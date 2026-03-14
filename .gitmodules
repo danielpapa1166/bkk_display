@@ -1,0 +1,3 @@
+[submodule "meta-platform-config"]
+	path = meta-platform-config
+	url = git@github.com:danielpapa1166/meta-platform-config

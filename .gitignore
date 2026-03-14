@@ -5,4 +5,3 @@ build-rpi/sstate-cache
 build-rpi/tmp
 build-rpi/bitbake-cookerdaemon.log
 build-rpi/conf/templateconf.cfg
-meta-platform-config
