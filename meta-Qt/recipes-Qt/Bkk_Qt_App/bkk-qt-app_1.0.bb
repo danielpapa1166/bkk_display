@@ -1,0 +1,19 @@
+SUMMARY = "Dummy Qt hello world application"
+LICENSE = "CLOSED"
+
+inherit cmake_qt5 pkgconfig systemd
+
+SRC_URI = "file://src/ \
+           file://bkk-qt-app.service \
+           "
+S = "${WORKDIR}/src"
+
+DEPENDS = "qtbase"
+
+SYSTEMD_SERVICE:${PN} = "bkk-qt-app.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+
+do_install:append() {
+    install -d ${D}${systemd_system_unitdir}
+    install -m 0644 ${WORKDIR}/bkk-qt-app.service ${D}${systemd_system_unitdir}/bkk-qt-app.service
+}
