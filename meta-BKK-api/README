@@ -1,0 +1,39 @@
+This layer provides recipes for integrating BKK API components into Yocto.
+
+Dependencies
+============
+
+Required layers:
+
+  URI: /data/projects/yocto/poky/meta
+  branch: kirkstone
+
+  URI: /data/projects/yocto/meta-openembedded/meta-oe
+  branch: kirkstone
+
+  URI: /data/projects/bkk_display/meta-BKK-api
+  branch: local
+
+
+Adding the layer
+================
+
+Run:
+
+  bitbake-layers add-layer /data/projects/bkk_display/meta-BKK-api
+
+
+Provided recipe
+===============
+
+`bkk-api`:
+- Fetches `git@github.com:danielpapa1166/bkk_api.git` from branch `main`
+- Builds the C++ shared library from `cpp/`
+- Installs `libbkk_api_shared.so` and public headers under `${includedir}/bkk_api`
+
+
+Build example
+=============
+
+  bitbake bkk-api
+

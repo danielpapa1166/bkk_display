@@ -1,0 +1,14 @@
+[Unit]
+Description=BKK API Key Setup Service
+Before=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/bkk-api/bkk-api-keygen.sh
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

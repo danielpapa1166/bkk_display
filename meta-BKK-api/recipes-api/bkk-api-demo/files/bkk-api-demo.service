@@ -1,0 +1,12 @@
+[Unit]
+Description=BKK API demo application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/environment.d/10-bkk-api.conf
+ExecStart=/usr/bin/bkk-api-demo
+
+[Install]
+WantedBy=multi-user.target
