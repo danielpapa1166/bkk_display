@@ -1,0 +1,13 @@
+[Unit]
+Description=BKK Qt Application
+After=local-fs.target
+
+[Service]
+Environment="QT_QPA_PLATFORM=eglfs"
+Environment="QT_QPA_EGLFS_HIDECURSOR=1"
+ExecStart=/usr/bin/bkk-qt-app
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
