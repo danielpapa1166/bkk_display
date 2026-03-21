@@ -1,11 +1,7 @@
 .vscode
-build-rpi/cache
-build-rpi/downloads
-build-rpi/sstate-cache
-build-rpi/tmp
-build-rpi/bitbake-cookerdaemon.log
-build-rpi/conf/templateconf.cfg
-build-rpi/bitbake.lock
+build-rpi/**
+!build-rpi/conf/
+!build-rpi/conf/**
 
 # this file contains the key for the BKK API (do not share)
 # a better solution to be implemented in the future
