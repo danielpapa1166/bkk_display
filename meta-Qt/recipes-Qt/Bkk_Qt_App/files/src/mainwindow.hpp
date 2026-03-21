@@ -11,9 +11,12 @@
 #include "bkk_api_wrapper.hpp"
 #include "bkk_clock_update.hpp"
 #include "bkk_online_check.hpp"
+#include "worker_thread.hpp"
 
 class MainWindow : public QWidget
 {
+    Q_OBJECT
+
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -21,8 +24,11 @@ public:
 private:
     void setupUi();
     void setupTableWidget();
+    void startWorkerThread();
+    void stopWorkerThread();
     void startTimers();
     void stopTimers();
+    void handleFetchCompleted();
     void updateUi();
     void populateArrivalsTable();
     void showTableMessage(const QString &message);
@@ -35,8 +41,10 @@ private:
     QTableWidget *arrivalsTable;
 
     CLockUpdater clockUpdater;
-    BkkApiWrapper apiWrapper;
     OnlineChecker onlineChecker;
+    WorkerThread workerThread;
+    std::vector<StationArrival> arrivals;
+    BkkApiError apiError;
 
     QTimer clockUpdateTimer;
     QTimer bkkApiFetchTimer;

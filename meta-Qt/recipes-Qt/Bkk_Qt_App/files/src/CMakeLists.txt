@@ -4,9 +4,10 @@ project(bkk_qt_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(CURL REQUIRED)
 
 add_executable(bkk-qt-app
@@ -20,9 +21,12 @@ add_executable(bkk-qt-app
 	bkk_online_check.hpp
 	bkk_api_wrapper.cpp
 	bkk_api_wrapper.hpp
+	worker_thread.cpp
+	worker_thread.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE
+	Qt5::Core
 	Qt5::Widgets
 	bkk_api_shared
 	CURL::libcurl
