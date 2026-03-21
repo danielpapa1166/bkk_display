@@ -13,16 +13,21 @@ MainWindow::MainWindow(QWidget *parent)
       clockLabel(nullptr),
       bkkLogoLabel(nullptr),
       wifiIconLabel(nullptr),
-    arrivalsTable(nullptr),
-    blinkOn(false)
+      arrivalsTable(nullptr),
+      apiError(BkkApiError::None),
+            clockText(),
+            onlineStatus(false),
+      blinkOn(false)
 {
     setupUi();
+    startWorkerThread();
     startTimers();
 }
 
 MainWindow::~MainWindow()
 {
     stopTimers();
+    stopWorkerThread();
 }
 
 void MainWindow::setupUi()
@@ -96,32 +101,75 @@ void MainWindow::setupTableWidget()
     arrivalsTable->setSortingEnabled(false);
 }
 
+void MainWindow::startWorkerThread()
+{
+    QObject::connect(&workerThread, &WorkerThread::apiFetchCompleted, this, &MainWindow::handleApiFetchCompleted);
+    QObject::connect(&workerThread, &WorkerThread::clockUpdateCompleted, this, &MainWindow::handleClockUpdateCompleted);
+    QObject::connect(&workerThread, &WorkerThread::onlineCheckCompleted, this, &MainWindow::handleOnlineCheckCompleted);
+
+    if (!workerThread.isRunning()) {
+        workerThread.start();
+    }
+}
+
+void MainWindow::stopWorkerThread()
+{
+    if (!workerThread.isRunning()) {
+        return;
+    }
+
+    workerThread.requestInterruption();
+    workerThread.wait();
+}
+
 void MainWindow::startTimers()
 {
-    clockUpdater.update();
-    apiWrapper.fetchData();
-    onlineChecker.cyclicCheck();
+    workerThread.requestClockUpdate();
+    workerThread.requestOnlineCheck();
+    workerThread.requestApiFetch();
 
     QObject::connect(&clockUpdateTimer, &QTimer::timeout, this, [this]() {
-        clockUpdater.update();
+        workerThread.requestClockUpdate();
     });
     clockUpdateTimer.start(1000);
 
     QObject::connect(&bkkApiFetchTimer, &QTimer::timeout, this, [this]() {
-        apiWrapper.fetchData();
+        workerThread.requestApiFetch();
     });
     bkkApiFetchTimer.start(10000);
 
     QObject::connect(&onlineCheckTimer, &QTimer::timeout, this, [this]() {
-        onlineChecker.cyclicCheck();
+        workerThread.requestOnlineCheck();
     });
     onlineCheckTimer.start(5000);
 
     QObject::connect(&mainTaskTimer, &QTimer::timeout, this, [this]() {
         updateUi();
+
+        // flip the blink state for the departure dots
+        blinkOn = !blinkOn;
     });
     mainTaskTimer.start(1000);
 
+    updateUi();
+}
+
+void MainWindow::handleApiFetchCompleted()
+{
+    arrivals = workerThread.getArrivals();
+    apiError = workerThread.getErrorCode();
+    updateUi();
+}
+
+void MainWindow::handleClockUpdateCompleted()
+{
+    clockText = workerThread.getClockText();
+    updateUi();
+}
+
+void MainWindow::handleOnlineCheckCompleted()
+{
+    onlineStatus = workerThread.isOnline();
     updateUi();
 }
 
@@ -135,13 +183,10 @@ void MainWindow::stopTimers()
 
 void MainWindow::updateUi()
 {
-    const bool connected = onlineChecker.isOnline();
-    blinkOn = !blinkOn;
-
-    clockLabel->setText(QString::fromStdString(clockUpdater.getClock()));
+    clockLabel->setText(QString::fromStdString(clockText));
 
     wifiIconLabel->setPixmap(
-        QPixmap(connected ? ":/icons/wifi_on.png" : ":/icons/wifi_off.png")
+        QPixmap(onlineStatus ? ":/icons/wifi_on.png" : ":/icons/wifi_off.png")
             .scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     bkkLogoLabel->setPixmap(
@@ -153,33 +198,33 @@ void MainWindow::updateUi()
 
 void MainWindow::populateArrivalsTable()
 {
-    auto arrivals = apiWrapper.getArrivals();
+    auto currentArrivals = arrivals;
     static constexpr int kMaxRows = 8;
 
-    std::sort(arrivals.begin(), arrivals.end(), [](const StationArrival &left, const StationArrival &right) {
+    std::sort(currentArrivals.begin(), currentArrivals.end(), [](const StationArrival &left, const StationArrival &right) {
         return left.arrival.departs_in_min < right.arrival.departs_in_min;
     });
 
-    if (static_cast<int>(arrivals.size()) > kMaxRows) {
-        arrivals.resize(static_cast<size_t>(kMaxRows));
+    if (static_cast<int>(currentArrivals.size()) > kMaxRows) {
+        currentArrivals.resize(static_cast<size_t>(kMaxRows));
     }
 
-    if (apiWrapper.getErrorCode() != BkkApiError::None) {
+    if (apiError != BkkApiError::None) {
         showTableMessage("Error fetching arrivals");
         return;
     }
 
-    if (arrivals.empty()) {
+    if (currentArrivals.empty()) {
         showTableMessage("No arrivals");
         return;
     }
 
     arrivalsTable->clearContents();
     arrivalsTable->clearSpans();
-    arrivalsTable->setRowCount(static_cast<int>(arrivals.size()));
+    arrivalsTable->setRowCount(static_cast<int>(currentArrivals.size()));
 
-    for (int row = 0; row < static_cast<int>(arrivals.size()); ++row) {
-        const auto &stationArrival = arrivals[static_cast<size_t>(row)];
+    for (int row = 0; row < static_cast<int>(currentArrivals.size()); ++row) {
+        const auto &stationArrival = currentArrivals[static_cast<size_t>(row)];
         const QColor backgroundColor = getRowColor(row);
 
         auto *stopItem = new QTableWidgetItem(QString::fromStdString(stationArrival.station_name));
