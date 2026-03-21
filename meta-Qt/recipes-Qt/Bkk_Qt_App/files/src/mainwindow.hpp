@@ -8,7 +8,7 @@
 #include <QTimer>
 #include <QWidget>
 
-#include "worker_thread.hpp"
+#include "bkk_worker_thread.hpp"
 
 class MainWindow : public QWidget
 {

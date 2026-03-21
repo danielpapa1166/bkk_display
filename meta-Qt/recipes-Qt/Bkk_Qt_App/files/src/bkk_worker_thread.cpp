@@ -1,4 +1,4 @@
-#include "worker_thread.hpp"
+#include "bkk_worker_thread.hpp"
 
 #include <QMutexLocker>
 

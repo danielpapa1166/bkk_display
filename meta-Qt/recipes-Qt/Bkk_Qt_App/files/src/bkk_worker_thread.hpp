@@ -1,5 +1,5 @@
-#ifndef WORKER_THREAD_HPP
-#define WORKER_THREAD_HPP
+#ifndef BKK_WORKER_THREAD_HPP
+#define BKK_WORKER_THREAD_HPP
 
 #include <QMutex>
 #include <QThread>

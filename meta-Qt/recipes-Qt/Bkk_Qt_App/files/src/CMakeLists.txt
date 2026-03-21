@@ -21,8 +21,8 @@ add_executable(bkk-qt-app
 	bkk_online_check.hpp
 	bkk_api_wrapper.cpp
 	bkk_api_wrapper.hpp
-	worker_thread.cpp
-	worker_thread.hpp
+	bkk_worker_thread.cpp
+	bkk_worker_thread.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE
