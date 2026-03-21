@@ -3,7 +3,8 @@ DESCRIPTION = "Builds libbkk_api_shared.so and installs public C++ headers"
 HOMEPAGE = "https://github.com/danielpapa1166/bkk_api"
 LICENSE = "CLOSED"
 
-SRC_URI = "git://github.com/danielpapa1166/bkk_api.git;protocol=ssh;branch=main"
+
+SRC_URI = "git://${TOPDIR}/../bkk_api;protocol=file;nobranch=1"
 SRCREV = "104d6c6fb8037672cb3b7ae0412302cf19e1a746"
 
 PV = "1.0+git${SRCPV}"

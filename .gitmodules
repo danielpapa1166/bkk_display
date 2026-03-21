@@ -1,3 +1,7 @@
 [submodule "meta-platform-config"]
 	path = meta-platform-config
 	url = git@github.com:danielpapa1166/meta-platform-config
+[submodule "bkk_api"]
+	path = bkk_api
+	url = git@github.com:danielpapa1166/bkk_api.git
+	branch = main
