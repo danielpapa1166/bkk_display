@@ -2,7 +2,7 @@
 build-rpi/**
 !build-rpi/conf/
 !build-rpi/conf/**
-
+.clangd
 # this file contains the key for the BKK API (do not share)
 # a better solution to be implemented in the future
-meta-BKK-api/recipes-api/bkk-api-demo/files/api-key.txt 
+meta-BKK-api/recipes-api/bkk-api-keyenv/files/api-key.txt
