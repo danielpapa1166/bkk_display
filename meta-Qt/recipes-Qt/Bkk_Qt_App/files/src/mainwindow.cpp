@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
       wifiIconLabel(nullptr),
       arrivalsTable(nullptr),
       apiError(BkkApiError::None),
+            clockText(),
+            onlineStatus(false),
       blinkOn(false)
 {
     setupUi();
@@ -101,7 +103,9 @@ void MainWindow::setupTableWidget()
 
 void MainWindow::startWorkerThread()
 {
-    QObject::connect(&workerThread, &WorkerThread::fetchCompleted, this, &MainWindow::handleFetchCompleted);
+    QObject::connect(&workerThread, &WorkerThread::apiFetchCompleted, this, &MainWindow::handleApiFetchCompleted);
+    QObject::connect(&workerThread, &WorkerThread::clockUpdateCompleted, this, &MainWindow::handleClockUpdateCompleted);
+    QObject::connect(&workerThread, &WorkerThread::onlineCheckCompleted, this, &MainWindow::handleOnlineCheckCompleted);
 
     if (!workerThread.isRunning()) {
         workerThread.start();
@@ -120,37 +124,52 @@ void MainWindow::stopWorkerThread()
 
 void MainWindow::startTimers()
 {
-    clockUpdater.update();
-    onlineChecker.cyclicCheck();
-    workerThread.requestFetch();
+    workerThread.requestClockUpdate();
+    workerThread.requestOnlineCheck();
+    workerThread.requestApiFetch();
 
     QObject::connect(&clockUpdateTimer, &QTimer::timeout, this, [this]() {
-        clockUpdater.update();
+        workerThread.requestClockUpdate();
     });
     clockUpdateTimer.start(1000);
 
     QObject::connect(&bkkApiFetchTimer, &QTimer::timeout, this, [this]() {
-        workerThread.requestFetch();
+        workerThread.requestApiFetch();
     });
     bkkApiFetchTimer.start(10000);
 
     QObject::connect(&onlineCheckTimer, &QTimer::timeout, this, [this]() {
-        onlineChecker.cyclicCheck();
+        workerThread.requestOnlineCheck();
     });
     onlineCheckTimer.start(5000);
 
     QObject::connect(&mainTaskTimer, &QTimer::timeout, this, [this]() {
         updateUi();
+
+        // flip the blink state for the departure dots
+        blinkOn = !blinkOn;
     });
     mainTaskTimer.start(1000);
 
     updateUi();
 }
 
-void MainWindow::handleFetchCompleted()
+void MainWindow::handleApiFetchCompleted()
 {
     arrivals = workerThread.getArrivals();
     apiError = workerThread.getErrorCode();
+    updateUi();
+}
+
+void MainWindow::handleClockUpdateCompleted()
+{
+    clockText = workerThread.getClockText();
+    updateUi();
+}
+
+void MainWindow::handleOnlineCheckCompleted()
+{
+    onlineStatus = workerThread.isOnline();
     updateUi();
 }
 
@@ -164,13 +183,10 @@ void MainWindow::stopTimers()
 
 void MainWindow::updateUi()
 {
-    const bool connected = onlineChecker.isOnline();
-    blinkOn = !blinkOn;
-
-    clockLabel->setText(QString::fromStdString(clockUpdater.getClock()));
+    clockLabel->setText(QString::fromStdString(clockText));
 
     wifiIconLabel->setPixmap(
-        QPixmap(connected ? ":/icons/wifi_on.png" : ":/icons/wifi_off.png")
+        QPixmap(onlineStatus ? ":/icons/wifi_on.png" : ":/icons/wifi_off.png")
             .scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     bkkLogoLabel->setPixmap(
