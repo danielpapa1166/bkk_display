@@ -1,10 +1,11 @@
 [Unit]
 Description=BKK Qt Application
-After=local-fs.target
-
+After=local-fs.target bkk-api-keygen.service
+Requires=bkk-api-keygen.service
 [Service]
 Environment="QT_QPA_PLATFORM=eglfs"
 Environment="QT_QPA_EGLFS_HIDECURSOR=1"
+EnvironmentFile=/etc/environment.d/10-bkk-api.conf
 ExecStart=/usr/bin/bkk-qt-app
 Restart=on-failure
 RestartSec=5

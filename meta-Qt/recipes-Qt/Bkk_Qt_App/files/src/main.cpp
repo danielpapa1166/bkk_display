@@ -1,14 +1,13 @@
 #include <QApplication>
-#include <QLabel>
+
+#include "mainwindow.hpp"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QLabel label("Szia Ági!");
-    label.setMinimumSize(400, 200);
-    label.setAlignment(Qt::AlignCenter);
-    label.show();
+    MainWindow window;
+    window.show();
 
     return app.exec();
 }

@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/icons">
+        <file alias="wifi_on.png">../icon/wifi_on.png</file>
+        <file alias="wifi_off.png">../icon/wifi_off.png</file>
+        <file alias="bkk_logo.png">../icon/bkk_logo.png</file>
+    </qresource>
+</RCC>

@@ -31,6 +31,14 @@ Provided recipe
 - Builds the C++ shared library from `cpp/`
 - Installs `libbkk_api_shared.so` and public headers under `${includedir}/bkk_api`
 
+`bkk-api-keyenv`:
+- Installs the API key bootstrap service, helper script, and default key file under `/etc/bkk-api`
+- Enables `bkk-api-keygen.service` to export the key into the runtime environment
+
+`bkk-api-demo`:
+- Builds the demo application binary and its application service
+- Pulls in `bkk-api-keyenv` at runtime so the API key bootstrap service is present
+
 
 Build example
 =============
