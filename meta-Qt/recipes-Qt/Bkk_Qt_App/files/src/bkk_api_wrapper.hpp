@@ -2,6 +2,7 @@
 #define BKK_API_WRAPPER_HPP
 
 #include <bkk_api/bkk_api.hpp>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -28,6 +29,7 @@ struct BkkApiWrapper {
     void fetchData();
     std::vector<StationArrival> getArrivals();
     std::string getArrivalsText();
+    uint64_t getLastFetchDurationMs() const;
     BkkApiError getErrorCode() const {
         return errorCode;
     }
@@ -39,8 +41,9 @@ private:
 
     std::unique_ptr<BkkApi> api = nullptr;
 
-    std::mutex arrivalsMutex;
+    mutable std::mutex arrivalsMutex;
     std::vector<StationArrival> arrivals;
+    uint64_t lastFetchDurationMs;
 
     BkkApiError errorCode;
 }; 

@@ -9,12 +9,14 @@ struct OnlineChecker {
     ~OnlineChecker();
 
     bool isOnline() const;
+    uint64_t getLastResponseTimeMs() const;
     void cyclicCheck();
 
 private:
     bool onlineStatus;
     mutable std::mutex statusMutex;
     uint8_t errorCode;
+    uint64_t lastResponseTimeMs;
 
     void setOnlineStatus(bool status) {
         std::lock_guard<std::mutex> lock(statusMutex);

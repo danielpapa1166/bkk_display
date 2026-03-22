@@ -23,6 +23,9 @@ add_executable(bkk-qt-app
 	bkk_api_wrapper.hpp
 	bkk_worker_thread.cpp
 	bkk_worker_thread.hpp
+	bkk_elapsed_timer.hpp
+	bkk_logger.cpp
+	bkk_logger.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

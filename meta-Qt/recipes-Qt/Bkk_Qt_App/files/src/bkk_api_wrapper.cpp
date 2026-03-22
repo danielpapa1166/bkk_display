@@ -1,9 +1,11 @@
 #include "bkk_api_wrapper.hpp"
+#include "bkk_elapsed_timer.hpp"
+#include "bkk_logger.hpp"
 
+#include <QString>
 #include <array>
 #include <cstring>
 #include <exception>
-#include <iostream>
 #include <string>
 
 namespace {
@@ -23,7 +25,7 @@ const char *getStationName(const char *stationId)
 
 } // namespace
 
-BkkApiWrapper::BkkApiWrapper() : errorCode(BkkApiError::None) {
+BkkApiWrapper::BkkApiWrapper() : lastFetchDurationMs(0), errorCode(BkkApiError::None) {
     (void) ensureApi();
     arrivals.clear();
 }
@@ -35,8 +37,7 @@ bool BkkApiWrapper::ensureApi() {
         try {
             api = std::make_unique<BkkApi>();
         } catch (const std::exception& ex) {
-            std::cerr << "Error initializing BkkApi: " 
-                << ex.what() << std::endl;
+            Logger::error("BkkApiWrapper", QString("Error initializing BkkApi: %1").arg(ex.what()));
             api.reset();
             errorCode = BkkApiError::InitializationFailed;
             return false;
@@ -56,8 +57,12 @@ bool BkkApiWrapper::ensureApi() {
 void BkkApiWrapper::fetchData() {
 	if (!ensureApi()) {
         errorCode = BkkApiError::ApiUninitialized;
+        std::lock_guard<std::mutex> lock(arrivalsMutex);
+        lastFetchDurationMs = 0;
         return;
 	}
+
+    BkkElapsedTimer totalTimer;
 
     std::vector<StationArrival> mergedArrivals;
     bool fetchedAny = false;
@@ -65,7 +70,9 @@ void BkkApiWrapper::fetchData() {
 
     for (const char *stationId : stationIds) {
         try {
+            BkkElapsedTimer stationTimer;
             auto stationArrivals = api->get_arrivals_for_station(stationId);
+            const auto stationMs = stationTimer.elapsedMs();
             for (auto &arrival : stationArrivals) {
                 StationArrival stationArrival;
                 stationArrival.arrival = std::move(arrival);
@@ -73,16 +80,40 @@ void BkkApiWrapper::fetchData() {
                 stationArrival.station_name = getStationName(stationId);
                 mergedArrivals.push_back(std::move(stationArrival));
             }
+
+            Logger::info(
+                "BkkApiWrapper",
+                QString("Fetched station %1 in %2 ms (%3 arrivals)")
+                    .arg(stationId)
+                    .arg(stationMs)
+                    .arg(static_cast<int>(stationArrivals.size())));
             fetchedAny = true;
         } catch (const std::exception &ex) {
-            std::cerr << "Error fetching arrivals for station " << stationId
-                      << ": " << ex.what() << std::endl;
+            Logger::warning(
+                "BkkApiWrapper",
+                QString("Error fetching arrivals for station %1: %2")
+                    .arg(stationId)
+                    .arg(ex.what()));
         }
     }
 
-    std::lock_guard<std::mutex> lock(arrivalsMutex);
-    arrivals = std::move(mergedArrivals);
-    errorCode = fetchedAny ? BkkApiError::None : BkkApiError::FetchFailed;
+    const auto totalMs = totalTimer.elapsedMs();
+
+    size_t arrivalsCount = 0;
+    {
+        std::lock_guard<std::mutex> lock(arrivalsMutex);
+        arrivals = std::move(mergedArrivals);
+        lastFetchDurationMs = totalMs;
+        errorCode = fetchedAny ? BkkApiError::None : BkkApiError::FetchFailed;
+        arrivalsCount = arrivals.size();
+    }
+
+    Logger::info(
+        "BkkApiWrapper",
+        QString("Fetch cycle completed in %1 ms (status=%2, arrivals=%3)")
+            .arg(totalMs)
+            .arg(errorCode == BkkApiError::None ? "ok" : "failed")
+            .arg(static_cast<int>(arrivalsCount)));
 }
 
 std::vector<StationArrival> BkkApiWrapper::getArrivals() {
@@ -105,4 +136,9 @@ std::string BkkApiWrapper::getArrivalsText() {
             + "  [" + a.station_id + "]\n";
     }
     return out;
+}
+
+uint64_t BkkApiWrapper::getLastFetchDurationMs() const {
+    std::lock_guard<std::mutex> lock(arrivalsMutex);
+    return lastFetchDurationMs;
 }
