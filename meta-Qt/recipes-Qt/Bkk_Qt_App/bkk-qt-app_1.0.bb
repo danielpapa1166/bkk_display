@@ -9,7 +9,7 @@ SRC_URI = "file://src/ \
            "
 S = "${WORKDIR}/src"
 
-DEPENDS = "qtbase bkk-api"
+DEPENDS = "qtbase bkk-api ads7846-controller"
 RDEPENDS:${PN} += "bkk-api bkk-api-keyenv"
 
 # Generate compile_commands.json for clangd tooling.
