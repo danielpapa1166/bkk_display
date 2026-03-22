@@ -1,0 +1,1 @@
+IMAGE_INSTALL:append = " ads7846-demo"
