@@ -68,7 +68,7 @@ static void irq_callback(ads7846_irq_event_t event,
 
 int main(int argc, char *argv[])
 {
-    const char *spidev = "/dev/spidev0.0";
+    const char *spidev = "/dev/spidev0.1";
     unsigned int irq_gpio = 25;
 
     if (argc >= 2) {
