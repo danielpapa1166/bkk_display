@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@/ads7846_controller
+
+Name: ads7846-controller
+Description: ADS7846 userspace SPI and IRQ controller library
+Version: 1.0.0
+Libs: -L${libdir} -lads7846_controller
+Cflags: -I${includedir}
