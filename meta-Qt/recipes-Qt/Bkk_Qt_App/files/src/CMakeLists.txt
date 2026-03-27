@@ -30,6 +30,8 @@ add_executable(bkk-qt-app
 	bkk_elapsed_timer.hpp
 	bkk_logger.cpp
 	bkk_logger.hpp
+	bkk_touchscreen.cpp
+	bkk_touchscreen.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

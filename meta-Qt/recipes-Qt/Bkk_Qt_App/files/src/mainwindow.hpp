@@ -9,6 +9,7 @@
 #include <QWidget>
 
 #include "bkk_worker_thread.hpp"
+#include "bkk_touchscreen.hpp"
 
 class MainWindow : public QWidget
 {
@@ -38,6 +39,7 @@ private:
     QLabel *bkkLogoLabel;
     QLabel *wifiIconLabel;
     QTableWidget *arrivalsTable;
+    BkkTouchScreen *touchscreen;
 
     WorkerThread workerThread;
 

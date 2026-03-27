@@ -1,4 +1,5 @@
 #include "mainwindow.hpp"
+#include "bkk_touchscreen.hpp"
 
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -7,6 +8,16 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <cstdio>
+
+static void g_touchscreenCallback(int *x, int *y) {
+    // This is where you would handle touch input and update the UI accordingly.
+    // For example, you could check if the touch coordinates correspond to a specific area of the screen
+    // and trigger an action or update the display.
+
+    // For demonstration purposes, we'll just print the touch coordinates.
+    printf("Touch at X=%d, Y=%d\n", *x, *y);
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent),
@@ -14,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
       bkkLogoLabel(nullptr),
       wifiIconLabel(nullptr),
       arrivalsTable(nullptr),
+    touchscreen(nullptr),
       apiError(BkkApiError::None),
             clockText(),
             onlineStatus(false),
@@ -22,12 +34,17 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi();
     startWorkerThread();
     startTimers();
+
+    // Initialize touchscreen callback
+    touchscreen = new BkkTouchScreen(g_touchscreenCallback);
 }
 
 MainWindow::~MainWindow()
 {
     stopTimers();
     stopWorkerThread();
+    delete touchscreen;
+    touchscreen = nullptr;
 }
 
 void MainWindow::setupUi()
