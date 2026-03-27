@@ -1,0 +1,14 @@
+{
+  "default_target": "rpi-dev",
+  "targets": {
+    "rpi-dev": {
+      "host": "192.168.0.50",
+      "user": "root",
+      "port": 22,
+      "identity_file": "~/.ssh/id_ed25519",
+      "local_binary": "/data/projects/bkk_display/build-rpi/tmp/work/cortexa7t2hf-neon-vfpv4-poky-linux-gnueabi/bkk-qt-app/1.0-r0/package/usr/bin/bkk-qt-app",
+      "remote_binary": "/usr/bin/bkk-qt-app",
+      "service_name": "bkk-qt-app.service"
+    }
+  }
+}

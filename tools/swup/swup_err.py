@@ -1,0 +1,2 @@
+class SwupError(RuntimeError):
+	pass
