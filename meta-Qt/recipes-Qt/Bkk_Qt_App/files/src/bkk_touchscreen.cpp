@@ -1,5 +1,6 @@
 #include "bkk_touchscreen.hpp"
 #include "ads7846_controller.h"
+#include "bkk_elapsed_timer.hpp"
 #include "bkk_logger.hpp"
 
 
@@ -74,8 +75,11 @@ int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
 
   int retVal; 
 
-  retVal = ads7846_controller_fetch_touch_coords(
-    controller, &x_raw, &y_raw);
+  uint64_t elapsedTime = BkkElapsedTimer::measureMs([&]() {
+    retVal = ads7846_controller_fetch_touch_coords(
+      controller, &x_raw, &y_raw);
+  });
+
 
   if (retVal != 0) {
     Logger::error("TouchScreenIF", 
@@ -113,7 +117,7 @@ void BkkTouchScreenWorker::irq_callback(
     ? TOUCHSCREEN_EVENT_TOUCHED 
     : TOUCHSCREEN_EVENT_RELEASED;
 
-      if (self->mainWindowCallback != nullptr) {
+  if (self->mainWindowCallback != nullptr) {
     self->mainWindowCallback(
       touchEvent,  
       self->mainWindowCallbackArg);
