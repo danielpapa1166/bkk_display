@@ -36,9 +36,6 @@ private:
   
   static void irq_callback(
     ads7846_irq_event_t event, uint64_t foo, void * user_arg); 
-  
-  int read_adc(uint8_t command, uint16_t *out);
-  int fetch_touch_coordinates(void);
 
 };
 

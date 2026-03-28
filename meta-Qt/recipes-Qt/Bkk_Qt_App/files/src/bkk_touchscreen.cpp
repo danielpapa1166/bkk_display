@@ -3,11 +3,6 @@
 #include "bkk_logger.hpp"
 
 
-// these macros to be checked, and moved to the controller header: 
-#define ADS7846_CMD_X  0xD0  /* channel 1 (X), 12-bit, differential */
-#define ADS7846_CMD_Y  0x90  /* channel 0 (Y), 12-bit, differential */
-
-
 BkkTouchScreen::BkkTouchScreen(touchscreen_callback_t callback) 
     : mainWindowCallback(callback) {
 
@@ -65,21 +60,6 @@ BkkTouchScreen::~BkkTouchScreen() {
 }
 
 
-int BkkTouchScreen::read_adc(uint8_t cmd, uint16_t * out) {
-
-  uint8_t tx[] = { cmd, 0x00, 0x00 };
-  uint8_t rx[3] = { 0 };
-
-  int ret = ads7846_controller_spi_transfer(
-    controller, tx, rx, sizeof(tx));
-  if (ret != 0) {
-    errorStatus = TOUCHSCREEN_ERROR_SPI_READ_FAILED;
-    return ret;
-  }
-
-  *out = (uint16_t)((((rx[1] << 8) | rx[2]) >> 3) & 0x0FFF);
-  return 0;
-} 
 
 int BkkTouchScreen::fetch_touch_coordinates(void) {
 
@@ -93,8 +73,8 @@ int BkkTouchScreen::fetch_touch_coordinates(void) {
 
   int retVal; 
 
-  retVal = read_adc(ADS7846_CMD_X, &x_raw);
-  retVal |= read_adc(ADS7846_CMD_Y, &y_raw);
+  retVal = ads7846_controller_fetch_touch_coords(
+    controller, &x_raw, &y_raw);
 
   if (retVal != 0) {
     Logger::error("TouchScreenIF", 
