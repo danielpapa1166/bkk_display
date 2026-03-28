@@ -1,5 +1,6 @@
 #include "ads7846_controller.h"
 
+#include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/spi/spidev.h>
@@ -19,6 +20,10 @@
 #endif
 
 #define SYSFS_GPIO_PATH "/sys/class/gpio"
+#define ADS7846_CMD_X  0xD0  /* channel 1 (X), 12-bit, differential */
+#define ADS7846_CMD_Y  0x90  /* channel 0 (Y), 12-bit, differential */
+
+
 
 struct ads7846_controller {
     int spi_fd;
@@ -39,6 +44,23 @@ struct ads7846_controller {
     bool stop_requested;
     pthread_mutex_t lock;
 };
+
+
+static int read_adc(ads7846_controller_t *controller, uint8_t cmd, uint16_t * out) {
+
+  uint8_t tx[] = { cmd, 0x00, 0x00 };
+  uint8_t rx[3] = { 0 };
+
+  int ret = ads7846_controller_spi_transfer(
+    controller, tx, rx, sizeof(tx));
+  if (ret != 0) {
+    return ret;
+  }
+
+  *out = (uint16_t)((((rx[1] << 8) | rx[2]) >> 3) & 0x0FFF);
+  return 0;
+} 
+
 
 static int write_text_file(const char *path, const char *value) {
     // local implementation of writing a string to a sysfs file
@@ -202,7 +224,7 @@ static int ads7846_configure_spi(ads7846_controller_t *controller) {
     // set CPOL and CPHA: (to be checked in datasheet): 
     retval = ioctl(controller->spi_fd, 
         SPI_IOC_WR_MODE, &controller->spi_mode);
-    if (retval == 0) {
+    if (retval < 0) {
         return -errno;
     }
 
@@ -319,7 +341,7 @@ int ads7846_controller_init(ads7846_controller_t **out_controller,
         return -ENOMEM;
     }
 
-    // init fds to invalud: 
+    // init fds to invalid: 
     controller->spi_fd = -1;
     controller->irq_value_fd = -1;
     controller->stop_event_fd = -1;
@@ -383,7 +405,7 @@ int ads7846_controller_init(ads7846_controller_t **out_controller,
 }
 
 void ads7846_controller_deinit(ads7846_controller_t *controller) {
-    // clanup and free everything: 
+    // cleanup and free everything: 
     if (controller == NULL) {
         return;
     }
@@ -411,9 +433,9 @@ void ads7846_controller_deinit(ads7846_controller_t *controller) {
 }
 
 int ads7846_controller_spi_transfer(ads7846_controller_t *controller,
-                                    const uint8_t *tx,
-                                    uint8_t *rx,
-                                    size_t len) {
+        const uint8_t *tx,
+        uint8_t *rx,
+        size_t len) {
     
     // use standard linux spidev interface: 
     struct spi_ioc_transfer transfer;
@@ -439,6 +461,31 @@ int ads7846_controller_spi_transfer(ads7846_controller_t *controller,
     if (status < 0) {
         return -errno;
     }
+
+    return 0;
+}
+
+
+int ads7846_controller_fetch_touch_coords(
+        ads7846_controller_t * controller, uint16_t * x_pos, uint16_t * y_pos) {
+
+    if(controller == NULL) {
+        return -EINVAL;
+    }
+
+    uint16_t x_raw = 0, y_raw = 0;
+
+    int retVal; 
+
+    retVal = read_adc(controller, ADS7846_CMD_X, &x_raw);
+    retVal |= read_adc(controller, ADS7846_CMD_Y, &y_raw);
+
+    if (retVal != 0) {
+        return retVal;
+    }
+
+    *x_pos = x_raw;
+    *y_pos = y_raw;
 
     return 0;
 }

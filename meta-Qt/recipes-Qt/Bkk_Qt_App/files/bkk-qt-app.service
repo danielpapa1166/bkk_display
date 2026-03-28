@@ -5,6 +5,7 @@ Requires=bkk-api-keygen.service
 [Service]
 Environment="QT_QPA_PLATFORM=eglfs"
 Environment="QT_QPA_EGLFS_HIDECURSOR=1"
+Environment="QT_FATAL_WARNINGS=1"
 EnvironmentFile=/etc/environment.d/10-bkk-api.conf
 ExecStart=/usr/bin/bkk-qt-app
 Restart=on-failure

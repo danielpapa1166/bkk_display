@@ -1,4 +1,5 @@
 #include "mainwindow.hpp"
+#include "bkk_touchscreen.hpp"
 
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -6,7 +7,11 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
+#include "bkk_logger.hpp"
+
 #include <algorithm>
+#include <cstdio>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent),
@@ -22,6 +27,13 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi();
     startWorkerThread();
     startTimers();
+
+    // Initialize touchscreen callback
+    setupTouchScreenWorker(); 
+    
+    // Setup touch feedback overlay (raised above child widgets)
+    touchFeedback = new TouchScreenFeedBack(new QLabel(this));
+
 }
 
 MainWindow::~MainWindow()
@@ -300,3 +312,54 @@ QWidget *MainWindow::createDepartureCell(int departsInMin, const QColor &backgro
     layout->addWidget(minutes);
     return container;
 }
+
+void MainWindow::setupTouchScreenWorker() {
+    touchscreenWorker = new BkkTouchScreenWorker(
+        touchscreenCallback, this);
+
+    // setup worker timer but do not start it yet:
+    QObject::connect(
+        &touchScreenWorkerTimer, 
+        &QTimer::timeout, this, [this]() {
+            if (touchscreenWorker != nullptr) {
+                if (touchscreenWorker->fetch_touch_coordinates() == 0) {
+                    touchFeedback->showTouchAt(
+                        touchscreenWorker->getX(), 
+                        touchscreenWorker->getY());                  
+                }
+            }
+        }
+    );
+}
+
+
+void MainWindow::touchscreenCallback(ts_event_en event, void * arg) {
+    (void)event; // Unused parameter
+    
+    MainWindow *self = static_cast<MainWindow *>(arg);
+    if (self == nullptr) {
+        return;
+    }
+
+    if(event == TOUCHSCREEN_EVENT_TOUCHED
+         && self->currentTouchEvent != TOUCHSCREEN_EVENT_TOUCHED) {
+        
+        self->currentTouchEvent = TOUCHSCREEN_EVENT_TOUCHED;
+        // Start timer to fetch coordinates 
+        QMetaObject::invokeMethod(self, [self]() {
+            self->touchScreenWorkerTimer.start(30); 
+        }, Qt::QueuedConnection);
+    }
+    else if(event == TOUCHSCREEN_EVENT_RELEASED
+         && self->currentTouchEvent != TOUCHSCREEN_EVENT_RELEASED) {
+        self->currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
+        // Stop fetching coordinates when touch is released
+        QMetaObject::invokeMethod(self, [self]() {
+            self->touchScreenWorkerTimer.stop();
+        }, Qt::QueuedConnection);
+    }  
+    else {
+        // Ignore other events or repeated events
+    }
+}
+

@@ -26,8 +26,8 @@ typedef enum {
 } ads7846_irq_event_t;
 
 typedef void (*ads7846_irq_callback_t)(ads7846_irq_event_t event,
-                                       uint64_t timestamp_ns,
-                                       void *user_data);
+    uint64_t timestamp_ns,
+    void *user_data);
 
 typedef struct {
     const char *spidev_path;
@@ -38,17 +38,23 @@ typedef struct {
 } ads7846_config_t;
 
 int ads7846_controller_init(ads7846_controller_t **out_controller,
-                            const ads7846_config_t *config);
+    const ads7846_config_t *config);
+
 void ads7846_controller_deinit(ads7846_controller_t *controller);
 
-int ads7846_controller_spi_transfer(ads7846_controller_t *controller,
-                                    const uint8_t *tx,
-                                    uint8_t *rx,
-                                    size_t len);
+int ads7846_controller_spi_transfer(
+    ads7846_controller_t *controller,
+    const uint8_t *tx,
+    uint8_t *rx,
+    size_t len);
 
-int ads7846_controller_set_irq_callback(ads7846_controller_t *controller,
-                                        ads7846_irq_callback_t callback,
-                                        void *user_data);
+int ads7846_controller_fetch_touch_coords(
+    ads7846_controller_t * controller, uint16_t * x_pos, uint16_t * y_pos);
+
+int ads7846_controller_set_irq_callback(
+    ads7846_controller_t *controller, 
+    ads7846_irq_callback_t callback,
+    void *user_data);
 
 int ads7846_controller_start_irq_listener(ads7846_controller_t *controller);
 int ads7846_controller_stop_irq_listener(ads7846_controller_t *controller);
