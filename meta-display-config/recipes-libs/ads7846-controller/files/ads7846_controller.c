@@ -202,7 +202,7 @@ static int ads7846_configure_spi(ads7846_controller_t *controller) {
     // set CPOL and CPHA: (to be checked in datasheet): 
     retval = ioctl(controller->spi_fd, 
         SPI_IOC_WR_MODE, &controller->spi_mode);
-    if (retval == 0) {
+    if (retval < 0) {
         return -errno;
     }
 
@@ -411,9 +411,9 @@ void ads7846_controller_deinit(ads7846_controller_t *controller) {
 }
 
 int ads7846_controller_spi_transfer(ads7846_controller_t *controller,
-                                    const uint8_t *tx,
-                                    uint8_t *rx,
-                                    size_t len) {
+        const uint8_t *tx,
+        uint8_t *rx,
+        size_t len) {
     
     // use standard linux spidev interface: 
     struct spi_ioc_transfer transfer;

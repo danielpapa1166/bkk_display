@@ -50,6 +50,9 @@ BkkTouchScreen::BkkTouchScreen(touchscreen_callback_t callback)
     errorStatus = TOUCHSCREEN_ERROR_IRQ_LISTENER_FAILED;
     return;
   } 
+
+  Logger::info("TouchScreenIF", 
+    "Touchscreen controller initialized successfully");
 }
 
 
@@ -128,7 +131,8 @@ void BkkTouchScreen::irq_callback(
         self->mainWindowCallback(&self->x_pos, &self->y_pos);
       }
     }
-  } else {
+  } 
+  else {
     Logger::info("TouchScreenIF", "Touch released");
   }
 }
