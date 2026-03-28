@@ -32,6 +32,8 @@ add_executable(bkk-qt-app
 	bkk_logger.hpp
 	bkk_touchscreen.cpp
 	bkk_touchscreen.hpp
+	bkk_touchscreen_feedback.cpp
+	bkk_touchscreen_feedback.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

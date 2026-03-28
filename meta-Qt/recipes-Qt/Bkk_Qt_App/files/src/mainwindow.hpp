@@ -10,6 +10,7 @@
 
 #include "bkk_worker_thread.hpp"
 #include "bkk_touchscreen.hpp"
+#include "bkk_touchscreen_feedback.hpp"
 
 class MainWindow : public QWidget
 {
@@ -39,6 +40,8 @@ private:
     void setupTouchScreenWorker();
     static void touchscreenCallback(ts_event_en event, void * arg); 
     ts_event_en currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
+    TouchScreenFeedBack *touchFeedback = nullptr;
+
 
     QLabel *clockLabel;
     QLabel *bkkLogoLabel;
