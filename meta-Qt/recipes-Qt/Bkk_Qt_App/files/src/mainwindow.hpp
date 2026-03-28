@@ -34,12 +34,17 @@ private:
     void showTableMessage(const QString &message);
     QColor getRowColor(int row) const;
     QWidget *createDepartureCell(int departsInMin, const QColor &backgroundColor) const;
+    
+    BkkTouchScreenWorker *touchscreenWorker = nullptr;
+    void setupTouchScreenWorker();
+    static void touchscreenCallback(ts_event_en event, void * arg); 
+    ts_event_en currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
 
     QLabel *clockLabel;
     QLabel *bkkLogoLabel;
     QLabel *wifiIconLabel;
     QTableWidget *arrivalsTable;
-    BkkTouchScreen *touchscreen;
+
 
     WorkerThread workerThread;
 
@@ -52,6 +57,7 @@ private:
     QTimer bkkApiFetchTimer;
     QTimer onlineCheckTimer;
     QTimer mainTaskTimer;
+    QTimer touchScreenWorkerTimer; 
     bool blinkOn;
 };
 

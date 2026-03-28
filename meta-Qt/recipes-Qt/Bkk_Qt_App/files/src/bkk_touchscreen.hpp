@@ -4,7 +4,6 @@
 #include "ads7846_controller.h"
 
 
-typedef void (*touchscreen_callback_t)(int * x, int * y); 
 typedef enum {
   TOUCHSCREEN_ERROR_NONE = 0,
   TOUCHSCREEN_ERROR_INIT_FAILED = -1,
@@ -13,11 +12,17 @@ typedef enum {
   TOUCHSCREEN_ERROR_SPI_READ_FAILED = -4
 } ts_error_en; 
 
+typedef enum {
+  TOUCHSCREEN_EVENT_TOUCHED,
+  TOUCHSCREEN_EVENT_RELEASED
+} ts_event_en;
 
-struct BkkTouchScreen
-{
-  BkkTouchScreen(touchscreen_callback_t callback); 
-  ~BkkTouchScreen();
+typedef void (*touchscreen_callback_t)(ts_event_en event, void * arg); 
+
+
+struct BkkTouchScreenWorker {
+  BkkTouchScreenWorker(touchscreen_callback_t callback, void * user_arg); 
+  ~BkkTouchScreenWorker();
 
 
 private: 
@@ -32,8 +37,9 @@ private:
     .irq_gpio_number   = 25,
   };
   
-  touchscreen_callback_t mainWindowCallback = nullptr;   
-  
+  touchscreen_callback_t mainWindowCallback = nullptr; 
+  void * mainWindowCallbackArg = nullptr;  
+  int fetch_touch_coordinates(void); 
   static void irq_callback(
     ads7846_irq_event_t event, uint64_t foo, void * user_arg); 
 

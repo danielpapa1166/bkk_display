@@ -10,14 +10,6 @@
 #include <algorithm>
 #include <cstdio>
 
-static void g_touchscreenCallback(int *x, int *y) {
-    // This is where you would handle touch input and update the UI accordingly.
-    // For example, you could check if the touch coordinates correspond to a specific area of the screen
-    // and trigger an action or update the display.
-
-    // For demonstration purposes, we'll just print the touch coordinates.
-    printf("Touch at X=%d, Y=%d\n", *x, *y);
-}
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent),
@@ -36,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     startTimers();
 
     // Initialize touchscreen callback
-    touchscreen = new BkkTouchScreen(g_touchscreenCallback);
+    setupTouchScreenWorker(); 
 }
 
 MainWindow::~MainWindow()
@@ -316,4 +308,49 @@ QWidget *MainWindow::createDepartureCell(int departsInMin, const QColor &backgro
     layout->addWidget(dot);
     layout->addWidget(minutes);
     return container;
+}
+
+void MainWindow::setupTouchScreenWorker() {
+    touchscreenWorker = new BkkTouchScreenWorker(
+        touchscreenCallback);
+
+    // setup worker timer but do not start it yet:
+    QObject::connect(
+        &touchScreenWorkerTimer, 
+        &QTimer::timeout, this, [this]() {
+            if (touchscreenWorker != nullptr) {
+                touchscreenWorker->fetch_touch_coordinates();
+            }
+        }
+    );
+}
+
+
+void MainWindow::touchscreenCallback(ts_event_en event, void * arg) {
+    (void)event; // Unused parameter
+    
+    MainWindow *self = static_cast<MainWindow *>(arg);
+    if (self == nullptr) {
+        return;
+    }
+
+    if(event == TOUCHSCREEN_EVENT_TOUCHED) {
+        self->currentTouchEvent = TOUCHSCREEN_EVENT_TOUCHED;
+        // Start timer to fetch coordinates 
+        self->touchScreenWorkerTimer.start(30); 
+    }
+    else if(event == TOUCHSCREEN_EVENT_RELEASED) {
+        self->currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
+        // Stop fetching coordinates when touch is released
+        self->touchScreenWorkerTimer.stop();
+    }
+    else {
+        self->currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
+        self->touchScreenWorkerTimer.stop();
+    }
+
+    // For demonstration, we'll just log the touch event. In a real application,
+    // you might want to trigger some UI updates or actions based on the touch.
+    Logger::info("MainWindow", "Touchscreen event received");
+    
 }

@@ -3,8 +3,9 @@
 #include "bkk_logger.hpp"
 
 
-BkkTouchScreen::BkkTouchScreen(touchscreen_callback_t callback) 
-    : mainWindowCallback(callback) {
+BkkTouchScreenWorker::BkkTouchScreenWorker(
+    touchscreen_callback_t callback, void * user_arg) 
+    : mainWindowCallback(callback), mainWindowCallbackArg(user_arg) {
 
   int retVal; 
 
@@ -22,7 +23,7 @@ BkkTouchScreen::BkkTouchScreen(touchscreen_callback_t callback)
 
   retVal = ads7846_controller_set_irq_callback(
     controller, 
-    &BkkTouchScreen::irq_callback, 
+    &BkkTouchScreenWorker::irq_callback, 
     this);
 
   if(retVal != 0) {
@@ -51,7 +52,7 @@ BkkTouchScreen::BkkTouchScreen(touchscreen_callback_t callback)
 }
 
 
-BkkTouchScreen::~BkkTouchScreen() {
+BkkTouchScreenWorker::~BkkTouchScreenWorker() {
   if (controller != nullptr) {
     ads7846_controller_stop_irq_listener(controller);
     ads7846_controller_deinit(controller);
@@ -61,7 +62,7 @@ BkkTouchScreen::~BkkTouchScreen() {
 
 
 
-int BkkTouchScreen::fetch_touch_coordinates(void) {
+int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
 
   if(controller == nullptr) {
     Logger::error("TouchScreenIF", 
@@ -91,28 +92,30 @@ int BkkTouchScreen::fetch_touch_coordinates(void) {
 }
 
 
-void BkkTouchScreen::irq_callback(
+void BkkTouchScreenWorker::irq_callback(
   ads7846_irq_event_t event, uint64_t foo, void * user_arg) {
 
   (void)foo; // Unused parameter
 
-  BkkTouchScreen *self = static_cast<BkkTouchScreen *>(user_arg);
+  BkkTouchScreenWorker *self = static_cast<BkkTouchScreenWorker *>(user_arg);
   if (self == nullptr) {
     return;
   }
 
-  if (event == ADS7846_IRQ_EVENT_FALLING) {
-    // Pen down — read touch coordinates
-    if (self->fetch_touch_coordinates() == 0) {
-      Logger::info("TouchScreenIF", 
-        QString("Touch detected at X=%1, Y=%2").arg(self->x_pos).arg(self->y_pos));
+  if(event != ADS7846_IRQ_EVENT_FALLING 
+      && event != ADS7846_IRQ_EVENT_RISING) {
+    Logger::warning("TouchScreenIF", 
+      QString("Received unknown IRQ event: %1").arg(event));
+    return;
+  }
+
+  ts_event_en touchEvent = (event == ADS7846_IRQ_EVENT_FALLING) 
+    ? TOUCHSCREEN_EVENT_TOUCHED 
+    : TOUCHSCREEN_EVENT_RELEASED;
 
       if (self->mainWindowCallback != nullptr) {
-        self->mainWindowCallback(&self->x_pos, &self->y_pos);
-      }
-    }
-  } 
-  else {
-    Logger::info("TouchScreenIF", "Touch released");
+    self->mainWindowCallback(
+      touchEvent,  
+      self->mainWindowCallbackArg);
   }
 }
