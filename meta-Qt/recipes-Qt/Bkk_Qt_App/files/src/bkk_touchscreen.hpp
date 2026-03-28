@@ -24,11 +24,12 @@ struct BkkTouchScreenWorker {
   BkkTouchScreenWorker(touchscreen_callback_t callback, void * user_arg); 
   ~BkkTouchScreenWorker();
   int fetch_touch_coordinates(void); 
-
+  int getX() const { return x_px; }
+  int getY() const { return y_px; }
 
 private: 
   ts_error_en errorStatus = TOUCHSCREEN_ERROR_NONE;
-  int x_pos = 0, y_pos = 0;
+  int x_px = 0, y_px = 0;
   ads7846_controller_t *controller = nullptr;
   const ads7846_config_t config = {
     .spidev_path       = "/dev/spidev0.1",
@@ -42,6 +43,10 @@ private:
   void * mainWindowCallbackArg = nullptr;  
   static void irq_callback(
     ads7846_irq_event_t event, uint64_t foo, void * user_arg); 
+
+  const int screenWidth = 800;
+  const int screenHeight = 480;
+  const int adcDivider = 4095; 
 
 };
 

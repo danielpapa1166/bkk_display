@@ -89,12 +89,9 @@ int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
     return -1;
   }
 
-  x_pos = x_raw;
-  y_pos = y_raw;
-
-  Logger::info("TouchScreenIF", 
-    QString("Fetched touch coordinates: x=%1, y=%2 (read time: %3 ms)")
-      .arg(x_pos).arg(y_pos).arg(elapsedTime));
+  // convert to screen pixels: 
+  x_px = x_raw * screenWidth / adcDivider;
+  y_px = y_raw * screenHeight / adcDivider;
 
   return 0;
 }
