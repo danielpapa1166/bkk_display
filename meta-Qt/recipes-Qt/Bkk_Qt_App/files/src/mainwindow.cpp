@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent)
       bkkLogoLabel(nullptr),
       wifiIconLabel(nullptr),
       arrivalsTable(nullptr),
-    touchscreen(nullptr),
       apiError(BkkApiError::None),
             clockText(),
             onlineStatus(false),
@@ -35,8 +34,6 @@ MainWindow::~MainWindow()
 {
     stopTimers();
     stopWorkerThread();
-    delete touchscreen;
-    touchscreen = nullptr;
 }
 
 void MainWindow::setupUi()
@@ -312,7 +309,7 @@ QWidget *MainWindow::createDepartureCell(int departsInMin, const QColor &backgro
 
 void MainWindow::setupTouchScreenWorker() {
     touchscreenWorker = new BkkTouchScreenWorker(
-        touchscreenCallback);
+        touchscreenCallback, this);
 
     // setup worker timer but do not start it yet:
     QObject::connect(
@@ -347,10 +344,5 @@ void MainWindow::touchscreenCallback(ts_event_en event, void * arg) {
     else {
         self->currentTouchEvent = TOUCHSCREEN_EVENT_RELEASED;
         self->touchScreenWorkerTimer.stop();
-    }
-
-    // For demonstration, we'll just log the touch event. In a real application,
-    // you might want to trigger some UI updates or actions based on the touch.
-    Logger::info("MainWindow", "Touchscreen event received");
-    
+    }    
 }

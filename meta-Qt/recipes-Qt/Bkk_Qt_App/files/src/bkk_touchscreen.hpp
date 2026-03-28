@@ -23,6 +23,7 @@ typedef void (*touchscreen_callback_t)(ts_event_en event, void * arg);
 struct BkkTouchScreenWorker {
   BkkTouchScreenWorker(touchscreen_callback_t callback, void * user_arg); 
   ~BkkTouchScreenWorker();
+  int fetch_touch_coordinates(void); 
 
 
 private: 
@@ -39,7 +40,6 @@ private:
   
   touchscreen_callback_t mainWindowCallback = nullptr; 
   void * mainWindowCallbackArg = nullptr;  
-  int fetch_touch_coordinates(void); 
   static void irq_callback(
     ads7846_irq_event_t event, uint64_t foo, void * user_arg); 
 

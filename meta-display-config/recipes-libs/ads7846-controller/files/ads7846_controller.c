@@ -1,6 +1,6 @@
 #include "ads7846_controller.h"
 
-#include <cstdint>
+#include <stdint.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/spi/spidev.h>
