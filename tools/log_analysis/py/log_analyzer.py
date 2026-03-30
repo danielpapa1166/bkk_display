@@ -14,7 +14,7 @@ class LogAnalyzer:
             record.duration_ms
             for session in self._sessions
             for record in session.records
-            if record.component == "BkkApiWrapper"
+            if record.component == "BkkApiWorker"
             and record.event == "api_fetch_cycle"
             and record.duration_ms is not None
         ]

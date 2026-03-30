@@ -8,9 +8,10 @@
 #include <QTimer>
 #include <QWidget>
 
-#include "bkk_worker_thread.hpp"
 #include "bkk_touchscreen.hpp"
 #include "bkk_touchscreen_feedback.hpp"
+#include "bkk_arrival_table_handler.hpp"
+#include "bkk_worker_thread.hpp"
 
 class MainWindow : public QWidget
 {
@@ -22,20 +23,14 @@ public:
 
 private:
     void setupUi();
-    void setupTableWidget();
     void startWorkerThread();
     void stopWorkerThread();
     void startTimers();
     void stopTimers();
-    void handleApiFetchCompleted();
     void handleClockUpdateCompleted();
     void handleOnlineCheckCompleted();
     void updateUi();
-    void populateArrivalsTable();
-    void showTableMessage(const QString &message);
-    QColor getRowColor(int row) const;
-    QWidget *createDepartureCell(int departsInMin, const QColor &backgroundColor) const;
-    
+
     BkkTouchScreenWorker *touchscreenWorker = nullptr;
     void setupTouchScreenWorker();
     static void touchscreenCallback(ts_event_en event, void * arg); 
@@ -48,16 +43,13 @@ private:
     QLabel *wifiIconLabel;
     QTableWidget *arrivalsTable;
 
-
+    ArrivalTableHandler *arrivalTableHandler = nullptr;
     WorkerThread workerThread;
 
-    std::vector<StationArrival> arrivals;
-    BkkApiError apiError;
     std::string clockText;
     bool onlineStatus;
 
     QTimer clockUpdateTimer;
-    QTimer bkkApiFetchTimer;
     QTimer onlineCheckTimer;
     QTimer mainTaskTimer;
     QTimer touchScreenWorkerTimer; 

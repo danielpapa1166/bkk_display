@@ -4,18 +4,11 @@
 
 WorkerThread::WorkerThread(QObject *parent)
     : QThread(parent),
-      errorCode(BkkApiError::None),
       clockText(),
       onlineStatus(false),
-      apiFetchRequested(false),
       clockUpdateRequested(false),
       onlineCheckRequested(false)
 {
-}
-
-void WorkerThread::requestApiFetch()
-{
-    apiFetchRequested.store(true);
 }
 
 void WorkerThread::requestClockUpdate()
@@ -28,17 +21,6 @@ void WorkerThread::requestOnlineCheck()
     onlineCheckRequested.store(true);
 }
 
-std::vector<StationArrival> WorkerThread::getArrivals()
-{
-    QMutexLocker lock(&resultMutex);
-    return arrivals;
-}
-
-BkkApiError WorkerThread::getErrorCode() const
-{
-    QMutexLocker lock(&resultMutex);
-    return errorCode;
-}
 
 std::string WorkerThread::getClockText() const
 {
@@ -56,19 +38,6 @@ void WorkerThread::run()
 {
     while (!isInterruptionRequested()) {
         bool didWork = false;
-
-        if (apiFetchRequested.exchange(false)) {
-            apiWrapper.fetchData();
-
-            {
-                QMutexLocker lock(&resultMutex);
-                arrivals = apiWrapper.getArrivals();
-                errorCode = apiWrapper.getErrorCode();
-            }
-
-            apiFetchCompleted();
-            didWork = true;
-        }
 
         if (clockUpdateRequested.exchange(false)) {
             clockUpdater.update();

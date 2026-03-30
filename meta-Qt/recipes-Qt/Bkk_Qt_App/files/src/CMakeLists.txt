@@ -23,8 +23,8 @@ add_executable(bkk-qt-app
 	bkk_clock_update.hpp
 	bkk_online_check.cpp
 	bkk_online_check.hpp
-	bkk_api_wrapper.cpp
-	bkk_api_wrapper.hpp
+	bkk_api_worker.cpp
+	bkk_api_worker.hpp
 	bkk_worker_thread.cpp
 	bkk_worker_thread.hpp
 	bkk_elapsed_timer.hpp

@@ -18,13 +18,15 @@ MainWindow::MainWindow(QWidget *parent)
       clockLabel(nullptr),
       bkkLogoLabel(nullptr),
       wifiIconLabel(nullptr),
-      arrivalsTable(nullptr),
-      apiError(BkkApiError::None),
-            clockText(),
-            onlineStatus(false),
+      clockText(),
+      onlineStatus(false),
       blinkOn(false)
 {
+
     setupUi();
+
+    
+
     startWorkerThread();
     startTimers();
 
@@ -90,32 +92,13 @@ void MainWindow::setupUi()
     layout->addWidget(statusRow);
 
     arrivalsTable = new QTableWidget(this);
-    arrivalsTable->setColumnCount(4);
-    arrivalsTable->setHorizontalHeaderLabels(
-        {"Station", "Line", "Destination", "Departs"});
-    setupTableWidget();
+    arrivalTableHandler = new ArrivalTableHandler(arrivalsTable);
     layout->addWidget(arrivalsTable, 1);
 }
 
-void MainWindow::setupTableWidget()
-{
-    arrivalsTable->horizontalHeader()->setStretchLastSection(false);
-    arrivalsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    arrivalsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    arrivalsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
-    arrivalsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-
-    arrivalsTable->verticalHeader()->setVisible(false);
-    arrivalsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    arrivalsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    arrivalsTable->setSelectionMode(QAbstractItemView::SingleSelection);
-    arrivalsTable->setAlternatingRowColors(false);
-    arrivalsTable->setSortingEnabled(false);
-}
 
 void MainWindow::startWorkerThread()
 {
-    QObject::connect(&workerThread, &WorkerThread::apiFetchCompleted, this, &MainWindow::handleApiFetchCompleted);
     QObject::connect(&workerThread, &WorkerThread::clockUpdateCompleted, this, &MainWindow::handleClockUpdateCompleted);
     QObject::connect(&workerThread, &WorkerThread::onlineCheckCompleted, this, &MainWindow::handleOnlineCheckCompleted);
 
@@ -138,17 +121,11 @@ void MainWindow::startTimers()
 {
     workerThread.requestClockUpdate();
     workerThread.requestOnlineCheck();
-    workerThread.requestApiFetch();
 
     QObject::connect(&clockUpdateTimer, &QTimer::timeout, this, [this]() {
         workerThread.requestClockUpdate();
     });
     clockUpdateTimer.start(1000);
-
-    QObject::connect(&bkkApiFetchTimer, &QTimer::timeout, this, [this]() {
-        workerThread.requestApiFetch();
-    });
-    bkkApiFetchTimer.start(10000);
 
     QObject::connect(&onlineCheckTimer, &QTimer::timeout, this, [this]() {
         workerThread.requestOnlineCheck();
@@ -163,13 +140,6 @@ void MainWindow::startTimers()
     });
     mainTaskTimer.start(1000);
 
-    updateUi();
-}
-
-void MainWindow::handleApiFetchCompleted()
-{
-    arrivals = workerThread.getArrivals();
-    apiError = workerThread.getErrorCode();
     updateUi();
 }
 
@@ -189,7 +159,6 @@ void MainWindow::stopTimers()
 {
     mainTaskTimer.stop();
     onlineCheckTimer.stop();
-    bkkApiFetchTimer.stop();
     clockUpdateTimer.stop();
 }
 
@@ -205,113 +174,8 @@ void MainWindow::updateUi()
         QPixmap(":/icons/bkk_logo.png")
             .scaled(106, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    populateArrivalsTable();
 }
 
-void MainWindow::populateArrivalsTable()
-{
-    auto currentArrivals = arrivals;
-    static constexpr int kMaxRows = 8;
-
-    std::sort(currentArrivals.begin(), currentArrivals.end(), [](const StationArrival &left, const StationArrival &right) {
-        return left.arrival.departs_in_min < right.arrival.departs_in_min;
-    });
-
-    if (static_cast<int>(currentArrivals.size()) > kMaxRows) {
-        currentArrivals.resize(static_cast<size_t>(kMaxRows));
-    }
-
-    if (apiError != BkkApiError::None) {
-        showTableMessage("Error fetching arrivals");
-        return;
-    }
-
-    if (currentArrivals.empty()) {
-        showTableMessage("No arrivals");
-        return;
-    }
-
-    arrivalsTable->clearContents();
-    arrivalsTable->clearSpans();
-    arrivalsTable->setRowCount(static_cast<int>(currentArrivals.size()));
-
-    for (int row = 0; row < static_cast<int>(currentArrivals.size()); ++row) {
-        const auto &stationArrival = currentArrivals[static_cast<size_t>(row)];
-        const QColor backgroundColor = getRowColor(row);
-
-        auto *stopItem = new QTableWidgetItem(QString::fromStdString(stationArrival.station_name));
-        stopItem->setTextAlignment(Qt::AlignCenter);
-        stopItem->setBackground(backgroundColor);
-        stopItem->setForeground(Qt::white);
-        arrivalsTable->setItem(row, 0, stopItem);
-
-        auto *lineItem = new QTableWidgetItem(QString::fromStdString(stationArrival.arrival.line));
-        lineItem->setTextAlignment(Qt::AlignCenter);
-        lineItem->setBackground(backgroundColor);
-        lineItem->setForeground(Qt::white);
-        arrivalsTable->setItem(row, 1, lineItem);
-
-        auto *destinationItem = new QTableWidgetItem(QString::fromStdString(stationArrival.arrival.destination));
-        destinationItem->setBackground(backgroundColor);
-        destinationItem->setForeground(Qt::white);
-        arrivalsTable->setItem(row, 2, destinationItem);
-
-        arrivalsTable->setCellWidget(row, 3,
-            createDepartureCell(stationArrival.arrival.departs_in_min, backgroundColor));
-
-    }
-
-    arrivalsTable->resizeRowsToContents();
-}
-
-void MainWindow::showTableMessage(const QString &message)
-{
-    arrivalsTable->clearContents();
-    arrivalsTable->clearSpans();
-    arrivalsTable->setRowCount(1);
-
-    auto *messageItem = new QTableWidgetItem(message);
-    messageItem->setTextAlignment(Qt::AlignCenter);
-    arrivalsTable->setSpan(0, 0, 1, arrivalsTable->columnCount());
-    arrivalsTable->setItem(0, 0, messageItem);
-}
-
-QColor MainWindow::getRowColor(int row) const
-{
-    return (row % 2 == 0) ? QColor("#340a41") : QColor("#505050");
-}
-
-QWidget *MainWindow::createDepartureCell(int departsInMin, const QColor &backgroundColor) const
-{
-    auto *container = new QWidget(arrivalsTable);
-    container->setStyleSheet(QString("background-color: %1;").arg(backgroundColor.name()));
-
-    auto *layout = new QHBoxLayout(container);
-    layout->setContentsMargins(6, 0, 6, 0);
-    layout->setSpacing(6);
-    layout->setAlignment(Qt::AlignCenter);
-
-    auto *dot = new QLabel(container);
-    dot->setFixedSize(8, 8);
-
-    QString dotColor = "transparent";
-    if (blinkOn) {
-        if (departsInMin < 5) {
-            dotColor = "#ff2d2d";
-        } else if (departsInMin <= 10) {
-            dotColor = "#00d84f";
-        }
-    }
-    dot->setStyleSheet(QString("background-color: %1; border-radius: 4px;").arg(dotColor));
-
-    auto *minutes = new QLabel(QString::number(departsInMin) + "'", container);
-    minutes->setAlignment(Qt::AlignCenter);
-    minutes->setStyleSheet("color: #ffffff;");
-
-    layout->addWidget(dot);
-    layout->addWidget(minutes);
-    return container;
-}
 
 void MainWindow::setupTouchScreenWorker() {
     touchscreenWorker = new BkkTouchScreenWorker(

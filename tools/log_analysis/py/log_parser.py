@@ -33,7 +33,7 @@ class LogSession:
 
 class LogParser:
     # Example:
-    # 2026-03-24T18:35:57.797 [mono_ms=47408] [boot_id=...] [INFO] [BkkApiWrapper] Fetch cycle completed in 399 ms (status=ok, arrivals=9)
+    # 2026-03-24T18:35:57.797 [mono_ms=47408] [boot_id=...] [INFO] [BkkApiWorker] Fetch cycle completed in 399 ms (status=ok, arrivals=9)
     _LINE_RE = re.compile(
         r"^(?P<ts>\S+)\s+"
         r"\[mono_ms=\s*(?P<mono>\d+)\]\s+"
