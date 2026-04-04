@@ -47,7 +47,7 @@ private:
   static constexpr int kBlinkThresholdGreen = 10; 
   static constexpr int kBlinkThresholdRed = 5; 
 
-  static constexpr int kBlinkIntervalMs = 500; // blink interval 
+  static constexpr int kBlinkIntervalMs = 800; // blink interval 
   static constexpr int kFetchIntervalMs = 5000; // fetch new data 
 
 };
