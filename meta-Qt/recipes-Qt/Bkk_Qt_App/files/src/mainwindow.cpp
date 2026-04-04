@@ -2,33 +2,17 @@
 #include "bkk_touchscreen.hpp"
 
 #include <QHBoxLayout>
-#include <QHeaderView>
 #include <QPixmap>
-#include <QTableWidgetItem>
 #include <QVBoxLayout>
 
 #include "bkk_logger.hpp"
 
-#include <algorithm>
-#include <cstdio>
-
 
 MainWindow::MainWindow(QWidget *parent)
-    : QWidget(parent),
-      clockLabel(nullptr),
-      bkkLogoLabel(nullptr),
-      wifiIconLabel(nullptr),
-      clockText(),
-      onlineStatus(false),
-      blinkOn(false)
+    : QWidget(parent)
 {
 
     setupUi();
-
-    
-
-    startWorkerThread();
-    startTimers();
 
     // Initialize touchscreen callback
     setupTouchScreenWorker(); 
@@ -40,8 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    stopTimers();
-    stopWorkerThread();
 }
 
 void MainWindow::setupUi()
@@ -65,115 +47,12 @@ void MainWindow::setupUi()
 
     auto *statusRow = new QWidget(this);
     statusRow->setFixedHeight(46);
-    auto *statusRowLayout = new QHBoxLayout(statusRow);
-    statusRowLayout->setContentsMargins(0, 0, 0, 0);
-    statusRowLayout->setSpacing(8);
-
-    clockLabel = new QLabel(statusRow);
-    clockLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    clockLabel->setFixedWidth(86);
-
-    bkkLogoLabel = new QLabel(statusRow);
-    bkkLogoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    bkkLogoLabel->setFixedSize(106, 40);
-    statusRowLayout->addWidget(bkkLogoLabel);
-
-    statusRowLayout->addStretch(1);
-
-    wifiIconLabel = new QLabel(statusRow);
-    wifiIconLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    wifiIconLabel->setFixedSize(40, 40);
-    statusRowLayout->addWidget(wifiIconLabel);
-
-    statusRowLayout->addSpacing(12);
-
-    statusRowLayout->addWidget(clockLabel);
-
+    infoBarHandler = new BkkInfoBarHandler(statusRow);
     layout->addWidget(statusRow);
 
-    arrivalsTable = new QTableWidget(this);
+    auto *arrivalsTable = new QTableWidget(this);
     arrivalTableHandler = new ArrivalTableHandler(arrivalsTable);
     layout->addWidget(arrivalsTable, 1);
-}
-
-
-void MainWindow::startWorkerThread()
-{
-    QObject::connect(&workerThread, &WorkerThread::clockUpdateCompleted, this, &MainWindow::handleClockUpdateCompleted);
-    QObject::connect(&workerThread, &WorkerThread::onlineCheckCompleted, this, &MainWindow::handleOnlineCheckCompleted);
-
-    if (!workerThread.isRunning()) {
-        workerThread.start();
-    }
-}
-
-void MainWindow::stopWorkerThread()
-{
-    if (!workerThread.isRunning()) {
-        return;
-    }
-
-    workerThread.requestInterruption();
-    workerThread.wait();
-}
-
-void MainWindow::startTimers()
-{
-    workerThread.requestClockUpdate();
-    workerThread.requestOnlineCheck();
-
-    QObject::connect(&clockUpdateTimer, &QTimer::timeout, this, [this]() {
-        workerThread.requestClockUpdate();
-    });
-    clockUpdateTimer.start(1000);
-
-    QObject::connect(&onlineCheckTimer, &QTimer::timeout, this, [this]() {
-        workerThread.requestOnlineCheck();
-    });
-    onlineCheckTimer.start(5000);
-
-    QObject::connect(&mainTaskTimer, &QTimer::timeout, this, [this]() {
-        updateUi();
-
-        // flip the blink state for the departure dots
-        blinkOn = !blinkOn;
-    });
-    mainTaskTimer.start(1000);
-
-    updateUi();
-}
-
-void MainWindow::handleClockUpdateCompleted()
-{
-    clockText = workerThread.getClockText();
-    updateUi();
-}
-
-void MainWindow::handleOnlineCheckCompleted()
-{
-    onlineStatus = workerThread.isOnline();
-    updateUi();
-}
-
-void MainWindow::stopTimers()
-{
-    mainTaskTimer.stop();
-    onlineCheckTimer.stop();
-    clockUpdateTimer.stop();
-}
-
-void MainWindow::updateUi()
-{
-    clockLabel->setText(QString::fromStdString(clockText));
-
-    wifiIconLabel->setPixmap(
-        QPixmap(onlineStatus ? ":/icons/wifi_on.png" : ":/icons/wifi_off.png")
-            .scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-    bkkLogoLabel->setPixmap(
-        QPixmap(":/icons/bkk_logo.png")
-            .scaled(106, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
 }
 
 

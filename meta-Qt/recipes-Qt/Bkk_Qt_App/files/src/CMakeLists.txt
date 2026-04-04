@@ -36,6 +36,8 @@ add_executable(bkk-qt-app
 	bkk_touchscreen_feedback.hpp
 	bkk_arrival_table_handler.cpp
 	bkk_arrival_table_handler.hpp
+	bkk_info_bar_handler.cpp
+	bkk_info_bar_handler.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

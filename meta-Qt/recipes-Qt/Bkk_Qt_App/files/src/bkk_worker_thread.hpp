@@ -7,7 +7,6 @@
 #include <atomic>
 #include <string>
 
-#include "bkk_api_worker.hpp"
 #include "bkk_clock_update.hpp"
 #include "bkk_online_check.hpp"
 
