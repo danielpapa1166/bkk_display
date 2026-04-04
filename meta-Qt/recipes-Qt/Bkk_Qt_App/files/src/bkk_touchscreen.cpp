@@ -2,6 +2,7 @@
 #include "ads7846_controller.h"
 #include "bkk_elapsed_timer.hpp"
 #include "bkk_logger.hpp"
+#include <algorithm>
 
 
 BkkTouchScreenWorker::BkkTouchScreenWorker(
@@ -89,9 +90,11 @@ int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
     return -1;
   }
 
-  // convert to screen pixels: 
-  x_px = x_raw * screenWidth / adcDivider;
-  y_px = y_raw * screenHeight / adcDivider;
+  // convert to screen pixels, clamping to the calibrated ADC range:
+  int xClamped = std::clamp(static_cast<int>(x_raw), adcRawMin, adcRawMax);
+  int yClamped = std::clamp(static_cast<int>(y_raw), adcRawMin, adcRawMax);
+  x_px = (xClamped - adcRawMin) * screenWidth  / (adcRawMax - adcRawMin);
+  y_px = (yClamped - adcRawMin) * screenHeight / (adcRawMax - adcRawMin);
 
   return 0;
 }
