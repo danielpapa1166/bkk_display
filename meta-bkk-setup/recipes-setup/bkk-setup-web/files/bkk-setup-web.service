@@ -1,0 +1,18 @@
+[Unit]
+Description=BKK Display First-Boot Setup Web Server
+After=bkk-boot-mode.service systemd-networkd.service
+Requires=bkk-boot-mode.service
+ConditionPathExists=!/etc/bkk-config/configured
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sh -c 'wpa_supplicant -i wlan0 -c /run/wpa_supplicant-ap.conf -B'
+ExecStart=/usr/bin/python3 /usr/libexec/bkk-setup/bkk-setup-server.py
+ExecStopPost=/bin/sh -c 'killall wpa_supplicant 2>/dev/null || true'
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

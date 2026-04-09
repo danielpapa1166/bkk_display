@@ -1,0 +1,6 @@
+meta-bkk-setup
+==============
+
+Yocto layer for BKK Display first-boot setup and provisioning.
+
+Provides AP-mode hotspot and a Bottle web server for initial device configuration.
