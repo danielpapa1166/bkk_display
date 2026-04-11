@@ -38,6 +38,8 @@ add_executable(bkk-qt-app
 	bkk_arrival_table_handler.hpp
 	bkk_info_bar_handler.cpp
 	bkk_info_bar_handler.hpp
+	bkk_screenshot_util.cpp
+	bkk_screenshot_util.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

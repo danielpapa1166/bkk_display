@@ -1,11 +1,34 @@
 #include "mainwindow.hpp"
 #include "bkk_touchscreen.hpp"
 
+#include <QApplication>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QPixmap>
 #include <QVBoxLayout>
 
 #include "bkk_logger.hpp"
+#include "bkk_screenshot_util.hpp"
+#include <csignal>
+#include <signal.h>
+#include <unistd.h>
+
+
+static void sigHandler(int signum) {
+    if(signum == SIGUSR1) {
+        Logger::info("Main", "Recieved User Signal. Taking screenshot...");
+        QScreen *screen = QGuiApplication::primaryScreen();
+        if(screen != nullptr) {
+            QMetaObject::invokeMethod(QApplication::instance(), [screen]() {
+                ScreenshotUtil util("/tmp/bkk_screenshot.png");
+                util.saveScreenshot(screen);
+            }, Qt::QueuedConnection);  
+        }
+        else {
+            Logger::warning("Main", "No primary screen found. Cannot take screenshot.");
+        }
+    }
+}
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -19,6 +42,14 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Setup touch feedback overlay (raised above child widgets)
     touchFeedback = new TouchScreenFeedBack(new QLabel(this));
+
+    // Register signal handler for SIGUSR1 to trigger screenshot
+    if(signal(SIGUSR1, sigHandler) == SIG_ERR) {
+        Logger::error("Main", "Failed to register signal handler for SIGUSR1");
+    }
+    else {
+        Logger::info("Main", "Signal handler for SIGUSR1 registered successfully");
+    }
 
 }
 

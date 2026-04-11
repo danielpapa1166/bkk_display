@@ -1,6 +1,8 @@
 #include "bkk_screenshot_util.hpp"
 #include "bkk_logger.hpp"
 
+#include <QScreen>
+#include <QPixmap>
 
 void ScreenshotUtil::saveScreenshot(QScreen * screen) {
     QPixmap pixmap = screen->grabWindow(0);
