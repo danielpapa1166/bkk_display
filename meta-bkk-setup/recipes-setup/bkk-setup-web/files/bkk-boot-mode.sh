@@ -1,7 +1,7 @@
 #!/bin/sh
 # bkk-boot-mode.sh
 #
-# Runs early at boot to decide between AP (setup) mode and client (normal) mode.
+# Runs early at boot to decide between Access Point (setup) mode and client (normal) mode.
 # - If /etc/bkk-config/configured exists -> client mode (do nothing, default services handle it)
 # - If not -> switch wlan0 to AP mode for first-boot setup
 
@@ -32,7 +32,7 @@ network={
 }
 EOF
 
-# Install AP-mode networkd config (static IP + DHCP server)
+# Install Access Point mode networkd config (static IP + DHCP server)
 mkdir -p /run/systemd/network
 cat > /run/systemd/network/20-wlan0-ap.network << 'NETEOF'
 [Match]

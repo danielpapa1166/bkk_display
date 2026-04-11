@@ -1,0 +1,17 @@
+[Unit]
+Description=BKK Display Web Setup Helper UI
+After=bkk-boot-mode.service bkk-setup-web.service
+Requires=bkk-boot-mode.service
+ConditionPathExists=!/etc/bkk-config/configured
+
+[Service]
+Environment="QT_QPA_PLATFORM=eglfs"
+Environment="QT_QPA_EGLFS_HIDECURSOR=1"
+ExecStart=/usr/bin/bkk-web-setup-helper
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
