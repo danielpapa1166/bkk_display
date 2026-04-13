@@ -8,54 +8,23 @@ import sys
 import subprocess
 
 # Add script directory to path so vendored bottle.py is found
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from bottle import Bottle, request, response
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+from bottle import Bottle, request, response, static_file
 
 CONFIGURED_FLAG = "/etc/bkk-config/configured"
 
 app = Bottle()
 
-HTML_PAGE = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BKK Display Setup</title>
-</head>
-<body>
-    <div class="card">
-        <h1>BKK Display Setup</h1>
-        <div id="content">
-            <button id="btn" onclick="configure()">Config</button>
-        </div>
-    </div>
-    <script>
-        function configure() {
-            var btn = document.getElementById('btn');
-            btn.disabled = true;
-            btn.textContent = 'Configuring...';
-            fetch('/api/finish', { method: 'POST' })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    document.getElementById('content').innerHTML =
-                        '<p class="done">Done! Device will reboot now...</p>';
-                })
-                .catch(function(err) {
-                    btn.disabled = false;
-                    btn.textContent = 'Config';
-                    alert('Error: ' + err);
-                });
-        }
-    </script>
-</body>
-</html>
-"""
-
 
 @app.route("/")
 def index():
-    return HTML_PAGE
+    return static_file("index.html", root=SCRIPT_DIR)
+
+
+@app.route("/static/<filename>")
+def serve_static(filename):
+    return static_file(filename, root=SCRIPT_DIR)
 
 
 @app.route("/api/finish", method="POST")

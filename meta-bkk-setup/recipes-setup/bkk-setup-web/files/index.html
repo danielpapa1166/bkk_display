@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BKK Display Setup</title>
+</head>
+<body>
+    <h1>BKK Display Setup</h1>
+
+    <div id="page-wifi" class="page">
+        <h2>WiFi Configuration</h2>
+        <input type="text" id="wifi-input" placeholder="WiFi placeholder">
+        <br><br>
+        <button onclick="showPage('api-key')">Next</button>
+    </div>
+
+    <div id="page-api-key" class="page" style="display:none">
+        <h2>BKK API Key</h2>
+        <input type="text" id="api-key-input" placeholder="API key placeholder">
+        <br><br>
+        <button onclick="showPage('wifi')">Back</button>
+        <button onclick="showPage('stations')">Next</button>
+    </div>
+
+    <div id="page-stations" class="page" style="display:none">
+        <h2>Station Configuration</h2>
+        <input type="text" id="stations-input" placeholder="Stations placeholder">
+        <br><br>
+        <button onclick="showPage('api-key')">Back</button>
+        <button onclick="finish()">Finish</button>
+    </div>
+
+    <script src="/static/setup.js"></script>
+</body>
+</html>

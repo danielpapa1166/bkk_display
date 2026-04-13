@@ -36,4 +36,12 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 	add_target_args(rollback_parser)
 	rollback_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
 
+	deploy_webapp_parser = subparsers.add_parser("deploy_webapp", help="Upload bkk-setup-web files and restart the service.")
+	add_target_args(deploy_webapp_parser)
+	deploy_webapp_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+
+	reset_cfg_parser = subparsers.add_parser("reset_cfg", help="Delete the configured flag and reboot, entering setup mode.")
+	add_target_args(reset_cfg_parser)
+	reset_cfg_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+
 	return parser.parse_args(argv)

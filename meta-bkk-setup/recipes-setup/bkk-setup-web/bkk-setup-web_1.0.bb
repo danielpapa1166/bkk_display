@@ -7,6 +7,8 @@ LICENSE = "CLOSED"
 SRC_URI = " \
     file://bottle.py \
     file://bkk-setup-server.py \
+    file://index.html \
+    file://setup.js \
     file://bkk-boot-mode.sh \
     file://bkk-boot-mode-restore.sh \
     file://bkk-boot-mode.service \
@@ -26,6 +28,8 @@ FILES:${PN} += " \
     ${systemd_system_unitdir}/bkk-setup-web.service \
     ${libexecdir}/bkk-setup/bottle.py \
     ${libexecdir}/bkk-setup/bkk-setup-server.py \
+    ${libexecdir}/bkk-setup/index.html \
+    ${libexecdir}/bkk-setup/setup.js \
     ${libexecdir}/bkk-setup/bkk-boot-mode.sh \
     ${libexecdir}/bkk-setup/bkk-boot-mode-restore.sh \
 "
@@ -53,6 +57,10 @@ do_install() {
         ${D}${libexecdir}/bkk-setup/bottle.py
     install -m 0755 ${WORKDIR}/bkk-setup-server.py \
         ${D}${libexecdir}/bkk-setup/bkk-setup-server.py
+    install -m 0644 ${WORKDIR}/index.html \
+        ${D}${libexecdir}/bkk-setup/index.html
+    install -m 0644 ${WORKDIR}/setup.js \
+        ${D}${libexecdir}/bkk-setup/setup.js
     install -m 0755 ${WORKDIR}/bkk-boot-mode.sh \
         ${D}${libexecdir}/bkk-setup/bkk-boot-mode.sh
     install -m 0755 ${WORKDIR}/bkk-boot-mode-restore.sh \
