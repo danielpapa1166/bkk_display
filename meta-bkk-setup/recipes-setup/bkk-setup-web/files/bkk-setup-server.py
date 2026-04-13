@@ -16,6 +16,7 @@ from bottle import Bottle, request, response, static_file
 BKK_CONFIG_DIR = "/etc/bkk-api"
 CONFIGURED_FLAG = os.path.join(BKK_CONFIG_DIR, "configured")
 CONFIG_FILE = os.path.join(BKK_CONFIG_DIR, "config.json")
+KEY_FILE = os.path.join(BKK_CONFIG_DIR, "api-key.txt")
 WPA_SUPPLICANT_FILE_WLAN0 = "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf"
 WPA_SUPPLICANT_FILE = "/etc/wpa_supplicant/wpa_supplicant.conf"
 
@@ -50,6 +51,24 @@ def write_wpa_supplicant_config(ssid, password):
     os.chmod(WPA_SUPPLICANT_FILE_WLAN0, 0o600)
 
 
+def read_stored_api_key():
+    if not os.path.exists(KEY_FILE):
+        return ""
+
+    try:
+        with open(KEY_FILE, "r") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def write_api_key(api_key):
+    with open(KEY_FILE, "w") as f:
+        f.write(api_key + "\n")
+
+    os.chmod(KEY_FILE, 0o600)
+
+
 @app.route("/")
 def index():
     return static_file("index.html", root=SCRIPT_DIR)
@@ -66,13 +85,16 @@ def finish():
 
     wifi_ssid = data.get("wifi", {}).get("ssid", "").strip()
     wifi_password = data.get("wifi", {}).get("password", "")
+    submitted_api_key = data.get("api_key", "").strip()
+    stored_api_key = read_stored_api_key()
+    final_api_key = submitted_api_key if submitted_api_key else stored_api_key
 
     config = {
         "wifi": {
             "ssid": wifi_ssid,
             "password": wifi_password,
         },
-        "api_key": data.get("api_key", ""),
+        "api_key": final_api_key,
         "stations": data.get("stations", []),
     }
 
@@ -80,6 +102,9 @@ def finish():
 
     if wifi_ssid and wifi_password:
         write_wpa_supplicant_config(wifi_ssid, wifi_password)
+
+    if submitted_api_key:
+        write_api_key(submitted_api_key)
 
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=2)
