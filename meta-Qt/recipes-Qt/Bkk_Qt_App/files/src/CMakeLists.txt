@@ -23,8 +23,8 @@ add_executable(bkk-qt-app
 	bkk_clock_update.hpp
 	bkk_online_check.cpp
 	bkk_online_check.hpp
-	bkk_api_wrapper.cpp
-	bkk_api_wrapper.hpp
+	bkk_api_worker.cpp
+	bkk_api_worker.hpp
 	bkk_worker_thread.cpp
 	bkk_worker_thread.hpp
 	bkk_elapsed_timer.hpp
@@ -34,6 +34,12 @@ add_executable(bkk-qt-app
 	bkk_touchscreen.hpp
 	bkk_touchscreen_feedback.cpp
 	bkk_touchscreen_feedback.hpp
+	bkk_arrival_table_handler.cpp
+	bkk_arrival_table_handler.hpp
+	bkk_info_bar_handler.cpp
+	bkk_info_bar_handler.hpp
+	bkk_screenshot_util.cpp
+	bkk_screenshot_util.hpp
 )
 
 target_link_libraries(bkk-qt-app PRIVATE

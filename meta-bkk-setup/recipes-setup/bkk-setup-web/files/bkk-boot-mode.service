@@ -1,0 +1,16 @@
+[Unit]
+Description=BKK Display Boot Mode Selector
+DefaultDependencies=no
+Before=network-pre.target wpa_supplicant@wlan0.service wpa_supplicant.service
+After=local-fs.target systemd-tmpfiles-setup.service
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/bkk-setup/bkk-boot-mode.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

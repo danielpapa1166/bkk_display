@@ -1,0 +1,15 @@
+[Unit]
+Description=BKK Display Boot Mode Restore (client mode cleanup)
+After=local-fs.target
+Before=network-pre.target wpa_supplicant@wlan0.service
+ConditionPathExists=/etc/bkk-api/configured
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/bkk-setup/bkk-boot-mode-restore.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

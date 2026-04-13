@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from swup_target_cfg import TargetConfig
+from swup_err import SwupError
 
 def run_command(command: Sequence[str], dry_run: bool = False) -> subprocess.CompletedProcess[str] | None:
 	printable = shlex.join(command)
@@ -46,6 +47,17 @@ def scp_to_target(target: TargetConfig, dry_run: bool = False) -> None:
 			*build_scp_base(target),
 			str(target.local_binary),
 			f"{target.ssh_destination}:{target.remote_tmp_binary}",
+		],
+		dry_run=dry_run,
+	)
+
+
+def scp_files_to_target(target: TargetConfig, local_files: list[str], remote_dir: str, dry_run: bool = False) -> None:
+	run_command(
+		[
+			*build_scp_base(target),
+			*local_files,
+			f"{target.ssh_destination}:{remote_dir}",
 		],
 		dry_run=dry_run,
 	)
