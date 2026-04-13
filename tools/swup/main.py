@@ -18,7 +18,7 @@ WEBAPP_FILES_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup
 WEBAPP_FILES = ["bkk-setup-server.py", "bottle.py", "index.html", "setup.js"]
 WEBAPP_REMOTE_DIR = "/usr/libexec/bkk-setup"
 WEBAPP_SERVICE = "bkk-setup-web.service"
-CONFIGURED_FLAG = "/etc/bkk-config/configured"
+CONFIGURED_FLAG = "/etc/bkk-api/configured"
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 

@@ -10,23 +10,25 @@
 
     <div id="page-wifi" class="page">
         <h2>WiFi Configuration</h2>
-        <input type="text" id="wifi-input" placeholder="WiFi placeholder">
-        <br><br>
+        <label>SSID:</label><br>
+        <input type="text" id="wifi-ssid"><br><br>
+        <label>Password:</label><br>
+        <input type="password" id="wifi-password"><br><br>
         <button onclick="showPage('api-key')">Next</button>
     </div>
 
     <div id="page-api-key" class="page" style="display:none">
         <h2>BKK API Key</h2>
-        <input type="text" id="api-key-input" placeholder="API key placeholder">
-        <br><br>
+        <label>API Key:</label><br>
+        <input type="text" id="api-key"><br><br>
         <button onclick="showPage('wifi')">Back</button>
         <button onclick="showPage('stations')">Next</button>
     </div>
 
     <div id="page-stations" class="page" style="display:none">
         <h2>Station Configuration</h2>
-        <input type="text" id="stations-input" placeholder="Stations placeholder">
-        <br><br>
+        <label>Station IDs (comma-separated):</label><br>
+        <input type="text" id="station-ids" placeholder="e.g. F02261,F02122"><br><br>
         <button onclick="showPage('api-key')">Back</button>
         <button onclick="finish()">Finish</button>
     </div>

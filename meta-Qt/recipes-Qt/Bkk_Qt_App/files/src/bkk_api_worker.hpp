@@ -54,6 +54,10 @@ private:
   bool ensureApi();
   void fetchData();
 
+  void loadStationList(); 
+
+  std::vector<std::string> stationIdList;
+
   // BKK API interface: 
   std::unique_ptr<BkkApi> api = nullptr;
 

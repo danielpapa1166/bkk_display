@@ -2,10 +2,10 @@
 # bkk-boot-mode.sh
 #
 # Runs early at boot to decide between Access Point (setup) mode and client (normal) mode.
-# - If /etc/bkk-config/configured exists -> client mode (do nothing, default services handle it)
+# - If /etc/bkk-api/configured exists -> client mode (do nothing, default services handle it)
 # - If not -> switch wlan0 to AP mode for first-boot setup
 
-CONFIGURED_FLAG="/etc/bkk-config/configured"
+CONFIGURED_FLAG="/etc/bkk-api/configured"
 
 if [ -f "$CONFIGURED_FLAG" ]; then
     echo "bkk-boot-mode: Device is configured. Normal client mode."

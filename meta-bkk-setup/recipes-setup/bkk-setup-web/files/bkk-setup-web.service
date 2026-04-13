@@ -2,7 +2,7 @@
 Description=BKK Display First-Boot Setup Web Server
 After=bkk-boot-mode.service systemd-networkd.service
 Requires=bkk-boot-mode.service
-ConditionPathExists=!/etc/bkk-config/configured
+ConditionPathExists=!/etc/bkk-api/configured
 
 [Service]
 Type=simple

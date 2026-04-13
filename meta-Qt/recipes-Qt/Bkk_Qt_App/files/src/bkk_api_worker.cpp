@@ -6,6 +6,8 @@
 #include <array>
 #include <cstring>
 #include <exception>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace {
@@ -29,6 +31,7 @@ BkkApiWorker::BkkApiWorker(QObject *parent)
     lastFetchDurationMs(0), 
     errorCode(BkkApiError::None) {
 
+  loadStationList();
   (void) ensureApi();
   arrivals.clear();
 }
@@ -88,25 +91,25 @@ void BkkApiWorker::fetchData() {
 
   std::vector<StationArrival> mergedArrivals;
   bool fetchedAny = false;
-  static constexpr std::array<const char *, 2> stationIds = {"F02261", "F02122"};
 
-  for (const char *stationId : stationIds) {
+  for (const auto &stationId : stationIdList) {
+    const char *stationIdCStr = stationId.c_str();
     try {
       BkkElapsedTimer stationTimer;
-      auto stationArrivals = api->get_arrivals_for_station(stationId);
+      auto stationArrivals = api->get_arrivals_for_station(stationIdCStr);
       const auto stationMs = stationTimer.elapsedMs();
       for (auto &arrival : stationArrivals) {
         StationArrival stationArrival;
         stationArrival.arrival = std::move(arrival);
         stationArrival.station_id = stationId;
-        stationArrival.station_name = getStationName(stationId);
+        stationArrival.station_name = getStationName(stationIdCStr);
         mergedArrivals.push_back(std::move(stationArrival));
       }
 
       Logger::info(
         "BkkApiWorker",
         QString("Fetched station %1 in %2 ms (%3 arrivals)")
-          .arg(stationId)
+          .arg(stationIdCStr)
           .arg(stationMs)
           .arg(static_cast<int>(stationArrivals.size())));
       fetchedAny = true;
@@ -115,7 +118,7 @@ void BkkApiWorker::fetchData() {
       Logger::warning(
         "BkkApiWorker",
         QString("Error fetching arrivals for station %1: %2")
-          .arg(stationId)
+          .arg(stationIdCStr)
           .arg(ex.what()));
     }
   }
@@ -137,6 +140,41 @@ void BkkApiWorker::fetchData() {
       .arg(totalMs)
       .arg(errorCode == BkkApiError::None ? "ok" : "failed")
       .arg(static_cast<int>(arrivalsCount)));
+}
+
+void BkkApiWorker::loadStationList() {
+  static constexpr const char *configPath = "/etc/bkk-api/config.json";
+
+  std::ifstream file(configPath);
+  if (!file.is_open()) {
+    Logger::warning("BkkApiWorker",
+      QString("Cannot open config file: %1").arg(configPath));
+    return;
+  }
+
+  try {
+    nlohmann::json config = nlohmann::json::parse(file);
+
+    if (config.contains("stations") && config["stations"].is_array()) {
+      stationIdList.clear();
+      for (const auto &station : config["stations"]) {
+        if (station.is_string()) {
+          stationIdList.push_back(station.get<std::string>());
+        }
+      }
+      Logger::info("BkkApiWorker",
+        QString("Loaded %1 station(s) from config")
+          .arg(static_cast<int>(stationIdList.size())));
+    } 
+    else {
+      Logger::warning("BkkApiWorker",
+        "Config file missing 'stations' array");
+    }
+  } 
+  catch (const std::exception &ex) {
+    Logger::error("BkkApiWorker",
+      QString("Error parsing config file: %1").arg(ex.what()));
+  }
 }
 
 std::vector<StationArrival> BkkApiWorker::getArrivals() const {
