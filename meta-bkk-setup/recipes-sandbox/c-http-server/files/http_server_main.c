@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "http_server_client_handler.h"
 
 #define PORT 8081
 
@@ -35,13 +36,30 @@ int main(void)
     return 1;
   }
 
+  int request_cnt = 0; 
+
   while(1) {
     int client_fd = accept(listen_fd, NULL, NULL);
     if(client_fd < 0) {
       continue;
     }
-    printf("Client connected! \n");
-    close(client_fd);
+
+    request_cnt++;
+    printf("Client connected! %d\n", request_cnt);
+
+    int pid = fork();
+    if (pid == 0) {
+      printf("Child: client count %d, listen fd: %d, client fd: %d \n", 
+        request_cnt, listen_fd, client_fd);
+      close(listen_fd); 
+      client_handler(client_fd);
+      printf("Child closed for client %d\n", request_cnt); 
+      return 0;
+    }
+    else {
+      close(client_fd);
+      continue;
+    }
   }
 
   return 0;
