@@ -23,6 +23,7 @@ WEBAPP_SERVICE = "bkk-setup-web.service"
 CONFIGURED_FLAG = "/etc/bkk-api/configured"
 HTTP_TEST_SERVER_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
 HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/c-http-server"
+HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/c-http-server/www"
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 
@@ -167,8 +168,43 @@ def resolve_http_test_server_binary(explicit_path: str | None) -> Path:
 	return matches[0].resolve()
 
 
+def resolve_http_test_server_www_files(binary_path: Path) -> list[Path]:
+	www_dir = binary_path.parent.parent / "share" / "c-http-server" / "www"
+	if not www_dir.exists() or not www_dir.is_dir():
+		raise SwupError(
+			"HTTP test server www directory not found next to packaged binary: "
+			f"{www_dir}. Rebuild c-http-server or check package layout."
+		)
+
+	www_files = sorted(path for path in www_dir.glob("*") if path.is_file())
+	if not www_files:
+		raise SwupError(f"No www files found in: {www_dir}")
+
+	return www_files
+
+
+def deploy_http_test_server_www(target: TargetConfig, dry_run: bool, www_files: list[Path]) -> None:
+	tmp_dir = "/tmp/c-http-server-www.swup"
+	ssh_run(target, f"mkdir -p {tmp_dir}", dry_run=dry_run)
+	scp_files_to_target(target, [str(path) for path in www_files], tmp_dir, dry_run=dry_run)
+
+	install_steps = [
+		f"sudo mkdir -p {shlex.quote(HTTP_TEST_SERVER_REMOTE_WWW_DIR)}",
+		f"sudo rm -f {shlex.quote(HTTP_TEST_SERVER_REMOTE_WWW_DIR)}/*",
+	]
+	for path in www_files:
+		install_steps.append(
+			f"sudo install -m 0644 {tmp_dir}/{shlex.quote(path.name)} "
+			f"{shlex.quote(HTTP_TEST_SERVER_REMOTE_WWW_DIR)}/{shlex.quote(path.name)}"
+		)
+	install_steps.append(f"rm -rf {tmp_dir}")
+
+	ssh_run(target, " && ".join(install_steps), dry_run=dry_run)
+
+
 def deploy_http_test_server(target: TargetConfig, dry_run: bool, explicit_binary_path: str | None) -> None:
 	http_binary = resolve_http_test_server_binary(explicit_binary_path)
+	www_files = resolve_http_test_server_www_files(http_binary)
 	http_target = replace(
 		target,
 		local_binary=http_binary,
@@ -176,6 +212,7 @@ def deploy_http_test_server(target: TargetConfig, dry_run: bool, explicit_binary
 	)
 
 	deploy(http_target, dry_run=dry_run, skip_restart=True)
+	deploy_http_test_server_www(http_target, dry_run=dry_run, www_files=www_files)
 
 
 def main(argv: Sequence[str]) -> int:

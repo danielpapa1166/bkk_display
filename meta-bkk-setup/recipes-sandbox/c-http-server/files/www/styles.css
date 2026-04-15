@@ -1,0 +1,38 @@
+:root {
+  color-scheme: light;
+  --bg: #f7fafc;
+  --card: #ffffff;
+  --text: #1f2937;
+  --accent: #0ea5e9;
+  --border: #dbe3ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans", "Segoe UI", sans-serif;
+  background: linear-gradient(160deg, #f7fafc 0%, #eef7ff 100%);
+  color: var(--text);
+}
+
+.container {
+  max-width: 720px;
+  margin: 8vh auto;
+  padding: 1.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+h1 {
+  margin-top: 0;
+  color: var(--accent);
+}
+
+p {
+  line-height: 1.6;
+}
