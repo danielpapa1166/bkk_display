@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import sys
 
+from dataclasses import replace
 from pathlib import Path
 import json
 import shlex
 import subprocess
+from typing import Sequence
 from swup_target_cfg import TargetConfig, load_target
 from swup_ssh_handler import ssh_run, scp_to_target, scp_files_to_target
 from swup_cli_parser import parse_args, add_target_args
@@ -19,6 +21,8 @@ WEBAPP_FILES = ["bkk-setup-server.py", "bottle.py", "index.html", "setup.js"]
 WEBAPP_REMOTE_DIR = "/usr/libexec/bkk-setup"
 WEBAPP_SERVICE = "bkk-setup-web.service"
 CONFIGURED_FLAG = "/etc/bkk-api/configured"
+HTTP_TEST_SERVER_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
+HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/c-http-server"
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 
@@ -120,6 +124,60 @@ def reset_cfg(target: TargetConfig, dry_run: bool) -> None:
 	print("Config reset done, device is rebooting.")
 
 
+def resolve_http_test_server_binary(explicit_path: str | None) -> Path:
+	if explicit_path:
+		candidate = Path(explicit_path).expanduser().resolve()
+		if not candidate.exists():
+			raise SwupError(f"HTTP test server binary not found: {candidate}")
+		return candidate
+
+	# Search for c-http-server at architecture level to avoid massive recursive glob
+	try:
+		c_http_dirs = list(HTTP_TEST_SERVER_BUILD_ROOT.glob("*/c-http-server"))
+	except Exception as e:
+		raise SwupError(f"Error searching build directory: {e}")
+
+	if not c_http_dirs:
+		raise SwupError(
+			"No c-http-server package directory found under build output. "
+			"Build it first with bitbake c-http-server or pass --http-binary <path>."
+		)
+
+	# For each c-http-server package dir, look for the binary
+	matches = []
+	for pkg_dir in c_http_dirs:
+		try:
+			binaries = sorted(pkg_dir.glob("*/package/usr/bin/c-http-server"))
+			matches.extend(binaries)
+		except Exception:
+			continue
+
+	if not matches:
+		raise SwupError(
+			"No compiled c-http-server binary found under build output. "
+			"Build it first with bitbake c-http-server or pass --http-binary <path>."
+		)
+
+	if len(matches) > 1:
+		raise SwupError(
+			"Multiple c-http-server binaries found. Pass --http-binary to choose one explicitly: "
+			+ ", ".join(str(path) for path in matches)
+		)
+
+	return matches[0].resolve()
+
+
+def deploy_http_test_server(target: TargetConfig, dry_run: bool, explicit_binary_path: str | None) -> None:
+	http_binary = resolve_http_test_server_binary(explicit_binary_path)
+	http_target = replace(
+		target,
+		local_binary=http_binary,
+		remote_binary=HTTP_TEST_SERVER_REMOTE_BINARY,
+	)
+
+	deploy(http_target, dry_run=dry_run, skip_restart=True)
+
+
 def main(argv: Sequence[str]) -> int:
 	args = parse_args(argv)
 
@@ -136,6 +194,12 @@ def main(argv: Sequence[str]) -> int:
 			deploy_webapp(target, dry_run=args.dry_run)
 		elif args.command == "reset_cfg":
 			reset_cfg(target, dry_run=args.dry_run)
+		elif args.command == "deploy_http_test_server":
+			deploy_http_test_server(
+				target,
+				dry_run=args.dry_run,
+				explicit_binary_path=args.http_binary,
+			)
 		else:
 			raise SwupError(f"Unsupported command: {args.command}")
 	except (KeyError, ValueError, json.JSONDecodeError) as exc:

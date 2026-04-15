@@ -26,6 +26,8 @@ cd tools/swup
 cp swup.example.json swup.json
 python3 main.py deploy --dry-run
 python3 main.py deploy
+python3 main.py deploy_http_test_server --dry-run
+python3 main.py deploy_http_test_server
 python3 main.py status
 python3 main.py rollback
 ```
