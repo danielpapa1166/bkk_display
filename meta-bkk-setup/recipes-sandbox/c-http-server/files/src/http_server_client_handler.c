@@ -13,7 +13,8 @@ void client_handler(int client_fd)
     buffer[read_bytes] = '\0';
     printf("Received from client: %s \n", buffer);
     http_server_handle_resource_request(client_fd, buffer);
-  } else {
+  } 
+  else {
     const char *response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n"
                            "Content-Length: 12\r\nConnection: close\r\n\r\nBad Request\n";
     write(client_fd, response, strlen(response));

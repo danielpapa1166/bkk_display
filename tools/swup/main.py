@@ -24,6 +24,7 @@ CONFIGURED_FLAG = "/etc/bkk-api/configured"
 HTTP_TEST_SERVER_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
 HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/c-http-server"
 HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/c-http-server/www"
+HTTP_TEST_SERVER_WWW_SOURCE_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-sandbox/c-http-server/files/www")
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 
@@ -169,11 +170,11 @@ def resolve_http_test_server_binary(explicit_path: str | None) -> Path:
 
 
 def resolve_http_test_server_www_files(binary_path: Path) -> list[Path]:
-	www_dir = binary_path.parent.parent / "share" / "c-http-server" / "www"
+	www_dir = HTTP_TEST_SERVER_WWW_SOURCE_DIR
 	if not www_dir.exists() or not www_dir.is_dir():
 		raise SwupError(
-			"HTTP test server www directory not found next to packaged binary: "
-			f"{www_dir}. Rebuild c-http-server or check package layout."
+			"HTTP test server www directory not found: "
+			f"{www_dir}. Check meta-bkk-setup/recipes-sandbox/c-http-server/files/www"
 		)
 
 	www_files = sorted(path for path in www_dir.glob("*") if path.is_file())

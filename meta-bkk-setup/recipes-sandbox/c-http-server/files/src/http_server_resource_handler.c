@@ -33,6 +33,9 @@ static const char *get_mime_type(const char *path) {
   if (strcmp(dot, ".css") == 0) {
     return "text/css; charset=utf-8";
   }
+  if (strcmp(dot, ".js") == 0 || strcmp(dot, ".mjs") == 0) {
+    return "application/javascript; charset=utf-8";
+  }
 
   return NULL;
 }
@@ -150,7 +153,7 @@ void http_server_handle_resource_request(int client_fd, const char *request_text
     send_simple_response(client_fd, 
       "415 Unsupported Media Type", 
       "text/plain; charset=utf-8",
-      "Only .html and .css files are served\n");
+      "Only .html, .css, and .js files are served\n");
     return;
   }
 
