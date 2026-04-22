@@ -1,5 +1,6 @@
 #include "http_server_client_handler.h"
 #include "http_server_resource_handler.h"
+#include "http_server_post_handler.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,10 +69,20 @@ void client_handler(int client_fd)
   http_method_t method_type = parse_http_method(buffer); 
 
   if(method_type == HTTP_METHOD_POST) {
-    const char *response = 
-      "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/plain\r\n"
-      "Content-Length: 18\r\nConnection: close\r\n\r\nMethod Not Allowed\n";
-    write(client_fd, response, strlen(response));
+    char *response_buf = NULL;
+    size_t response_len = 0;
+    int result = http_server_handle_post(
+      buffer, 
+      &response_buf, 
+      &response_len);
+
+    if (result == 0) {
+      write_all(client_fd, response_buf, response_len);
+    }
+
+    if(response_buf != NULL){
+      free(response_buf);
+    }
   }
   else if(method_type == HTTP_METHOD_GET) {
     char *response_buf = NULL;
