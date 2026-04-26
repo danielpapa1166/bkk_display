@@ -5,3 +5,6 @@
 	path = bkk_api
 	url = git@github.com:danielpapa1166/bkk_api.git
 	branch = main
+[submodule "rbuflogd"]
+	path = rbuflogd
+	url = git@github.com:danielpapa1166/rbuflogd.git
