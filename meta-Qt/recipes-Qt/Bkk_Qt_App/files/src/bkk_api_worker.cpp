@@ -1,6 +1,5 @@
 #include "bkk_api_worker.hpp"
 #include "bkk_elapsed_timer.hpp"
-#include "bkk_logger.hpp"
 
 #include <QString>
 #include <array>
@@ -34,6 +33,12 @@ BkkApiWorker::BkkApiWorker(QObject *parent)
   loadStationList();
   (void) ensureApi();
   arrivals.clear();
+
+  rbuflogd_producer_open(&loggerProducer, "BkkApiWorker");
+}
+
+BkkApiWorker::~BkkApiWorker() {
+  rbuflogd_producer_close(&loggerProducer);
 }
 
 bool BkkApiWorker::ensureApi() {
@@ -42,7 +47,12 @@ bool BkkApiWorker::ensureApi() {
       api = std::make_unique<BkkApi>();
     } 
     catch (const std::exception& ex) {
-      Logger::error("BkkApiWorker", QString("Error initializing BkkApi: %1").arg(ex.what()));
+      rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_ERROR, 
+        "Api Init", 
+        QString("Error initializing BkkApi: %1").arg(ex.what()).toStdString().c_str());
+
       api.reset();
       errorCode = BkkApiError::InitializationFailed;
       return false;
@@ -105,21 +115,26 @@ void BkkApiWorker::fetchData() {
         stationArrival.station_name = getStationName(stationIdCStr);
         mergedArrivals.push_back(std::move(stationArrival));
       }
-
-      Logger::info(
-        "BkkApiWorker",
+      
+      rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_INFO, 
+        "fetch data", 
         QString("Fetched station %1 in %2 ms (%3 arrivals)")
           .arg(stationIdCStr)
           .arg(stationMs)
-          .arg(static_cast<int>(stationArrivals.size())));
+          .arg(static_cast<int>(stationArrivals.size())).toStdString().c_str());
+
       fetchedAny = true;
     } 
     catch (const std::exception &ex) {
-      Logger::warning(
-        "BkkApiWorker",
+      rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_WARNING, 
+        "fetch data", 
         QString("Error fetching arrivals for station %1: %2")
           .arg(stationIdCStr)
-          .arg(ex.what()));
+          .arg(ex.what()).toStdString().c_str());
     }
   }
 
@@ -134,12 +149,14 @@ void BkkApiWorker::fetchData() {
     arrivalsCount = arrivals.size();
   }
 
-  Logger::info(
-    "BkkApiWorker",
+  rbuflogd_producer_log(
+    &loggerProducer, 
+    RBUF_LOG_LEVEL_INFO, 
+    "fetch data", 
     QString("Fetch cycle completed in %1 ms (status=%2, arrivals=%3)")
       .arg(totalMs)
       .arg(errorCode == BkkApiError::None ? "ok" : "failed")
-      .arg(static_cast<int>(arrivalsCount)));
+      .arg(static_cast<int>(arrivalsCount)).toStdString().c_str());
 }
 
 void BkkApiWorker::loadStationList() {
@@ -147,8 +164,11 @@ void BkkApiWorker::loadStationList() {
 
   std::ifstream file(configPath);
   if (!file.is_open()) {
-    Logger::warning("BkkApiWorker",
-      QString("Cannot open config file: %1").arg(configPath));
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "config", 
+      QString("Cannot open config file: %1").arg(configPath).toStdString().c_str());
     return;
   }
 
@@ -162,18 +182,27 @@ void BkkApiWorker::loadStationList() {
           stationIdList.push_back(station.get<std::string>());
         }
       }
-      Logger::info("BkkApiWorker",
+      rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_INFO, 
+        "config", 
         QString("Loaded %1 station(s) from config")
-          .arg(static_cast<int>(stationIdList.size())));
+          .arg(static_cast<int>(stationIdList.size())).toStdString().c_str());
     } 
     else {
-      Logger::warning("BkkApiWorker",
+      rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_WARNING, 
+        "config", 
         "Config file missing 'stations' array");
     }
   } 
   catch (const std::exception &ex) {
-    Logger::error("BkkApiWorker",
-      QString("Error parsing config file: %1").arg(ex.what()));
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "config", 
+      QString("Error parsing config file: %1").arg(ex.what()).toStdString().c_str());
   }
 }
 

@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <mutex>
 
+#include <rbuflogd/producer.h>
+
 struct OnlineChecker {
     OnlineChecker(); 
     ~OnlineChecker();
@@ -22,6 +24,8 @@ private:
         std::lock_guard<std::mutex> lock(statusMutex);
         onlineStatus = status;
     }
+
+    rbuflogd_producer_t loggerProducer {};
 };
 
 #endif // BKK_ONLINE_CHECK_HPP

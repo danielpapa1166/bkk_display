@@ -9,16 +9,18 @@
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
-
+    rbuflogd_producer_open(&loggerProducer, "BkkConfig"); 
     setupUi();
 }
 
 MainWindow::~MainWindow()
 {
+    rbuflogd_producer_close(&loggerProducer);
 }
 
 void MainWindow::setupUi()
 {
+    rbuflogd_producer_log(&loggerProducer, RBUF_LOG_LEVEL_INFO, "Init", "Setting up UI");
     setMinimumSize(480, 320);
     setWindowTitle("BKK Display");
 
@@ -48,4 +50,6 @@ void MainWindow::setupUi()
     layout->addWidget(iconLabel);
     layout->addWidget(textLabel);
     layout->addStretch();
+
+    rbuflogd_producer_log(&loggerProducer, RBUF_LOG_LEVEL_INFO, "Init", "Setup UI completed");
 }

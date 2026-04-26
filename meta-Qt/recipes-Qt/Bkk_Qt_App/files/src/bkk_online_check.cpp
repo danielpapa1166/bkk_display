@@ -2,17 +2,29 @@
 #include <QString>
 #include "bkk_elapsed_timer.hpp"
 #include "bkk_online_check.hpp"
-#include "bkk_logger.hpp"
 
 
 OnlineChecker::OnlineChecker() : onlineStatus(false), errorCode(0), lastResponseTimeMs(0) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
-    Logger::info("OnlineChecker", "Initialized OnlineChecker with CURL");
+
+    rbuflogd_producer_open(&loggerProducer, "OnlineCk");
+
+    rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_INFO, 
+        "OnlineChecker", 
+        "Initialized OnlineChecker with CURL");
 }
 
 OnlineChecker::~OnlineChecker() {
     curl_global_cleanup();
-    Logger::info("OnlineChecker", "Cleaned up CURL resources");
+    rbuflogd_producer_log(
+        &loggerProducer, 
+        RBUF_LOG_LEVEL_INFO, 
+        "OnlineChecker", 
+        "Cleaned up CURL resources");
+
+    rbuflogd_producer_close(&loggerProducer);
 }
 
 bool OnlineChecker::isOnline() const {
@@ -30,7 +42,11 @@ void OnlineChecker::cyclicCheck() {
     if (!curl) {
         errorCode = 1; // Initialization failed
         setOnlineStatus(false); 
-        Logger::error("OnlineChecker", "Failed to initialize CURL");
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_ERROR, 
+            "OnlineChecker", 
+            "Failed to initialize CURL");
         return;
     }
 
@@ -61,14 +77,20 @@ void OnlineChecker::cyclicCheck() {
         (result == CURLE_OK && responseCode == 204) ? true : false); 
 
     if (isOnline()) {
-        Logger::info("OnlineChecker", QString("Online check successful in %1 ms").arg(totalTimeMs));
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_INFO, 
+            "OnlineChecker", 
+            QString("Online check successful in %1 ms").arg(totalTimeMs).toStdString().c_str());
     } else {
-        Logger::warning(
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_WARNING, 
             "OnlineChecker",
             QString("Online check failed (curl=%1, http=%2, total=%3 ms)")
                 .arg(static_cast<int>(result))
                 .arg(responseCode)
-                .arg(totalTimeMs));
+                .arg(totalTimeMs).toStdString().c_str());
     }
 
     return; // Success

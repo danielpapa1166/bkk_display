@@ -2,6 +2,7 @@
 #define BKK_TOUCHSCREEN_HPP
 
 #include "ads7846_controller.h"
+#include <rbuflogd/producer.h>
 
 
 typedef enum {
@@ -49,6 +50,7 @@ private:
   const int adcRawMin = 200;
   const int adcRawMax = 3900;
 
+  rbuflogd_producer_t loggerProducer {};
 };
 
 #endif // BKK_TOUCHSCREEN_HPP

@@ -1,0 +1,13 @@
+[Unit]
+Description=rbuflogd daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/bin/mkdir -p /var/log/rbuflogd
+ExecStart=/usr/bin/rbuflogd -p /var/log/rbuflogd
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

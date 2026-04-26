@@ -18,7 +18,9 @@ add_executable(bkk-web-setup-helper
 )
 
 target_link_libraries(bkk-web-setup-helper PRIVATE
-    Qt5::Core Qt5::Widgets
+    Qt5::Core
+    Qt5::Widgets
+    rbuflogd_producer
 )
 
 install(TARGETS bkk-web-setup-helper RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

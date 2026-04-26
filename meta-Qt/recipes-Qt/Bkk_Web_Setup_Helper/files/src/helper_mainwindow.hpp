@@ -5,6 +5,7 @@
 #include <QTableWidget>
 #include <QTimer>
 #include <QWidget>
+#include <rbuflogd/producer.h>
 
 
 class MainWindow : public QWidget
@@ -17,6 +18,8 @@ public:
 
 private:
     void setupUi();
+
+    rbuflogd_producer_t loggerProducer {};
 };
 
 #endif
