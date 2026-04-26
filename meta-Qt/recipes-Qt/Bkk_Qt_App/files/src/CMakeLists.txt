@@ -28,8 +28,6 @@ add_executable(bkk-qt-app
 	bkk_worker_thread.cpp
 	bkk_worker_thread.hpp
 	bkk_elapsed_timer.hpp
-	bkk_logger.cpp
-	bkk_logger.hpp
 	bkk_touchscreen.cpp
 	bkk_touchscreen.hpp
 	bkk_touchscreen_feedback.cpp
@@ -47,6 +45,7 @@ target_link_libraries(bkk-qt-app PRIVATE
 	Qt5::Widgets
 	bkk_api_shared
 	CURL::libcurl
+	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
 )
 

@@ -6,8 +6,8 @@
 #include <QHBoxLayout>
 #include <QPixmap>
 #include <QVBoxLayout>
+#include <rbuflogd/producer.h>
 
-#include "bkk_logger.hpp"
 #include "bkk_screenshot_util.hpp"
 #include <csignal>
 #include <signal.h>
@@ -16,8 +16,7 @@
 
 static void sigHandler(int signum) {
     if(signum == SIGUSR1) {
-        Logger::info("Main", "Recieved User Signal. Taking screenshot...");
-        QScreen *screen = QGuiApplication::primaryScreen();
+       QScreen *screen = QGuiApplication::primaryScreen();
         if(screen != nullptr) {
             QMetaObject::invokeMethod(QApplication::instance(), [screen]() {
                 ScreenshotUtil util("/tmp/bkk_screenshot.png");
@@ -25,7 +24,7 @@ static void sigHandler(int signum) {
             }, Qt::QueuedConnection);  
         }
         else {
-            Logger::warning("Main", "No primary screen found. Cannot take screenshot.");
+            // temporary removed logging
         }
     }
 }
@@ -34,6 +33,7 @@ static void sigHandler(int signum) {
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
+    rbuflogd_producer_open(&loggerProducer, "MainWindow");
 
     setupUi();
 
@@ -45,16 +45,25 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Register signal handler for SIGUSR1 to trigger screenshot
     if(signal(SIGUSR1, sigHandler) == SIG_ERR) {
-        Logger::error("Main", "Failed to register signal handler for SIGUSR1");
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_ERROR, 
+            "Init", 
+            "Failed to register signal handler for SIGUSR1");
     }
     else {
-        Logger::info("Main", "Signal handler for SIGUSR1 registered successfully");
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_INFO, 
+            "Init", 
+            "Signal handler for SIGUSR1 registered successfully");
     }
 
 }
 
 MainWindow::~MainWindow()
 {
+    rbuflogd_producer_close(&loggerProducer);
 }
 
 void MainWindow::setupUi()

@@ -11,6 +11,8 @@
 #include "bkk_arrival_table_handler.hpp"
 #include "bkk_info_bar_handler.hpp"
 
+#include <rbuflogd/producer.h>
+
 
 class MainWindow : public QWidget
 {
@@ -32,7 +34,9 @@ private:
     BkkInfoBarHandler *infoBarHandler = nullptr;
     ArrivalTableHandler *arrivalTableHandler = nullptr;
 
-    QTimer touchScreenWorkerTimer; 
+    QTimer touchScreenWorkerTimer;
+    
+    rbuflogd_producer_t loggerProducer {};
 };
 
 #endif

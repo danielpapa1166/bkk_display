@@ -1,11 +1,13 @@
 #ifndef BKK_API_WORKER_HPP
 #define BKK_API_WORKER_HPP
 
+#include <bkk_api/bkk_api.hpp>
+#include <rbuflogd/producer.h>
+
 #include <QMutex>
 #include <QThread>
 
 #include <atomic>
-#include <bkk_api/bkk_api.hpp>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -30,6 +32,7 @@ class BkkApiWorker : public QThread {
   Q_OBJECT
 public:
   explicit BkkApiWorker(QObject *parent = nullptr);
+  ~BkkApiWorker();
 
   // request the worker to perform a fetch as soon as possible:
   void requestFetch(); 
@@ -69,6 +72,8 @@ private:
 
   // fetch request flag:
   std::atomic<bool> fetchRequested = false; 
+
+  rbuflogd_producer_t loggerProducer {};
 }; 
 
 

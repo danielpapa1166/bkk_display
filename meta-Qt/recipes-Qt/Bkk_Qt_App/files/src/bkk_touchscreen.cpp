@@ -1,8 +1,8 @@
 #include "bkk_touchscreen.hpp"
 #include "ads7846_controller.h"
 #include "bkk_elapsed_timer.hpp"
-#include "bkk_logger.hpp"
 #include <algorithm>
+#include <QString>
 
 
 BkkTouchScreenWorker::BkkTouchScreenWorker(
@@ -11,13 +11,18 @@ BkkTouchScreenWorker::BkkTouchScreenWorker(
 
   int retVal; 
 
+  rbuflogd_producer_open(&loggerProducer, "TouchScreen"); 
+
   retVal = ads7846_controller_init(
     &controller, 
     &config); 
 
   if(retVal != 0) {
-    Logger::error("TouchScreenIF", 
-      QString("Init failed. Error code: %1").arg(retVal));
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "Init", 
+      QString("Init failed. Error code: %1").arg(retVal).toStdString().c_str());
 
     errorStatus = TOUCHSCREEN_ERROR_INIT_FAILED;
     return; 
@@ -29,9 +34,12 @@ BkkTouchScreenWorker::BkkTouchScreenWorker(
     this);
 
   if(retVal != 0) {
-    Logger::error("TouchScreenIF", 
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "Init", 
       QString("Failed to set touchscreen IRQ callback. Error code: %1")
-        .arg(retVal));
+        .arg(retVal).toStdString().c_str());
     ads7846_controller_deinit(controller);
 
     errorStatus = TOUCHSCREEN_ERROR_IRQ_CALLBACK_FAILED;
@@ -41,15 +49,21 @@ BkkTouchScreenWorker::BkkTouchScreenWorker(
   retVal = ads7846_controller_start_irq_listener(controller);
 
   if(retVal != 0) {
-    Logger::error("TouchScreenIF", 
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "Init", 
       QString("Failed to start touchscreen IRQ listener. Error code: %1")
-        .arg(retVal));
+        .arg(retVal).toStdString().c_str());
     ads7846_controller_deinit(controller);
     errorStatus = TOUCHSCREEN_ERROR_IRQ_LISTENER_FAILED;
     return;
   } 
 
-  Logger::info("TouchScreenIF", 
+  rbuflogd_producer_log(
+    &loggerProducer, 
+    RBUF_LOG_LEVEL_INFO, 
+    "Init", 
     "Touchscreen controller initialized successfully");
 }
 
@@ -58,8 +72,14 @@ BkkTouchScreenWorker::~BkkTouchScreenWorker() {
   if (controller != nullptr) {
     ads7846_controller_stop_irq_listener(controller);
     ads7846_controller_deinit(controller);
-    Logger::info("TouchScreenIF", "Touchscreen controller deinitialized");
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_INFO, 
+      "DeInit", 
+      "Touchscreen controller deinitialized");
   }
+
+  rbuflogd_producer_close(&loggerProducer);
 }
 
 
@@ -67,7 +87,10 @@ BkkTouchScreenWorker::~BkkTouchScreenWorker() {
 int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
 
   if(controller == nullptr) {
-    Logger::error("TouchScreenIF", 
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "Fetch", 
       "Cannot read ADC: Controller not initialized");
     return -1;
   }
@@ -83,9 +106,12 @@ int BkkTouchScreenWorker::fetch_touch_coordinates(void) {
 
 
   if (retVal != 0) {
-    Logger::error("TouchScreenIF", 
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "Fetch", 
       QString("Failed to read touch coordinates. Error code: %1")
-        .arg(retVal));
+        .arg(retVal).toStdString().c_str());
     errorStatus = TOUCHSCREEN_ERROR_SPI_READ_FAILED;
     return -1;
   }
@@ -112,8 +138,11 @@ void BkkTouchScreenWorker::irq_callback(
 
   if(event != ADS7846_IRQ_EVENT_FALLING 
       && event != ADS7846_IRQ_EVENT_RISING) {
-    Logger::warning("TouchScreenIF", 
-      QString("Received unknown IRQ event: %1").arg(event));
+    rbuflogd_producer_log(
+      &self->loggerProducer, 
+      RBUF_LOG_LEVEL_WARNING, 
+      "Irq", 
+      QString("Received unknown IRQ event: %1").arg(event).toStdString().c_str());
     return;
   }
 
