@@ -9,7 +9,8 @@ SRC_URI = "file://src/ \
            "
 S = "${WORKDIR}/src"
 
-DEPENDS = "qtbase"
+DEPENDS = "qtbase rbuflogd"
+RDEPENDS:${PN} += "rbuflogd"
 
 
 # Generate compile_commands.json for clangd tooling.

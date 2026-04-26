@@ -8,7 +8,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}:"
 SRC_URI = "git://${TOPDIR}/../rbuflogd;protocol=file;nobranch=1 \
            file://rbuflogd.service \
            "
-SRCREV = "d6407ba242be2300e645b1398544ffceb19e003b"
+SRCREV = "9793daba78f2e22200eecc3ce8527b780c26178e"
 
 PV = "1.0+git${SRCPV}"
 
