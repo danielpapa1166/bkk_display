@@ -50,42 +50,30 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
-# c-http-server shared library  (server logic, no main)
+# c-http-server executable
 # ---------------------------------------------------------------------------
-add_library(c-http-server-lib SHARED
+add_executable(c-http-server
+    http_server_main.c
     http_server_client_handler.c
     http_server_resource_handler.c
     http_server_post_handler.c
 )
 
-target_include_directories(c-http-server-lib PUBLIC
+target_include_directories(c-http-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CJSON_INCLUDE_DIR}
 )
 
-target_link_libraries(c-http-server-lib PUBLIC
+target_link_libraries(c-http-server PRIVATE
     cjson
     rbuflogd_producer
 )
-
-# ---------------------------------------------------------------------------
-# c-http-server executable
-# ---------------------------------------------------------------------------
-add_executable(c-http-server
-    http_server_main.c
-)
-
-target_link_libraries(c-http-server PRIVATE c-http-server-lib)
 
 # ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
 install(TARGETS c-http-server
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(TARGETS c-http-server-lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 if(TARGET cjson)
