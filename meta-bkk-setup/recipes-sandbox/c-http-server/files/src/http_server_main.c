@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -76,57 +75,8 @@ int main(void)
 
     int pid = fork();
     if (pid == 0) {
-      char child_name[RBUF_PROD_ID_MAX_LEN]; 
-      char child_msg[100];
-      int log_res = 0; 
-      snprintf(
-        child_name, 
-        RBUF_PROD_ID_MAX_LEN, 
-        "%d", getpid());
-
-      strcpy(producer.producer_name, child_name); 
-
-      snprintf(
-        child_msg, 
-        sizeof(child_msg), 
-        "Client connected: %d (listener: %d)", client_fd, listen_fd);
-
-      log_res = rbuflogd_producer_log(
-        &producer, 
-        RBUF_LOG_LEVEL_DEBUG, 
-        "child", 
-        child_msg);
-
-      if(log_res < 0) {
-        printf("Logging error %d \n", log_res);
-      }
-      else {
-        printf("Logged successfully \n");
-      }
-
-      printf("Child: client count %d, listen fd: %d, client fd: %d \n", 
-        request_cnt, listen_fd, client_fd);
       close(listen_fd); 
-      client_handler(client_fd);
-      printf("Child closed for client %d\n", request_cnt); 
-
-      snprintf(
-        child_msg, 
-        sizeof(child_msg), 
-        "Client closed: %d (listener: %d)", client_fd, listen_fd);
-      log_res = rbuflogd_producer_log(
-        &producer, 
-        RBUF_LOG_LEVEL_DEBUG, 
-        "child", 
-        child_msg);
-
-      if(log_res < 0) {
-        printf("Logging error %d \n", log_res);
-      }
-      else {
-        printf("Logged successfully \n");
-      }
-
+      client_handler(client_fd, &producer);
       return 0;
     }
     else {
