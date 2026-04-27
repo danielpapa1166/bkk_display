@@ -27,6 +27,16 @@ function parseJsonSafely(text) {
     }
 }
 
+function isBackendOkPayload(text) {
+    var trimmed = (text || "").trim().toLowerCase();
+    if (trimmed === "ok") {
+        return true;
+    }
+
+    var data = parseJsonSafely(text);
+    return !!(data && data.status === "ok");
+}
+
 function sendButtonPress(targetPage) {
     var currentPage = getCurrentPageName();
     var fromIndex = pages.indexOf(currentPage);
@@ -52,8 +62,7 @@ function sendButtonPress(targetPage) {
                     throw new Error("Backend rejected button press (HTTP " + response.status + ")");
                 }
 
-                var data = parseJsonSafely(text);
-                if (!data || data.status !== "ok") {
+                if (!isBackendOkPayload(text)) {
                     throw new Error("Backend response was not ok");
                 }
             });
