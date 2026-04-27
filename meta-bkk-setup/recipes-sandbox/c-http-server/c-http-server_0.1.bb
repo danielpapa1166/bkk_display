@@ -18,6 +18,9 @@ SRC_URI = "file://src/CMakeLists.txt \
            file://www/app.js \
 "
 
+DEPENDS = "rbuflogd"
+RDEPENDS:${PN} += " rbuflogd"
+
 S = "${WORKDIR}/src"
 
 do_install:append() {

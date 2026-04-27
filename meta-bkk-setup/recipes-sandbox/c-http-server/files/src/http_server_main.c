@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "http_server_client_handler.h"
+#include <rbuflogd/producer.h>
 
 #define PORT 8081
 
@@ -11,12 +12,26 @@ static struct sockaddr_in server_addr = { 0 };
 
 int main(void)
 {
-  printf("Hello world \n"); 
 
+  rbuflogd_producer_t producer;
+  rbuflogd_producer_open(
+    &producer, 
+    "http_srv");
+
+  rbuflogd_producer_log(
+    &producer, 
+    RBUF_LOG_LEVEL_INFO, 
+    "main", 
+    "HTTP server starting...");
 
   int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (listen_fd < 0) {
-    printf("Socket error: %d \n", listen_fd);
+    printf("Socket error %d \n", listen_fd);
+    rbuflogd_producer_log(
+      &producer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "main", 
+      "Socket error");
     return 1;
   }
 
@@ -26,13 +41,23 @@ int main(void)
 
   int bind_retval = bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
   if(bind_retval < 0) {
-    printf("Bind error: %d \n", bind_retval);
+    printf("Bind error %d \n", bind_retval);
+    rbuflogd_producer_log(
+      &producer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "main", 
+      "Bind error");
     return 1;
   }
 
   int listen_retval = listen(listen_fd, 5);
   if (listen_retval < 0) {
-    printf("Listen error: %d \n", listen_retval);
+    printf("Listen error %d \n", listen_retval);
+    rbuflogd_producer_log(
+      &producer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "main", 
+      "Listen error");
     return 1;
   }
 
