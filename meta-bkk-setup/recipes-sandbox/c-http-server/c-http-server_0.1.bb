@@ -18,10 +18,20 @@ SRC_URI = "file://src/CMakeLists.txt \
            file://www/app.js \
 "
 
-DEPENDS = "rbuflogd"
-RDEPENDS:${PN} += " rbuflogd"
+DEPENDS = "rbuflogd cjson"
+RDEPENDS:${PN} += " rbuflogd cjson"
 
 S = "${WORKDIR}/src"
+
+# c-http-server-lib is built as an unversioned .so runtime library.
+# Treat .so as a runtime lib so it is shipped in ${PN} instead of -dev.
+SOLIBS = ".so"
+FILES_SOLIBSDEV = ""
+
+FILES:${PN} += " \
+    ${bindir}/c-http-server \
+    ${libdir}/libc-http-server-lib.so \
+"
 
 do_install:append() {
     install -d ${D}${datadir}/c-http-server/www
