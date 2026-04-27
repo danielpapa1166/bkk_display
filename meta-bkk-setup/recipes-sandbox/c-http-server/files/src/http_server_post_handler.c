@@ -1,18 +1,12 @@
 #include "http_server_post_handler.h"
 #include "cJSON.h"
 #include "http_server_utils.h"
+#include "http_server_user_action_handler.h"
 #include <stdio.h>
 
 // ----------------------------------------------------------------------------
 // local types
 // ----------------------------------------------------------------------------
-
-typedef struct {
-  char action[16];
-  char from_page[64];
-  char to_page[64];
-} api_button_request_t;
-
 
 typedef int (http_post_handler_fn)          \
     (const char *request_text,              \
@@ -29,6 +23,9 @@ typedef struct {
 
 static int handle_button_api_post(const char *request_text, 
   api_button_request_t *out_request);
+static int handle_finish_api_post(const char *request_text, 
+  api_button_request_t *out_request);
+
 static int extract_http_json_body(const char *request_text,
     char *out_json, size_t out_json_size);
 static int parse_api_button_request(const cJSON *json, api_button_request_t *out_request);
@@ -40,6 +37,9 @@ static int parse_api_button_request(const cJSON *json, api_button_request_t *out
 static post_handler_table_entry_t post_handler_table[] = {
     { .request_path = "/api/button", 
           .handler_fn = (http_post_handler_fn *)&handle_button_api_post 
+        }, 
+    { .request_path = "/api/finish", 
+          .handler_fn = (http_post_handler_fn *)&handle_finish_api_post 
         }, 
 }; 
 
@@ -74,7 +74,7 @@ int http_server_handle_post(const char *request_text,
           "text/plain; charset=utf-8",         
           "Internal Server Error\n");
       }
-       return build_simple_response(out_buf, out_len,
+      return build_simple_response(out_buf, out_len,
         "200 OK",
         "text/plain; charset=utf-8",
         "ok\n");
@@ -82,9 +82,9 @@ int http_server_handle_post(const char *request_text,
   }
 
   return build_simple_response(out_buf, out_len,
-    "200 OK",
+    "404 Not Found",
     "text/plain; charset=utf-8",
-    "ok\n");
+    "Not Found\n");
 }
 
 
@@ -151,6 +151,21 @@ static int parse_api_button_request(const cJSON *json, api_button_request_t *out
   snprintf(out_request->action,    sizeof(out_request->action),    "%s", action->valuestring);
   snprintf(out_request->from_page, sizeof(out_request->from_page), "%s", from_page->valuestring);
   snprintf(out_request->to_page,   sizeof(out_request->to_page),   "%s", to_page->valuestring);
+
+  const cJSON *wifi_ssid     = cJSON_GetObjectItemCaseSensitive(json, "wifi_ssid");
+  const cJSON *wifi_password = cJSON_GetObjectItemCaseSensitive(json, "wifi_password");
+  const cJSON *api_key       = cJSON_GetObjectItemCaseSensitive(json, "api_key");
+  const cJSON *station_ids   = cJSON_GetObjectItemCaseSensitive(json, "station_ids");
+
+  if (cJSON_IsString(wifi_ssid) && wifi_ssid->valuestring)
+    snprintf(out_request->wifi_ssid, sizeof(out_request->wifi_ssid), "%s", wifi_ssid->valuestring);
+  if (cJSON_IsString(wifi_password) && wifi_password->valuestring)
+    snprintf(out_request->wifi_password, sizeof(out_request->wifi_password), "%s", wifi_password->valuestring);
+  if (cJSON_IsString(api_key) && api_key->valuestring)
+    snprintf(out_request->api_key, sizeof(out_request->api_key), "%s", api_key->valuestring);
+  if (cJSON_IsString(station_ids) && station_ids->valuestring)
+    snprintf(out_request->station_ids, sizeof(out_request->station_ids), "%s", station_ids->valuestring);
+
   return 0;
 }
 
@@ -179,10 +194,23 @@ static int handle_button_api_post(
 
     printf("Button request: action='%s' from='%s' to='%s'\n",
         out_request->action, out_request->from_page, out_request->to_page);
+
+    const int user_action_result = handle_user_action(out_request);
+    if (user_action_result != 0) {
+      printf("handle_user_action failed\n");
+      return -1;
+    }
   } 
   else {
     printf("No JSON body found in POST request\n");
     return -1;
   }
+  return 0;
+}
+
+static int handle_finish_api_post(const char *request_text, 
+    api_button_request_t *out_request) {
+  
+  printf("Received /api/finish POST request\n");
   return 0;
 }

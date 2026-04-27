@@ -57,6 +57,7 @@ add_executable(c-http-server
     http_server_client_handler.c
     http_server_resource_handler.c
     http_server_post_handler.c
+    http_server_user_action_handler.c
 )
 
 target_include_directories(c-http-server PRIVATE
