@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStartPre=/bin/mkdir -p /var/log/rbuflogd
-ExecStart=/usr/bin/rbuflogd -p /var/log/rbuflogd
+ExecStartPre=/bin/mkdir -p /etc/rbuflogd
+ExecStart=/usr/bin/rbuflogd -p /etc/rbuflogd -l 0
 Restart=on-failure
 RestartSec=2
 
