@@ -40,6 +40,17 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 	add_target_args(deploy_webapp_parser)
 	deploy_webapp_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
 
+	http_test_server_parser = subparsers.add_parser(
+		"deploy_http_test_server",
+		help="Upload the compiled c-http-server test binary to /usr/bin/c-http-server.",
+	)
+	add_target_args(http_test_server_parser)
+	http_test_server_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+	http_test_server_parser.add_argument(
+		"--http-binary",
+		help="Explicit local path to the compiled c-http-server binary. Auto-detected when omitted.",
+	)
+
 	reset_cfg_parser = subparsers.add_parser("reset_cfg", help="Delete the configured flag and reboot, entering setup mode.")
 	add_target_args(reset_cfg_parser)
 	reset_cfg_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")

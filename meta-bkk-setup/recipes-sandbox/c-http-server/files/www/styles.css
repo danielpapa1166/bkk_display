@@ -1,0 +1,105 @@
+:root {
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #5b667a;
+  --border: #d7deea;
+  --primary: #1e88e5;
+  --primary-hover: #166fc0;
+  --secondary: #eef2f8;
+  --secondary-hover: #e1e7f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Noto Sans", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at top right, #e8f2ff 0%, var(--bg) 45%);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.setup-card {
+  width: min(100%, 520px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 14px 30px rgba(19, 36, 66, 0.08);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.6rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.93rem;
+}
+
+input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.62rem 0.72rem;
+  font: inherit;
+}
+
+input:focus {
+  outline: 2px solid #b7d6ff;
+  border-color: #8dbffc;
+}
+
+.actions {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.actions.two-cols {
+  grid-template-columns: 1fr 1fr;
+}
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 0.62rem 0.8rem;
+  font: inherit;
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+}
+
+button:hover {
+  background: var(--primary-hover);
+}
+
+button.secondary {
+  background: var(--secondary);
+  color: var(--text);
+}
+
+button.secondary:hover {
+  background: var(--secondary-hover);
+}
+
+@media (max-width: 420px) {
+  .actions.two-cols {
+    grid-template-columns: 1fr;
+  }
+}
