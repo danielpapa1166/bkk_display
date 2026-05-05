@@ -10,5 +10,3 @@ meta-BKK-api/recipes-api/bkk-api-keyenv/files/api-key.txt
 *.log
 # Python cache
 **/__pycache__/
-
-meta-bkk-setup/recipes-sandbox

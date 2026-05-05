@@ -26,6 +26,8 @@ cd tools/swup
 cp swup.example.json swup.json
 python3 main.py deploy --dry-run
 python3 main.py deploy
+python3 main.py deploy_http_test_server --dry-run
+python3 main.py deploy_http_test_server
 python3 main.py status
 python3 main.py rollback
 ```
@@ -33,5 +35,6 @@ python3 main.py rollback
 ## Notes
 
 - the target user needs SSH access and sudo permissions to replace the binary in `remote_binary`
-- this is intentionally a small first version; it deploys only one executable, not a full app directory or assets
+- this is intentionally a small first version; it deploys one executable
+- `deploy_http_test_server` also deploys the packaged static `www` files to `/usr/share/c-http-server/www`
 - if your build output path changes often, point `local_binary` at a stable symlink or wrapper path
