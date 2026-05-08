@@ -19,12 +19,12 @@ from swup_err import SwupError
 # config-server (C replacement for the old Python/Bottle bkk-setup-web)
 WEBAPP_FILES_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/config-server/files")
 WEBAPP_FILES = ["www/index.html", "www/styles.css", "www/app.js"]
-WEBAPP_REMOTE_DIR = "/usr/share/c-http-server/www"
+WEBAPP_REMOTE_DIR = "/usr/share/config-server/www"
 WEBAPP_SERVICE = "bkk-setup-web.service"
-CONFIGURED_FLAG = "/etc/bkk-api/configured"
+CONFIGURED_FLAG = "/etc/bkk-display-config/api-configured"
 HTTP_TEST_SERVER_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
-HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/c-http-server"
-HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/c-http-server/www"
+HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/config-server"
+HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/config-server/www"
 HTTP_TEST_SERVER_WWW_SOURCE_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/config-server/files/www")
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
@@ -108,9 +108,10 @@ def deploy_webapp(target: TargetConfig, dry_run: bool) -> None:
 
 	install_steps = []
 	for f in WEBAPP_FILES:
-		mode = "0755" if f.endswith(".py") or f.endswith(".sh") else "0644"
+		filename = Path(f).name
+		mode = "0755" if f.endswith(".sh") else "0644"
 		install_steps.append(
-			f"sudo install -m {mode} {tmp_dir}/{shlex.quote(f)} {shlex.quote(WEBAPP_REMOTE_DIR)}/{shlex.quote(f)}"
+			f"sudo install -m {mode} {tmp_dir}/{shlex.quote(filename)} {shlex.quote(WEBAPP_REMOTE_DIR)}/{shlex.quote(filename)}"
 		)
 	install_steps.append(f"rm -rf {tmp_dir}")
 	ssh_run(target, " && ".join(install_steps), dry_run=dry_run)
@@ -134,36 +135,36 @@ def resolve_http_test_server_binary(explicit_path: str | None) -> Path:
 			raise SwupError(f"HTTP test server binary not found: {candidate}")
 		return candidate
 
-	# Search for c-http-server at architecture level to avoid massive recursive glob
+	# Search for config-server at architecture level to avoid massive recursive glob
 	try:
-		c_http_dirs = list(HTTP_TEST_SERVER_BUILD_ROOT.glob("*/c-http-server"))
+		c_http_dirs = list(HTTP_TEST_SERVER_BUILD_ROOT.glob("*/config-server"))
 	except Exception as e:
 		raise SwupError(f"Error searching build directory: {e}")
 
 	if not c_http_dirs:
 		raise SwupError(
-			"No c-http-server package directory found under build output. "
-			"Build it first with bitbake c-http-server or pass --http-binary <path>."
+			"No config-server package directory found under build output. "
+			"Build it first with bitbake config-server or pass --http-binary <path>."
 		)
 
-	# For each c-http-server package dir, look for the binary
+	# For each config-server package dir, look for the binary
 	matches = []
 	for pkg_dir in c_http_dirs:
 		try:
-			binaries = sorted(pkg_dir.glob("*/package/usr/bin/c-http-server"))
+			binaries = sorted(pkg_dir.glob("*/package/usr/bin/config-server"))
 			matches.extend(binaries)
 		except Exception:
 			continue
 
 	if not matches:
 		raise SwupError(
-			"No compiled c-http-server binary found under build output. "
-			"Build it first with bitbake c-http-server or pass --http-binary <path>."
+			"No compiled config-server binary found under build output. "
+			"Build it first with bitbake config-server or pass --http-binary <path>."
 		)
 
 	if len(matches) > 1:
 		raise SwupError(
-			"Multiple c-http-server binaries found. Pass --http-binary to choose one explicitly: "
+			"Multiple config-server binaries found. Pass --http-binary to choose one explicitly: "
 			+ ", ".join(str(path) for path in matches)
 		)
 
@@ -174,8 +175,8 @@ def resolve_http_test_server_www_files(binary_path: Path) -> list[Path]:
 	www_dir = HTTP_TEST_SERVER_WWW_SOURCE_DIR
 	if not www_dir.exists() or not www_dir.is_dir():
 		raise SwupError(
-			"HTTP test server www directory not found: "
-			f"{www_dir}. Check meta-bkk-setup/recipes-sandbox/c-http-server/files/www"
+			f"HTTP server www directory not found: "
+			f"{www_dir}. Check meta-bkk-setup/recipes-setup/config-server/files/www"
 		)
 
 	www_files = sorted(path for path in www_dir.glob("*") if path.is_file())
@@ -186,7 +187,7 @@ def resolve_http_test_server_www_files(binary_path: Path) -> list[Path]:
 
 
 def deploy_http_test_server_www(target: TargetConfig, dry_run: bool, www_files: list[Path]) -> None:
-	tmp_dir = "/tmp/c-http-server-www.swup"
+	tmp_dir = "/tmp/config-server-www.swup"
 	ssh_run(target, f"mkdir -p {tmp_dir}", dry_run=dry_run)
 	scp_files_to_target(target, [str(path) for path in www_files], tmp_dir, dry_run=dry_run)
 

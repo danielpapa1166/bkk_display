@@ -42,7 +42,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 	http_test_server_parser = subparsers.add_parser(
 		"deploy_http_test_server",
-		help="Upload the compiled c-http-server test binary to /usr/bin/c-http-server.",
+		help="Upload the compiled config-server binary to /usr/bin/config-server.",
 	)
 	add_target_args(http_test_server_parser)
 	http_test_server_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
