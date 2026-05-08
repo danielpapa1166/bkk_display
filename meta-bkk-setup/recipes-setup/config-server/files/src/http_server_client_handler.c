@@ -1,7 +1,7 @@
 #include "http_server_client_handler.h"
 #include "http_server_resource_handler.h"
 #include "http_server_post_handler.h"
-#include <rbuflogd/producer.h>
+#include "http_server_logger.h"
 #include <cJSON.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -16,42 +16,7 @@ typedef enum {
 } http_method_t;
 
 
-static rbuflogd_producer_t *global_logger_producer = NULL;
-static const char logger_name[] = "clt_hdl";
-static char logger_category[RBUF_PROD_ID_MAX_LEN] = { 0 };
-
-
-static void configure_logger(rbuflogd_producer_t *producer) {
-  if(producer == NULL) {
-    return;
-  }
-
-  global_logger_producer = producer;
-
-  memcpy(
-    global_logger_producer->producer_name, 
-    logger_name, 
-    sizeof(logger_name)); 
-  
-  snprintf(
-    logger_category, 
-    RBUF_PROD_ID_MAX_LEN, 
-    "%d", getpid());
-}
-
-static int rbuflog(rbuflogd_log_level_t level, const char * message) {
-  if(global_logger_producer == NULL) {
-    return -1;
-  }
-
-  const int log_res = rbuflogd_producer_log(
-    global_logger_producer, 
-    level, 
-    logger_category, 
-    message);
-
-  return log_res;
-}
+static char logger_category[8];
 
 
 static int write_all(int fd, const char *data, size_t len) {
@@ -92,13 +57,14 @@ static http_method_t parse_http_method(const char *buffer) {
 }
 
 
-void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_mode_t mode)
+void client_handler(int client_fd, server_mode_t mode)
 {
   (void) mode; 
   struct timespec ts_start, ts_end;
   clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-  configure_logger(logger_producer);
+  rename_logger("clt_hdl", sizeof("clt_hdl") - 1);
+  snprintf(logger_category, sizeof(logger_category), "p:%d", getpid());
 
   char buffer[2048] = { 0 };
 
@@ -111,7 +77,8 @@ void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_
     write(client_fd, response, strlen(response));
     close(client_fd); 
 
-    rbuflog(RBUF_LOG_LEVEL_WARNING, 
+    log_warning(
+      logger_category, 
       "HTTP/1.1 400 Bad Request (read_bytes <= 0)");
     return; 
   }
@@ -132,7 +99,7 @@ void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_
     char log_msg[256] = { 0 };
     snprintf(log_msg, sizeof(log_msg), 
     "POST request handled with result: %d", result);
-    rbuflog(RBUF_LOG_LEVEL_INFO, log_msg);
+    log_info(logger_category, log_msg);
 
     if (result == 0) {
       write_all(client_fd, response_buf, response_len);
@@ -153,7 +120,7 @@ void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_
     char log_msg[256] = { 0 };
     snprintf(log_msg, sizeof(log_msg), 
     "GET request handled with result: %d", result);
-    rbuflog(RBUF_LOG_LEVEL_INFO, log_msg);
+    log_info(logger_category, log_msg);
 
     if (result == 0) {
       write_all(client_fd, response_buf, response_len);
@@ -168,7 +135,7 @@ void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_
       "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n"
       "Content-Length: 12\r\nConnection: close\r\n\r\nBad Request\n";
     write(client_fd, response, strlen(response));
-    rbuflog(RBUF_LOG_LEVEL_WARNING, 
+    log_warning(logger_category, 
       "HTTP/1.1 400 Bad Request (unsupported method)");
   }
 
@@ -177,9 +144,11 @@ void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_
   long elapsed_us = (ts_end.tv_sec - ts_start.tv_sec) * 1000000L +
                     (ts_end.tv_nsec - ts_start.tv_nsec) / 1000L;
   char rt_msg[64] = { 0 };
-  snprintf(rt_msg, sizeof(rt_msg), "client_handler runtime: %ld us", elapsed_us);
-  rbuflog(RBUF_LOG_LEVEL_DEBUG, rt_msg);
+  snprintf(rt_msg, sizeof(rt_msg), 
+    "client_handler runtime: %ld us", elapsed_us);
+  log_debug(logger_category, rt_msg);
 
   close(client_fd);
+  cleanup_logger(); // child cleans up its own logger instance before exiting
   return; 
 }

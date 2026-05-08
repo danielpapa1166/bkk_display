@@ -59,6 +59,7 @@ add_executable(config-server
     http_server_post_handler.c
     http_server_user_action_handler.c
     http_server_wifi_validation.c
+    http_server_logger.c
 )
 
 target_include_directories(config-server PRIVATE
