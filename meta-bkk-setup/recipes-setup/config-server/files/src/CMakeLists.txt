@@ -50,9 +50,9 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
-# c-http-server executable
+# config-server executable
 # ---------------------------------------------------------------------------
-add_executable(c-http-server
+add_executable(config-server
     http_server_main.c
     http_server_client_handler.c
     http_server_resource_handler.c
@@ -61,12 +61,12 @@ add_executable(c-http-server
     http_server_wifi_validation.c
 )
 
-target_include_directories(c-http-server PRIVATE
+target_include_directories(config-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CJSON_INCLUDE_DIR}
 )
 
-target_link_libraries(c-http-server PRIVATE
+target_link_libraries(config-server PRIVATE
     cjson
     rbuflogd_producer
 )
@@ -74,7 +74,7 @@ target_link_libraries(c-http-server PRIVATE
 # ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
-install(TARGETS c-http-server
+install(TARGETS config-server
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
