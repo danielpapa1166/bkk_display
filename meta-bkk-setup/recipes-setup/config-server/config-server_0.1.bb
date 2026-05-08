@@ -14,8 +14,8 @@ SRC_URI = " \
     file://src/http_server_client_handler.h \
     file://src/http_server_post_handler.c \
     file://src/http_server_post_handler.h \
-    file://src/http_server_resource_handler.c \
-    file://src/http_server_resource_handler.h \
+    file://src/http_server_get_handler.c \
+    file://src/http_server_get_handler.h \
     file://src/http_server_user_action_handler.c \
     file://src/http_server_user_action_handler.h \
     file://src/http_server_wifi_validation.c \

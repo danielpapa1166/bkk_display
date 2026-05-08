@@ -18,7 +18,8 @@ static const char *TAG = "usr_act";
 
 static int usr_act_wifi_apply(const api_button_request_t *request);
 
-int handle_user_action(const api_button_request_t *request) {
+int handle_user_action(const api_button_request_t *request, server_mode_t mode) {
+  (void) mode;
 
   if (strcmp(request->action, ACTION_TYPE_NEXT_STR) == 0) {
     if(strcmp(request->from_page, ACTION_PAGE_WIFI) == 0) {

@@ -1,4 +1,4 @@
-#include "http_server_resource_handler.h"
+#include "http_server_get_handler.h"
 #include "http_server_utils.h"
 
 #include <stdio.h>
@@ -128,4 +128,18 @@ int http_server_handle_resource_request(const char *request_text,
   *out_buf = buf;
   *out_len = total;
   return 0;
+}
+
+int http_server_handle_get_api(const char *request_path, server_mode_t mode,
+                                char **out_buf, size_t *out_len) {
+  if (strcmp(request_path, "/api/mode") == 0) {
+    const char *body = (mode == SERVER_MODE_API)
+        ? "{\"mode\":\"api\"}\n"
+        : "{\"mode\":\"wifi\"}\n";
+    return build_simple_response(out_buf, out_len,
+        "200 OK", "application/json; charset=utf-8", body);
+  }
+
+  return build_simple_response(out_buf, out_len,
+      "404 Not Found", "text/plain; charset=utf-8", "Not Found\n");
 }

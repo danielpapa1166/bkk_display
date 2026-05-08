@@ -10,7 +10,8 @@
 
 typedef int (http_post_handler_fn)          \
     (const char *request_text,              \
-      api_button_request_t *out_request); 
+      api_button_request_t *out_request,    \
+      server_mode_t mode);
 
 typedef struct {
   char request_path[256];
@@ -21,10 +22,10 @@ typedef struct {
 // local function declarations
 // ----------------------------------------------------------------------------
 
-static int handle_button_api_post(const char *request_text, 
-  api_button_request_t *out_request);
-static int handle_finish_api_post(const char *request_text, 
-  api_button_request_t *out_request);
+static int handle_button_api_post(const char *request_text,
+  api_button_request_t *out_request, server_mode_t mode);
+static int handle_finish_api_post(const char *request_text,
+  api_button_request_t *out_request, server_mode_t mode);
 
 static int extract_http_json_body(const char *request_text,
     char *out_json, size_t out_json_size);
@@ -49,7 +50,7 @@ static post_handler_table_entry_t post_handler_table[] = {
 // ----------------------------------------------------------------------------
 
 int http_server_handle_post(const char *request_text,
-    char **out_buf, size_t *out_len) {
+    char **out_buf, size_t *out_len, server_mode_t mode) {
 
   char method[8] = { 0 };
   char request_path[256] = { 0 };
@@ -67,7 +68,7 @@ int http_server_handle_post(const char *request_text,
   for (size_t i = 0; i < sizeof(post_handler_table) / sizeof(post_handler_table_entry_t); i++) {
     if (strcmp(request_path, post_handler_table[i].request_path) == 0) {
       api_button_request_t request = {0};
-      int handler_result = post_handler_table[i].handler_fn(request_text, &request);
+      int handler_result = post_handler_table[i].handler_fn(request_text, &request, mode);
       if (handler_result != 0) {
         return build_simple_response(out_buf, out_len,
           "500 Internal Server Error", 
@@ -170,8 +171,8 @@ static int parse_api_button_request(const cJSON *json, api_button_request_t *out
 }
 
 static int handle_button_api_post(
-    const char *request_text, api_button_request_t *out_request) {
-  
+    const char *request_text, api_button_request_t *out_request,
+    server_mode_t mode) {
   char json_body[2048] = { 0 };
   const int retval = extract_http_json_body(
     request_text, 
@@ -195,7 +196,7 @@ static int handle_button_api_post(
     printf("Button request: action='%s' from='%s' to='%s'\n",
         out_request->action, out_request->from_page, out_request->to_page);
 
-    const int user_action_result = handle_user_action(out_request);
+    const int user_action_result = handle_user_action(out_request, mode);
     if (user_action_result != 0) {
       printf("handle_user_action failed\n");
       return -1;
@@ -208,9 +209,11 @@ static int handle_button_api_post(
   return 0;
 }
 
-static int handle_finish_api_post(const char *request_text, 
-    api_button_request_t *out_request) {
-  
+static int handle_finish_api_post(const char *request_text,
+    api_button_request_t *out_request, server_mode_t mode) {
+  (void) request_text;
+  (void) out_request;
+  (void) mode;
   printf("Received /api/finish POST request\n");
   return 0;
 }
