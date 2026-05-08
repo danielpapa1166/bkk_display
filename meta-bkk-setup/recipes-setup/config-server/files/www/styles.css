@@ -8,6 +8,8 @@
   --primary-hover: #166fc0;
   --secondary: #eef2f8;
   --secondary-hover: #e1e7f2;
+  --error: #c62828;
+  --success: #2e7d32;
 }
 
 * {
@@ -40,7 +42,7 @@ h1 {
 }
 
 h2 {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.4rem;
   font-size: 1.15rem;
   color: var(--muted);
 }
@@ -64,6 +66,12 @@ input:focus {
   border-color: #8dbffc;
 }
 
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
 .actions {
   margin-top: 1rem;
   display: grid;
@@ -85,8 +93,13 @@ button {
   color: #fff;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   background: var(--primary-hover);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 button.secondary {
@@ -94,9 +107,28 @@ button.secondary {
   color: var(--text);
 }
 
-button.secondary:hover {
+button.secondary:hover:not(:disabled) {
   background: var(--secondary-hover);
 }
+
+.status {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  color: var(--error);
+  display: block;
+}
+
+.status.error {
+  color: var(--error);
+}
+
+/* Done / success page */
+.done-icon {
+  font-size: 3rem;
+  color: var(--success);
+  margin-bottom: 0.5rem;
+}
+
 
 @media (max-width: 420px) {
   .actions.two-cols {

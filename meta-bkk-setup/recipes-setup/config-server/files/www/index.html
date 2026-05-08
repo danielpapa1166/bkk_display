@@ -10,40 +10,62 @@
   <main class="setup-card">
     <h1>BKK Display Setup</h1>
 
-    <div id="page-wifi" class="page">
-      <h2>WiFi Configuration</h2>
-      <label for="wifi-ssid">SSID:</label>
-      <input type="text" id="wifi-ssid">
+    <!-- shown while fetching mode from the server -->
+    <div id="page-loading" class="page">
+      <p class="muted">Loading&hellip;</p>
+    </div>
 
-      <label for="wifi-password">Password:</label>
-      <input type="password" id="wifi-password">
+    <!-- Phase 1: WiFi credentials -->
+    <div id="page-wifi" class="page" style="display:none">
+      <h2>WiFi Configuration</h2>
+      <p class="muted">Connect the device to your local network.</p>
+
+      <label for="wifi-ssid">SSID</label>
+      <input type="text" id="wifi-ssid" placeholder="Network name" autocomplete="off">
+
+      <label for="wifi-password">Password</label>
+      <input type="password" id="wifi-password" placeholder="Leave empty for open networks">
 
       <div class="actions">
-        <button onclick="showPage('api-key')">Next</button>
+        <button id="btn-wifi-apply" onclick="applyWifi()">Apply &amp; Reboot</button>
       </div>
     </div>
 
+    <!-- Phase 2 step 1: BKK API key -->
     <div id="page-api-key" class="page" style="display:none">
       <h2>BKK API Key</h2>
-      <label for="api-key">API Key:</label>
-      <input type="text" id="api-key">
+      <p class="muted">Enter your Futar API key.</p>
 
-      <div class="actions two-cols">
-        <button class="secondary" onclick="showPage('wifi')">Back</button>
+      <label for="api-key">API Key</label>
+      <input type="text" id="api-key" autocomplete="off">
+
+      <div class="actions">
         <button onclick="showPage('stations')">Next</button>
       </div>
     </div>
 
+    <!-- Phase 2 step 2: station IDs -->
     <div id="page-stations" class="page" style="display:none">
       <h2>Station Configuration</h2>
-      <label for="station-ids">Station IDs (comma-separated):</label>
+      <p class="muted">Enter the stop IDs to display (comma-separated).</p>
+
+      <label for="station-ids">Station IDs</label>
       <input type="text" id="station-ids" placeholder="e.g. F02261,F02122">
 
       <div class="actions two-cols">
         <button class="secondary" onclick="showPage('api-key')">Back</button>
-        <button onclick="finish()">Finish</button>
+        <button onclick="finishApi()">Finish</button>
       </div>
     </div>
+
+    <!-- Shown after successful completion of either phase -->
+    <div id="page-done" class="page" style="display:none">
+      <div class="done-icon">&#10003;</div>
+      <h2 id="done-title">Done</h2>
+      <p class="muted" id="done-message"></p>
+    </div>
+
+    <p id="status-msg" class="status" style="display:none"></p>
   </main>
 
   <script src="/app.js"></script>
