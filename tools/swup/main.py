@@ -16,15 +16,16 @@ from swup_ssh_handler import ssh_run, scp_to_target, scp_files_to_target
 from swup_cli_parser import parse_args, add_target_args
 from swup_err import SwupError
 
-WEBAPP_FILES_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/bkk-setup-web/files")
-WEBAPP_FILES = ["bkk-setup-server.py", "bottle.py", "index.html", "setup.js"]
-WEBAPP_REMOTE_DIR = "/usr/libexec/bkk-setup"
+# config-server (C replacement for the old Python/Bottle bkk-setup-web)
+WEBAPP_FILES_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/config-server/files")
+WEBAPP_FILES = ["www/index.html", "www/styles.css", "www/app.js"]
+WEBAPP_REMOTE_DIR = "/usr/share/c-http-server/www"
 WEBAPP_SERVICE = "bkk-setup-web.service"
 CONFIGURED_FLAG = "/etc/bkk-api/configured"
 HTTP_TEST_SERVER_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
 HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/c-http-server"
 HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/c-http-server/www"
-HTTP_TEST_SERVER_WWW_SOURCE_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-sandbox/c-http-server/files/www")
+HTTP_TEST_SERVER_WWW_SOURCE_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/config-server/files/www")
 
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 
