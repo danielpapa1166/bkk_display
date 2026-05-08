@@ -92,8 +92,9 @@ static http_method_t parse_http_method(const char *buffer) {
 }
 
 
-void client_handler(int client_fd, rbuflogd_producer_t *logger_producer)
+void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_mode_t mode)
 {
+  (void) mode; 
   struct timespec ts_start, ts_end;
   clock_gettime(CLOCK_MONOTONIC, &ts_start);
 

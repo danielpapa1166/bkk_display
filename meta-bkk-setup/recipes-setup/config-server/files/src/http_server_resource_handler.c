@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define HTTP_SERVER_STATIC_ROOT "/usr/share/c-http-server/www"
+#define HTTP_SERVER_STATIC_ROOT "/usr/share/config-server/www"
 
 
 int http_server_handle_resource_request(const char *request_text,

@@ -2,6 +2,7 @@
 #define HTTP_SERVER_CLIENT_HANDLER_H
 
 #include "rbuflogd/producer.h"
-void client_handler(int client_fd, rbuflogd_producer_t *logger_producer);
+#include "http_server_config.h"
+void client_handler(int client_fd, rbuflogd_producer_t *logger_producer, server_mode_t mode);
 
 #endif /* HTTP_SERVER_CLIENT_HANDLER_H */
