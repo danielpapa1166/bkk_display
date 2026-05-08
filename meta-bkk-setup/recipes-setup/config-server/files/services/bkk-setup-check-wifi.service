@@ -1,0 +1,19 @@
+[Unit]
+Description=BKK Display Setup - WiFi Connectivity Check (Phase 2 gateway)
+# Wait until networkd has brought the interface online.
+After=network-online.target
+Wants=network-online.target
+# Only active in phase 2: WiFi was configured on the previous boot but
+# the API setup has not been completed yet.
+ConditionPathExists=/etc/bkk-display-config/wifi-configured
+ConditionPathExists=!/etc/bkk-display-config/api-configured
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/bkk-setup/bkk-setup-check-wifi.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
