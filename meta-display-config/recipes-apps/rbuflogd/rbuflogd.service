@@ -1,6 +1,5 @@
 [Unit]
 Description=rbuflogd daemon
-After=network.target
 
 [Service]
 Type=simple
