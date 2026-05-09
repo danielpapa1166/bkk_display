@@ -1,0 +1,15 @@
+[Unit]
+Description=BKK UDS Remote Fetch Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bkk_uds_server -k /etc/bkk-api/api-key.txt
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
