@@ -12,7 +12,11 @@ int main(int argc, char *argv[])
 
     const bool loggerReady = rbuflogd_producer_open(&loggerProducer, "MainApp") == 0;
     if (loggerReady) {
-        rbuflogd_producer_log(&loggerProducer, RBUF_LOG_LEVEL_INFO, "startup", "Application started");
+        rbuflogd_producer_log(
+            &loggerProducer, 
+            RBUF_LOG_LEVEL_INFO, 
+            "startup", 
+            "Application started");
     }
 
     MainWindow window;

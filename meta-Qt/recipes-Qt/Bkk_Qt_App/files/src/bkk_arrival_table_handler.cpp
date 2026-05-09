@@ -150,7 +150,7 @@ void ArrivalTableHandler::populateTable() {
 
     // line number: 
     auto *lineItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.arrival.line));
+        QString::fromStdString(stationArrival.arrival.line_id));
     lineItem->setTextAlignment(Qt::AlignCenter);
     lineItem->setBackground(backgroundColor);
     lineItem->setForeground(Qt::white);

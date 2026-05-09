@@ -1,7 +1,10 @@
 #ifndef BKK_API_WORKER_HPP
 #define BKK_API_WORKER_HPP
 
-#include <bkk_api/bkk_api.hpp>
+#include <bkk_uds/bkk_uds_client.h>
+#include <bkk_uds/bkk_api_arrival.h>
+#include <bkk_uds/bkk_stop_utils.h>
+
 #include <rbuflogd/producer.h>
 
 #include <QMutex>
@@ -60,9 +63,6 @@ private:
   void loadStationList(); 
 
   std::vector<std::string> stationIdList;
-
-  // BKK API interface: 
-  std::unique_ptr<BkkApi> api = nullptr;
 
   // fetch results and sync: 
   mutable std::mutex arrivalsMutex;

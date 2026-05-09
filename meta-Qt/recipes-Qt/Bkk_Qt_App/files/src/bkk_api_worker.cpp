@@ -1,12 +1,15 @@
 #include "bkk_api_worker.hpp"
 #include "bkk_elapsed_timer.hpp"
+#include "bkk_uds/bkk_uds_protocol.h"
+#include "cJSON.h"
+#include "rbuflogd/producer.h"
+#include "rbuflogd/pub_common_types.h"
 
 #include <QString>
 #include <array>
 #include <cstring>
 #include <exception>
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include <string>
 
 namespace {
@@ -22,7 +25,6 @@ const char *getStationName(const char *stationId) {
 
   return stationId;
 }
-
 } // namespace
 
 BkkApiWorker::BkkApiWorker(QObject *parent) 
@@ -30,44 +32,25 @@ BkkApiWorker::BkkApiWorker(QObject *parent)
     lastFetchDurationMs(0), 
     errorCode(BkkApiError::None) {
 
+  rbuflogd_producer_open(
+    &loggerProducer, 
+    "BkkApiWorker");
+
+  rbuflogd_producer_log(
+    &loggerProducer, 
+    RBUF_LOG_LEVEL_DEBUG, 
+    "Init", 
+    "Init started"); 
+
   loadStationList();
-  (void) ensureApi();
   arrivals.clear();
 
-  rbuflogd_producer_open(&loggerProducer, "BkkApiWorker");
 }
 
 BkkApiWorker::~BkkApiWorker() {
   rbuflogd_producer_close(&loggerProducer);
 }
 
-bool BkkApiWorker::ensureApi() {
-  if (!api) {
-    try {
-      api = std::make_unique<BkkApi>();
-    } 
-    catch (const std::exception& ex) {
-      rbuflogd_producer_log(
-        &loggerProducer, 
-        RBUF_LOG_LEVEL_ERROR, 
-        "Api Init", 
-        QString("Error initializing BkkApi: %1").arg(ex.what()).toStdString().c_str());
-
-      api.reset();
-      errorCode = BkkApiError::InitializationFailed;
-      return false;
-    }
-  }
-
-  if(!api) {
-    errorCode = BkkApiError::InitializationFailed;
-    return false;
-  }
-  else {
-    errorCode = BkkApiError::None;
-    return true;
-  }
-}
 
 void BkkApiWorker::requestFetch() {
   fetchRequested.store(true);
@@ -90,51 +73,40 @@ void BkkApiWorker::run() {
 
 
 void BkkApiWorker::fetchData() {
-  if (!ensureApi()) {
-    std::lock_guard<std::mutex> lock(arrivalsMutex);
-    errorCode = BkkApiError::ApiUninitialized;
-    lastFetchDurationMs = 0;
-    return;
-  }
-
   BkkElapsedTimer totalTimer;
 
   std::vector<StationArrival> mergedArrivals;
   bool fetchedAny = false;
-
+  bkk_uds_response_t response;
   for (const auto &stationId : stationIdList) {
     const char *stationIdCStr = stationId.c_str();
-    try {
-      BkkElapsedTimer stationTimer;
-      auto stationArrivals = api->get_arrivals_for_station(stationIdCStr);
-      const auto stationMs = stationTimer.elapsedMs();
-      for (auto &arrival : stationArrivals) {
-        StationArrival stationArrival;
-        stationArrival.arrival = std::move(arrival);
-        stationArrival.station_id = stationId;
-        stationArrival.station_name = getStationName(stationIdCStr);
-        mergedArrivals.push_back(std::move(stationArrival));
+
+    const int res = send_bkk_uds_query(stationIdCStr, &response);
+    if(res == 0) {
+      fetchedAny = true;
+      const char *stationName = getStationName(stationIdCStr);
+      for(int i = 0; i < response.number_of_arrivals; i++) {
+        mergedArrivals.push_back(StationArrival{
+          .arrival = response.arrivals[i],
+          .station_id = stationId,
+          .station_name = stationName
+        });
       }
-      
       rbuflogd_producer_log(
         &loggerProducer, 
         RBUF_LOG_LEVEL_INFO, 
         "fetch data", 
-        QString("Fetched station %1 in %2 ms (%3 arrivals)")
-          .arg(stationIdCStr)
-          .arg(stationMs)
-          .arg(static_cast<int>(stationArrivals.size())).toStdString().c_str());
-
-      fetchedAny = true;
+        QString("Fetched %1 arrivals for station_id %2")
+        .arg(response.number_of_arrivals)
+        .arg(stationIdCStr).toStdString().c_str());
     } 
-    catch (const std::exception &ex) {
+    else {
       rbuflogd_producer_log(
         &loggerProducer, 
-        RBUF_LOG_LEVEL_WARNING, 
+        RBUF_LOG_LEVEL_ERROR, 
         "fetch data", 
-        QString("Error fetching arrivals for station %1: %2")
-          .arg(stationIdCStr)
-          .arg(ex.what()).toStdString().c_str());
+        QString("Failed to fetch data for station_id %1")
+        .arg(stationIdCStr).toStdString().c_str());
     }
   }
 
@@ -172,38 +144,50 @@ void BkkApiWorker::loadStationList() {
     return;
   }
 
-  try {
-    nlohmann::json config = nlohmann::json::parse(file);
+  const std::string content(
+    (std::istreambuf_iterator<char>(file)),
+    std::istreambuf_iterator<char>());
 
-    if (config.contains("stations") && config["stations"].is_array()) {
-      stationIdList.clear();
-      for (const auto &station : config["stations"]) {
-        if (station.is_string()) {
-          stationIdList.push_back(station.get<std::string>());
-        }
-      }
-      rbuflogd_producer_log(
-        &loggerProducer, 
-        RBUF_LOG_LEVEL_INFO, 
-        "config", 
-        QString("Loaded %1 station(s) from config")
-          .arg(static_cast<int>(stationIdList.size())).toStdString().c_str());
-    } 
-    else {
-      rbuflogd_producer_log(
-        &loggerProducer, 
-        RBUF_LOG_LEVEL_WARNING, 
-        "config", 
-        "Config file missing 'stations' array");
-    }
-  } 
-  catch (const std::exception &ex) {
+  cJSON *root = cJSON_Parse(content.c_str());
+  if (!root) {
+    const char *errPtr = cJSON_GetErrorPtr();
     rbuflogd_producer_log(
-      &loggerProducer, 
-      RBUF_LOG_LEVEL_ERROR, 
-      "config", 
-      QString("Error parsing config file: %1").arg(ex.what()).toStdString().c_str());
+      &loggerProducer,
+      RBUF_LOG_LEVEL_ERROR,
+      "config",
+      QString("Failed to parse config JSON%1")
+        .arg(errPtr ? QString(": ") + errPtr : QString())
+        .toStdString().c_str());
+    return;
   }
+
+  const cJSON *stations = cJSON_GetObjectItemCaseSensitive(root, "stations");
+  if (!cJSON_IsArray(stations)) {
+    rbuflogd_producer_log(
+      &loggerProducer,
+      RBUF_LOG_LEVEL_WARNING,
+      "config",
+      "Config file missing 'stations' array");
+    cJSON_Delete(root);
+    return;
+  }
+
+  stationIdList.clear();
+  const cJSON *station = nullptr;
+  cJSON_ArrayForEach(station, stations) {
+    if (cJSON_IsString(station) && station->valuestring) {
+      stationIdList.push_back(station->valuestring);
+    }
+  }
+
+  cJSON_Delete(root);
+
+  rbuflogd_producer_log(
+    &loggerProducer,
+    RBUF_LOG_LEVEL_INFO,
+    "config",
+    QString("Loaded %1 station(s) from config")
+      .arg(static_cast<int>(stationIdList.size())).toStdString().c_str());
 }
 
 std::vector<StationArrival> BkkApiWorker::getArrivals() const {
