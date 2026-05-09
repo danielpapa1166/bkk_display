@@ -27,18 +27,15 @@ Provided recipe
 ===============
 
 `bkk-api`:
-- Fetches `git@github.com:danielpapa1166/bkk_api.git` from branch `main`
-- Builds the C++ shared library from `cpp/`
-- Installs `libbkk_api_shared.so` and public headers under `${includedir}/bkk_api`
+- Builds and installs the UDS server binary (`/usr/bin/bkk_uds_server`)
+- Installs and enables `bkk-uds-server.service`
+- Installs the UDS client shared object in package `bkk-api-client`
+- Installs public UDS client headers in `bkk-api-dev`
+- Installs the UDS test application in package `bkk-api-test`
 
 `bkk-api-keyenv`:
 - Installs the API key bootstrap service, helper script, and default key file under `/etc/bkk-api`
 - Enables `bkk-api-keygen.service` to export the key into the runtime environment
-
-`bkk-api-demo`:
-- Builds the demo application binary and its application service
-- Pulls in `bkk-api-keyenv` at runtime so the API key bootstrap service is present
-
 
 Build example
 =============
