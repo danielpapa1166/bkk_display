@@ -13,7 +13,7 @@ find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(CURL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../cJSON ${CMAKE_CURRENT_BINARY_DIR}/cJSON)
+pkg_check_modules(CJSON REQUIRED IMPORTED_TARGET libcjson)
 pkg_check_modules(ADS7846_CONTROLLER REQUIRED IMPORTED_TARGET ads7846-controller)
 
 add_executable(bkk-qt-app
@@ -49,11 +49,7 @@ target_link_libraries(bkk-qt-app PRIVATE
 	CURL::libcurl
 	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
-	cjson
-)
-
-target_include_directories(bkk-qt-app PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/../cJSON
+	PkgConfig::CJSON
 )
 
 install(TARGETS bkk-qt-app RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
