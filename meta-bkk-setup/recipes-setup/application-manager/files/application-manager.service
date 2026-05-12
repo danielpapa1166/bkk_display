@@ -1,0 +1,16 @@
+[Unit]
+Description=BKK Display Application Manager
+DefaultDependencies=no
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=network-pre.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/application_manager /etc/application-manager/configuration.json
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
