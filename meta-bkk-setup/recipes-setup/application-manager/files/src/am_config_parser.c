@@ -113,16 +113,18 @@ static parse_status_t parse_json_config(
     return PARSE_ERR_JSON_INVALID;
   }
 
-  if (!cJSON_IsArray(json)) {
+  // Root is an object with an "apps" array: { "apps": [...] }
+  cJSON * apps_array = cJSON_GetObjectItem(json, "apps");
+  if (!cJSON_IsArray(apps_array)) {
     cJSON_Delete(json);
     return PARSE_ERR_JSON_INVALID;
   }
 
-  int num_apps = cJSON_GetArraySize(json);
+  int num_apps = cJSON_GetArraySize(apps_array);
   app_config_t * apps = (app_config_t *)malloc(sizeof(app_config_t) * num_apps);
 
   for (int i = 0; i < num_apps; i++) {
-    cJSON * element = cJSON_GetArrayItem(json, i);
+    cJSON * element = cJSON_GetArrayItem(apps_array, i);
     parse_status_t status = parse_json_element(element, &apps[i]);
     if (status != PARSE_OK) {
       cJSON_Delete(json);

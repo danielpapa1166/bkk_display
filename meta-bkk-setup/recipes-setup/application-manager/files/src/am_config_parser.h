@@ -1,23 +1,7 @@
 #ifndef AM_CONFIG_PARSER_H
 #define AM_CONFIG_PARSER_H
 
-
-typedef struct {
-  char * name;
-  char * binary;
-  char ** args;
-  int num_args;
-  char ** phases;
-  int num_phases;
-  char * after;
-} app_config_t;
-
-
-typedef struct {
-  app_config_t * apps;
-  int num_apps;
-} app_config_list_t;
-
+#include "am_types.h"
 
 typedef enum {
   PARSE_OK,

@@ -56,6 +56,7 @@ endif()
 add_executable(application_manager
     am_main.c
     am_config_parser.c
+    am_launcher.c
 )
 
 target_include_directories(application_manager PRIVATE

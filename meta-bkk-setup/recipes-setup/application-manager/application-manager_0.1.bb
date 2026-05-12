@@ -7,12 +7,15 @@ LICENSE = "CLOSED"
 inherit cmake systemd
 
 SRC_URI = " \
-    file://src/CMakeLists.txt \
-    file://src/am_main.c \
-    file://src/am_config_parser.c \
-    file://src/am_config_parser.h \
-    file://configuration.json \
-    file://application-manager.service \
+    file://src/CMakeLists.txt               \
+    file://src/am_main.c                    \
+    file://src/am_config_parser.c           \
+    file://src/am_config_parser.h           \
+    file://src/am_launcher.c                \
+    file://src/am_launcher.h                \
+    file://src/am_types.h                   \
+    file://app_cfg/configuration.json       \
+    file://application-manager.service      \
 "
 
 DEPENDS = "rbuflogd cjson"
@@ -33,7 +36,7 @@ SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 do_install:append() {
     install -d ${D}${sysconfdir}/application-manager
-    install -m 0644 ${WORKDIR}/configuration.json \
+    install -m 0644 ${WORKDIR}/app_cfg/configuration.json \
         ${D}${sysconfdir}/application-manager/configuration.json
 
     install -d ${D}${systemd_system_unitdir}
