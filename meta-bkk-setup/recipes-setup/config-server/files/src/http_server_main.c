@@ -43,7 +43,7 @@ static struct sockaddr_in server_addr = { 0 };
 
 int main(int argc, char *argv[])
 {
-
+  init_logger();
 
   server_mode_t mode = SERVER_MODE_WIFI;
   if (parse_args(argc, argv, &mode) != 0) {
