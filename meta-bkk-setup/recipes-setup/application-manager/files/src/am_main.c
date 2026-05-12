@@ -1,8 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <cJSON.h>
+
 #include <rbuflogd/producer.h>
+#include "am_config_parser.h"
+
+
+// add argument parser: config JSON added as cli arg 
+// aplication config struct (mirroring the config JSON)
+// load at startup 
+
+// define config struct !!!!
 
 int main(void)
 {
@@ -16,16 +24,6 @@ int main(void)
     fprintf(stderr, "application_manager: rbuflogd not available, "
       "continuing without structured logging\n");
   }
-
-  // --- cJSON smoke test --- 
-  cJSON *root = cJSON_CreateObject();
-  cJSON_AddStringToObject(root, "status", "ok");
-  cJSON_AddStringToObject(root, "app", "application_manager");
-
-  char *json_str = cJSON_Print(root);
-  printf("application_manager: %s\n", json_str);
-  free(json_str);
-  cJSON_Delete(root);
 
   return 0;
 }

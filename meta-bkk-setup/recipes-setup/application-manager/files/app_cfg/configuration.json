@@ -1,0 +1,11 @@
+{
+  "apps": [
+    {
+      "name": "rbuflogd",
+      "binary": "/usr/bin/rbuflogd",
+      "args": [],
+      "phases": ["PHASE_1", "PHASE_2", "NORMAL"], 
+      "after": ""
+    }
+  ]
+}
