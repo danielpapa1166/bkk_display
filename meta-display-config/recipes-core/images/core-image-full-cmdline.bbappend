@@ -1,4 +1,5 @@
-IMAGE_INSTALL:append = " \
+IMAGE_INSTALL:append = "    \
     ads7846-demo            \
     config-server           \
+    application-manager     \
 "
