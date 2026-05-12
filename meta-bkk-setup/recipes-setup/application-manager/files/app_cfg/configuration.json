@@ -3,9 +3,26 @@
     {
       "name": "rbuflogd",
       "binary": "/usr/bin/rbuflogd",
-      "args": [],
+      "args": [
+        "-p", "/etc/rbuflogd",
+        "-l", "0"
+      ],
       "phases": ["PHASE_1", "PHASE_2", "NORMAL"], 
       "after": ""
+    }, 
+    {
+      "name": "sleep1",
+      "binary": "/bin/sleep",
+      "args": ["1"],
+      "phases": ["PHASE_1", "PHASE_2", "NORMAL"], 
+      "after": "rbuflogd"
+    }, 
+    {
+      "name": "sleep2",
+      "binary": "/bin/sleep",
+      "args": ["3"],
+      "phases": ["PHASE_1", "PHASE_2", "NORMAL"], 
+      "after": "rbuflogd"
     }
   ]
 }
