@@ -28,7 +28,12 @@ static parse_status_t load_config_file(const char * config_path, char ** data_ou
   }
     
   fseek(fid, 0, SEEK_SET);
-  fread(file_contents, 1, file_size, fid);
+  size_t fr_size = fread(file_contents, 1, file_size, fid);
+  if (fr_size != file_size) {
+    free(file_contents);
+    fclose(fid);
+    return PARSE_ERR_CFG_FILE_INVALID;
+  }
 
   file_contents[file_size] = '\0';
   fclose(fid); 
