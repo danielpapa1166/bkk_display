@@ -8,51 +8,10 @@
 #include "am_config_parser.h"
 #include "am_launcher.h"
 #include "am_types.h"
+#include "am_supervisor.h"
 
-// ----------------------------------------------------------------------------
-// Globals used by the SIGCHLD handler
-// ----------------------------------------------------------------------------
 
-static volatile sig_atomic_t g_child_exited = 0;
 
-static void sigchld_handler(int sig) {
-  (void)sig;
-  g_child_exited = 1;
-}
-
-// ----------------------------------------------------------------------------
-// Reap all children that have exited, update app_info status
-// ----------------------------------------------------------------------------
-
-static void reap_children(app_info_t * app_infos, int num_apps,
-                           rbuflogd_producer_t * log) {
-  pid_t pid;
-  int wstatus;
-
-  while ((pid = waitpid(-1, &wstatus, WNOHANG)) > 0) {
-    for (int i = 0; i < num_apps; i++) {
-      if (app_infos[i].pid != pid) {
-        continue;
-      }
-      if (WIFEXITED(wstatus)) {
-        app_infos[i].status = APP_STATUS_EXITED;
-        char msg[128];
-        snprintf(msg, sizeof(msg), "'%s' (pid %d) exited with code %d",
-                 app_infos[i].name, pid, WEXITSTATUS(wstatus));
-        fprintf(stderr, "am: %s\n", msg);
-        rbuflogd_producer_log(log, RBUF_LOG_LEVEL_WARNING, "lifecycle", msg);
-      } else if (WIFSIGNALED(wstatus)) {
-        app_infos[i].status = APP_STATUS_EXITED;
-        char msg[128];
-        snprintf(msg, sizeof(msg), "'%s' (pid %d) killed by signal %d",
-                 app_infos[i].name, pid, WTERMSIG(wstatus));
-        fprintf(stderr, "am: %s\n", msg);
-        rbuflogd_producer_log(log, RBUF_LOG_LEVEL_ERROR, "lifecycle", msg);
-      }
-      break;
-    }
-  }
-}
 
 // ----------------------------------------------------------------------------
 // main
@@ -76,15 +35,6 @@ int main(int argc, char * argv[])
     return 1;
   }
 
-  // --- install SIGCHLD handler before any fork ---
-  struct sigaction sa = {0};
-  sa.sa_handler = sigchld_handler;
-  sa.sa_flags   = SA_RESTART;   // don't interrupt blocking syscalls
-  sigemptyset(&sa.sa_mask);
-  if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-    fprintf(stderr, "am: failed to install SIGCHLD handler\n");
-    return 1;
-  }
 
   // --- launch all apps ---
   app_info_t * app_infos = (app_info_t *)malloc(
@@ -112,14 +62,7 @@ int main(int argc, char * argv[])
                         "application_manager entering event loop");
 
   // --- main event loop: sleep until SIGCHLD wakes us, then reap ---
-  while (1) {
-    pause(); // sleep until any signal arrives
-
-    if (g_child_exited) {
-      g_child_exited = 0;
-      reap_children(app_infos, config_list.num_apps, &log);
-    }
-  }
+  start_supervisor(app_infos, config_list.num_apps);
 
   // unreachable — kept for completeness
   free(app_infos);
