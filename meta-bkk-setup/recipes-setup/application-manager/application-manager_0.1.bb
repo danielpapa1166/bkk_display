@@ -15,6 +15,8 @@ SRC_URI = " \
     file://src/am_launcher.h                \
     file://src/am_supervisor.c              \
     file://src/am_supervisor.h              \
+    file://src/am_logger.c                  \
+    file://src/am_logger.h                  \    
     file://src/am_types.h                   \
     file://app_cfg/configuration.json       \
     file://application-manager.service      \
