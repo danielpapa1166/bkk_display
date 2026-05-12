@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <pthread.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <rbuflogd/producer.h>
 #include "am_config_parser.h"
 #include "am_launcher.h"
 #include "am_types.h"
 #include "am_supervisor.h"
+#include "am_logger.h"
 
-
-
+// mkdir rbuflogd 
 
 // ----------------------------------------------------------------------------
 // main
@@ -53,19 +53,46 @@ int main(int argc, char * argv[])
     }
   }
 
+  usleep(1000000); 
   // --- open logger after launching apps (rbuflogd is a managed child) ---
-  rbuflogd_producer_t log;
-  if (rbuflogd_producer_open(&log, "am") != 0) {
+  if (init_logger() != 0) {
     fprintf(stderr, "am: rbuflogd not yet available, continuing with stderr only\n");
   }
-  rbuflogd_producer_log(&log, RBUF_LOG_LEVEL_INFO, "init",
-                        "application_manager entering event loop");
+  log_info("init", "application_manager entering event loop");
 
-  // --- main event loop: sleep until SIGCHLD wakes us, then reap ---
-  start_supervisor(app_infos, config_list.num_apps);
+
+
+  // block SIGCHLD before creating the supervisor thread so that sigwaitinfo
+  // in the thread is the sole recipient — inherited by all threads spawned after
+  sigset_t sigchld_mask;
+  sigemptyset(&sigchld_mask);
+  sigaddset(&sigchld_mask, SIGCHLD);
+  if (pthread_sigmask(SIG_BLOCK, &sigchld_mask, NULL) != 0) {
+    log_error("main", "failed to block SIGCHLD");
+    return 1;
+  }
+
+  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  supervisor_args_t sup_args = {
+    .app_infos = app_infos,
+    .num_apps = config_list.num_apps,
+    .lock = &lock
+  };
+  pthread_t sup_thread;
+  if (pthread_create(&sup_thread, NULL, supervisor_thread, &sup_args) != 0) {
+    log_error("main", "failed to create supervisor thread");
+    return 1;
+  }
+  else {
+    log_info("main", "supervisor thread started");
+  }
+  
+  while (1) {
+    pause();
+  }
 
   // unreachable — kept for completeness
   free(app_infos);
-  rbuflogd_producer_close(&log);
+  cleanup_logger();
   return 0;
 }

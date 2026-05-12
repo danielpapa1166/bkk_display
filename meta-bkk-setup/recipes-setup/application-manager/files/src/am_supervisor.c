@@ -1,4 +1,5 @@
 #include "am_supervisor.h"
+#include "am_logger.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,14 +29,14 @@ static void reap_children(app_info_t * app_infos, int num_apps) {
         char msg[128];
         snprintf(msg, sizeof(msg), "'%s' (pid %d) exited with code %d",
                  app_infos[i].name, pid, WEXITSTATUS(wstatus));
-        printf("am: %s\n", msg);
+        log_info("supervisor", msg);
       } 
       else if (WIFSIGNALED(wstatus)) {
         app_infos[i].status = APP_STATUS_EXITED;
         char msg[128];
         snprintf(msg, sizeof(msg), "'%s' (pid %d) killed by signal %d",
                  app_infos[i].name, pid, WTERMSIG(wstatus));
-        printf("am: %s\n", msg);
+        log_info("supervisor", msg);
       }
       break;
     }
@@ -43,25 +44,25 @@ static void reap_children(app_info_t * app_infos, int num_apps) {
 }
 
 
-
-int start_supervisor(app_info_t * app_infos, int num_apps) {
-
-  // --- install SIGCHLD handler before any fork ---
-  struct sigaction sa = {0};
-  sa.sa_handler = sigchld_handler;
-  sa.sa_flags   = SA_RESTART;   // don't interrupt blocking syscalls
-  sigemptyset(&sa.sa_mask);
-  if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-    fprintf(stderr, "am: failed to install SIGCHLD handler\n");
-    return 1;
-  }
-
+void * supervisor_thread(void * args) {
+  
+  supervisor_args_t * sup_args = (supervisor_args_t *)args;
+  app_info_t * app_infos = sup_args->app_infos;
+  int num_apps = sup_args->num_apps;
+  pthread_mutex_t * lock = sup_args->lock;
+  
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGCHLD);
+  siginfo_t info;
+        
   while (1) {
-    if (g_child_exited) {
+    if (sigwaitinfo(&mask, &info) > 0) {
+      pthread_mutex_lock(lock);
       reap_children(app_infos, num_apps);
-      g_child_exited = 0;
+      pthread_mutex_unlock(lock);
     }
-    sleep(1);
   }
-  return 0;
+  return NULL;
+
 }
