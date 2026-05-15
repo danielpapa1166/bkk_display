@@ -9,6 +9,7 @@ typedef struct {
   char ** phases;
   int num_phases;
   char * after;
+  char * folder;
 } app_config_t;
 
 

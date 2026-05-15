@@ -104,6 +104,13 @@ static parse_status_t parse_json_element(
     app_out->after = NULL;
   }
 
+  cJSON * folder = cJSON_GetObjectItem(element, "folder");
+  if (cJSON_IsString(folder)) {
+    app_out->folder = strdup(folder->valuestring);
+  } else {
+    app_out->folder = NULL;
+  }
+
   return PARSE_OK;
 }
 

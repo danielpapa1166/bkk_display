@@ -9,6 +9,24 @@
 int launch_app(app_config_t * app, app_info_t * app_info) {
 
   app_info->name = strdup(app->name);
+  if (!app_info->name) {
+    app_info->pid = -1;
+    app_info->status = APP_STATUS_FAILED;
+    return LAUNCH_ERR_INTERNAL;
+  }
+
+  if (app->folder != NULL) {
+    const int mkdir_result = mkdir(app->folder, 0755);
+    if (mkdir_result != 0 && errno != EEXIST) {
+      fprintf(stderr, 
+        "am_launcher: mkdir failed for '%s': %s\n", app->folder, strerror(errno));
+      free(app_info->name);
+      app_info->name = NULL;
+      app_info->pid = -1;
+      app_info->status = APP_STATUS_FAILED;
+      return LAUNCH_ERR_FOLDER;
+    }
+  }
 
   // Build a NULL-terminated argv: [binary, arg0, arg1, ..., NULL]
   // argv[0] must be the program name (POSIX requirement).
