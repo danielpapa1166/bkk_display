@@ -17,6 +17,38 @@ static int check_app_valid_for_boot_mode(boot_mode_t boot_mode, app_config_t * a
   return 0;
 }
 
+static char ** build_argv(app_config_t * app) {
+  int full_argc = 1 + app->num_args + 1; // binary + args + NULL sentinel
+  char ** argv = (char **)malloc(sizeof(char *) * full_argc);
+  if (!argv) {
+    return NULL;
+  }
+  argv[0] = app->binary;
+  for (int i = 0; i < app->num_args; i++) {
+    argv[1 + i] = app->args[i];
+  }
+  argv[full_argc - 1] = NULL;
+  return argv;
+}
+
+
+static char ** build_envp(app_config_t * app) {
+  if (app->num_env == 0) {
+    return NULL;
+  }
+  char ** envp = (char **)malloc(sizeof(char *) * (app->num_env + 1));
+  if (!envp) {
+    return NULL;
+  }
+  for (int i = 0; i < app->num_env; i++) {
+    envp[i] = app->env[i];
+  }
+  envp[app->num_env] = NULL;
+  return envp;
+}
+
+
+
 
 const char * launch_status_to_string(launch_status_t status) {
   switch (status) {
@@ -71,23 +103,36 @@ launch_status_t launch_app(boot_mode_t boot_mode,
 
   // Build a NULL-terminated argv: [binary, arg0, arg1, ..., NULL]
   // argv[0] must be the program name (POSIX requirement).
-  int full_argc = 1 + app->num_args + 1; // binary + args + NULL sentinel
-  char ** argv = (char **)malloc(sizeof(char *) * full_argc);
+  char ** argv = build_argv(app);
   if (!argv) {
+    fprintf(stderr, 
+      "am_launcher: failed to build argv for '%s'\n", app->name);
     app_info->pid = -1;
     app_info->status = APP_STATUS_FAILED;
     return LAUNCH_ERR_INTERNAL;
   }
-  argv[0] = app->binary;
-  for (int i = 0; i < app->num_args; i++) {
-    argv[1 + i] = app->args[i];
+
+  char ** envp = build_envp(app);
+  if (app->num_env > 0 && !envp) {
+    fprintf(stderr, 
+      "am_launcher: failed to build envp for '%s'\n", app->name);
+    free(argv);
+    app_info->pid = -1;
+    app_info->status = APP_STATUS_FAILED;
+    return LAUNCH_ERR_INTERNAL;
   }
-  argv[full_argc - 1] = NULL;
 
   pid_t pid = fork();
   if (pid == 0) {
     // child process
-    execv(app->binary, argv);
+
+    if(app->env != NULL) {
+      // if env vars are provided, use execve which allows passing envp
+      execve(app->binary, argv, envp);
+    }
+    else {
+      execv(app->binary, argv);
+    }
     // execv only returns on failure
     fprintf(stderr, "am_launcher: execv failed for '%s'\n", app->binary);
     _exit(1);
