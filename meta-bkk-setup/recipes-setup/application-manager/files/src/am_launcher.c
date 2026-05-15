@@ -21,17 +21,19 @@ static int check_app_valid_for_boot_mode(boot_mode_t boot_mode, app_config_t * a
 const char * launch_status_to_string(launch_status_t status) {
   switch (status) {
     case LAUNCH_OK:
-      return "LAUNCH_OK";
+      return "OK";
+    case LAUNCH_OK_NOT_LAUNCHED: 
+      return "OK_NOT_LAUNCHED"; 
     case LAUNCH_ERR_INVALID_CONFIG:
-      return "LAUNCH_ERR_INVALID_CONFIG";
+      return "ERR_INVALID_CONFIG";
     case LAUNCH_ERR_INTERNAL:
-      return "LAUNCH_ERR_INTERNAL";
+      return "ERR_INTERNAL";
     case LAUNCH_ERR_FOLDER:
-      return "LAUNCH_ERR_FOLDER";
+      return "ERR_FOLDER";
     case LAUNCH_ERR_FORK:
-      return "LAUNCH_ERR_FORK";
+      return "ERR_FORK";
     case LAUNCH_ERR_EXEC:
-      return "LAUNCH_ERR_EXEC";
+      return "ERR_EXEC";
     default:
       return "UNKNOWN_STATUS";
   }
