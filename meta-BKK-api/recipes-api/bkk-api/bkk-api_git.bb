@@ -70,4 +70,4 @@ RDEPENDS:${PN}-test = "${PN}"
 INSANE_SKIP:${PN} += "dev-so"
 
 SYSTEMD_SERVICE:${PN} = "bkk-uds-server.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"

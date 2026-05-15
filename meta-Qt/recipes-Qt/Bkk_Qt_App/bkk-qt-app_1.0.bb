@@ -17,7 +17,7 @@ RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd"
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 SYSTEMD_SERVICE:${PN} = "bkk-qt-app.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 do_install:append() {
     install -d ${D}${systemd_system_unitdir}

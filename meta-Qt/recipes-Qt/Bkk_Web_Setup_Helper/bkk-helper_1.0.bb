@@ -17,7 +17,7 @@ RDEPENDS:${PN} += "rbuflogd"
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 SYSTEMD_SERVICE:${PN} = "bkk-web-setup-helper.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 do_install:append() {
     install -d ${D}${systemd_system_unitdir}
