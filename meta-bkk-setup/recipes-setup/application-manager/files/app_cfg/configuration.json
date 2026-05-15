@@ -9,28 +9,77 @@
       ],
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
       "after": "", 
-      "folder": "/etc/rbuflogd"
+      "folder": "/etc/rbuflogd", 
+      "environment": []
+    }, 
+    {
+      "name": "bkk-api-server", 
+      "binary": "/usr/bin/bkk_uds_server",
+      "phases": ["API_CONFIG", "NORMAL"],
+      "args": [
+        "-k", "/etc/bkk-api/api-key.txt"
+      ]
+    }, 
+    {
+      "name": "web-setup-helper", 
+      "binary": "/usr/bin/bkk-web-setup-helper",
+      "phases": ["WIFI_CONFIG", "API_CONFIG"], 
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs", 
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ] 
+    }, 
+    {
+      "name": "WPA_SUPPLICANT",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0", 
+        "-c", "/run/wpa_supplicant-ap.conf", 
+        "-B"
+      ], 
+      "phases": ["WIFI_CONFIG"]
+    }, 
+    { 
+      "name": "web-setup-server:wifi_config",
+      "binary": "/usr/bin/config-server",
+      "args": [
+        "--mode=wifi"
+      ], 
+      "phases": ["WIFI_CONFIG"]
+    }, 
+    { 
+      "name": "web-setup-server:api_config",
+      "binary": "/usr/bin/config-server",
+      "args": [
+        "--mode=api"
+      ], 
+      "phases": ["API_CONFIG"]
+    }, 
+    {
+      "name": "BKK Display", 
+      "binary": "/usr/bin/bkk-qt-app",
+      "phases": ["NORMAL"],
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs", 
+        "QT_QPA_EGLFS_HIDECURSOR=1", 
+        "QT_FATAL_WARNINGS=1"
+      ]
     }, 
     {
       "name": "sleep1",
       "binary": "/bin/sleep",
       "args": ["1"],
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "rbuflogd"
-    }, 
-    {
-      "name": "sleep2",
-      "binary": "/bin/sleep",
-      "args": ["3"],
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "rbuflogd"
+      "after": "rbuflogd", 
+      "environment": []
     }, 
     {
       "name": "sleep3",
       "binary": "/bin/sleep",
       "args": ["5"],
       "phases": ["NORMAL"], 
-      "after": "rbuflogd"
+      "after": "rbuflogd", 
+      "environment": []
     }
 
   ]

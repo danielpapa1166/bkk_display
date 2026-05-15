@@ -86,7 +86,9 @@ static parse_status_t parse_json_element(
     &app_out->args, &app_out->num_args);
   
   if(status != PARSE_OK) {
-    return status;
+    // optional field, missing is not an error
+    app_out->num_args = 0;
+    app_out->args = NULL;
   }
 
   status = parse_array_of_strings(
@@ -94,22 +96,35 @@ static parse_status_t parse_json_element(
     &app_out->phases, &app_out->num_phases);
   
   if(status != PARSE_OK) {
+    // mandatory field, must be present and valid
     return status;
   }
 
   cJSON * after = cJSON_GetObjectItem(element, "after");
   if (cJSON_IsString(after)) {
     app_out->after = strdup(after->valuestring);
-  } else {
+  } 
+  else {
     app_out->after = NULL;
   }
 
   cJSON * folder = cJSON_GetObjectItem(element, "folder");
   if (cJSON_IsString(folder)) {
     app_out->folder = strdup(folder->valuestring);
-  } else {
+  } 
+  else {
     app_out->folder = NULL;
   }
+
+  status = parse_array_of_strings(
+    cJSON_GetObjectItem(element, "environment"), 
+    &app_out->env, &app_out->num_env); 
+  if(status != PARSE_OK) { 
+    // optional field, missing is not an error: 
+    app_out->num_env = 0;
+    app_out->env = NULL; 
+  }
+  
 
   return PARSE_OK;
 }
