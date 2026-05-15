@@ -59,6 +59,7 @@ add_executable(application_manager
     am_launcher.c
     am_supervisor.c
     am_logger.c
+    am_boot_mode.c
 )
 
 target_include_directories(application_manager PRIVATE
