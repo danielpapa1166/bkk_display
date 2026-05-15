@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -15,7 +16,7 @@ static void sigchld_handler(int sig) {
 
 
 // Reap all children that have exited, update app_info status
-static void reap_children(app_info_t * app_infos, int num_apps) {
+static void reap_children(app_info_t * app_infos, int num_apps, const siginfo_t * siginfo) {
   pid_t pid;
   int wstatus;
 
@@ -33,10 +34,20 @@ static void reap_children(app_info_t * app_infos, int num_apps) {
       } 
       else if (WIFSIGNALED(wstatus)) {
         app_infos[i].status = APP_STATUS_EXITED;
-        char msg[128];
-        snprintf(msg, sizeof(msg), "'%s' (pid %d) killed by signal %d",
-                 app_infos[i].name, pid, WTERMSIG(wstatus));
+        int sig = WTERMSIG(wstatus);
+        char msg[256];
+        snprintf(msg, sizeof(msg), "'%s' (pid %d) killed by signal %d (%s)%s",
+                 app_infos[i].name, pid, sig, strsignal(sig),
+                 WCOREDUMP(wstatus) ? " [core dumped]" : "");
         log_info("supervisor", msg);
+        // If signal came from outside the process, log the sender
+        if (siginfo && siginfo->si_pid != 0 && siginfo->si_pid != pid) {
+          char sender[128];
+          snprintf(sender, sizeof(sender),
+                   "'%s' signal sender: pid %d uid %d (si_code=%d)",
+                   app_infos[i].name, siginfo->si_pid, siginfo->si_uid, siginfo->si_code);
+          log_info("supervisor", sender);
+        }
       }
       break;
     }
@@ -59,7 +70,7 @@ void * supervisor_thread(void * args) {
   while (1) {
     if (sigwaitinfo(&mask, &info) > 0) {
       pthread_mutex_lock(lock);
-      reap_children(app_infos, num_apps);
+      reap_children(app_infos, num_apps, &info);
       pthread_mutex_unlock(lock);
     }
   }

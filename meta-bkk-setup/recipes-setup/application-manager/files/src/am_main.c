@@ -103,7 +103,13 @@ int main(int argc, char * argv[])
     .lock = &lock
   };
   pthread_t sup_thread;
-  if (pthread_create(&sup_thread, NULL, supervisor_thread, &sup_args) != 0) {
+  const int thread_status = pthread_create(
+    &sup_thread, 
+    NULL, 
+    supervisor_thread, 
+    &sup_args);
+
+  if (thread_status != 0) {
     log_error("main", "failed to create supervisor thread");
     return 1;
   }

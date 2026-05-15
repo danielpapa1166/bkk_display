@@ -4,7 +4,7 @@
 #include <string.h>
 #include "rbuflogd/producer.h"
 
-static const char * logger_name = "AM";
+static const char * logger_name = "   AM   ";
 static rbuflogd_producer_t *global_logger_producer = NULL;
 
 
