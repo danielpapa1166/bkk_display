@@ -11,7 +11,15 @@
 #include "am_supervisor.h"
 #include "am_logger.h"
 
-// mkdir rbuflogd 
+// ----------------------------------------------------------------------------
+// internal helper functions
+// ----------------------------------------------------------------------------
+static const int LOGGER_APP_INDEX = 0;
+static void start_logger_process(
+  app_config_t * logger_cfg, app_info_t * logger_info); 
+static void log_app_launch_status(
+  int app_index, app_config_t * app_cfg, launch_status_t status); 
+
 
 // ----------------------------------------------------------------------------
 // main
@@ -44,21 +52,32 @@ int main(int argc, char * argv[])
     return 1;
   }
 
-  for (int i = 0; i < config_list.num_apps; i++) {
-    const int pid = launch_app(&config_list.apps[i], &app_infos[i]);
-    if (pid < 0) {
-      fprintf(stderr, "am: failed to launch '%s'\n", config_list.apps[i].name);
-    } else {
-      printf("am: launched '%s' with pid %d\n", config_list.apps[i].name, pid);
-    }
+
+  // --- start logger first --- 
+  start_logger_process(
+    &config_list.apps[LOGGER_APP_INDEX], 
+    &app_infos[LOGGER_APP_INDEX]);
+  usleep(1000000); 
+
+  // --- open logger after launching rbuflogd ---
+  if (init_logger() != 0) {
+    fprintf(stderr, 
+      "am: rbuflogd not yet available, continuing with stderr only\n");
+  }
+  log_info("init", 
+    "application_manager starting applications...");
+
+  char log_buf[256];
+
+  for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
+    const launch_status_t status = launch_app(
+      &config_list.apps[i], 
+      &app_infos[i]);
+
+    log_app_launch_status(i, &config_list.apps[i], status);
   }
 
-  usleep(1000000); 
-  // --- open logger after launching apps (rbuflogd is a managed child) ---
-  if (init_logger() != 0) {
-    fprintf(stderr, "am: rbuflogd not yet available, continuing with stderr only\n");
-  }
-  log_info("init", "application_manager entering event loop");
+  
 
 
 
@@ -95,4 +114,40 @@ int main(int argc, char * argv[])
   free(app_infos);
   cleanup_logger();
   return 0;
+}
+
+
+
+static void start_logger_process(
+    app_config_t * logger_cfg, app_info_t * logger_info) {
+    
+  const launch_status_t status = launch_app(logger_cfg, logger_info);
+  if (status != LAUNCH_OK) {
+    fprintf(stderr, "am: failed to launch logger '%s'\n", logger_cfg->name);
+  }
+  else {
+    fprintf(stderr, "am: launched logger '%s' successfully\n", logger_cfg->name);
+  }
+}
+
+
+static void log_app_launch_status(
+    int app_index, app_config_t * app_cfg, launch_status_t status) {
+  if (status != LAUNCH_OK) {
+    snprintf(log_buf, sizeof(log_buf), 
+      "Failed to launch app #%d'%s': %s", 
+      app_index,
+      app_cfg->name, 
+      launch_status_to_string(status));
+
+    log_error("main", log_buf);
+  } 
+  else {
+    snprintf(log_buf, sizeof(log_buf), 
+      "Launched app #%d '%s' successfully", 
+      app_index, 
+      app_cfg->name);
+
+    log_info("main", log_buf);
+  }
 }

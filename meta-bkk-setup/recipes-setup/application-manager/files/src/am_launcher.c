@@ -1,12 +1,33 @@
 #include "am_launcher.h"
 #include "am_types.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
+const char * launch_status_to_string(launch_status_t status) {
+  switch (status) {
+    case LAUNCH_OK:
+      return "LAUNCH_OK";
+    case LAUNCH_ERR_INVALID_CONFIG:
+      return "LAUNCH_ERR_INVALID_CONFIG";
+    case LAUNCH_ERR_INTERNAL:
+      return "LAUNCH_ERR_INTERNAL";
+    case LAUNCH_ERR_FOLDER:
+      return "LAUNCH_ERR_FOLDER";
+    case LAUNCH_ERR_FORK:
+      return "LAUNCH_ERR_FORK";
+    case LAUNCH_ERR_EXEC:
+      return "LAUNCH_ERR_EXEC";
+    default:
+      return "UNKNOWN_STATUS";
+  }
+}
 
-int launch_app(app_config_t * app, app_info_t * app_info) {
+
+launch_status_t launch_app(app_config_t * app, app_info_t * app_info) {
 
   app_info->name = strdup(app->name);
   if (!app_info->name) {
@@ -35,7 +56,7 @@ int launch_app(app_config_t * app, app_info_t * app_info) {
   if (!argv) {
     app_info->pid = -1;
     app_info->status = APP_STATUS_FAILED;
-    return -1;
+    return LAUNCH_ERR_INTERNAL;
   }
   argv[0] = app->binary;
   for (int i = 0; i < app->num_args; i++) {
@@ -58,11 +79,11 @@ int launch_app(app_config_t * app, app_info_t * app_info) {
     // parent process: record child PID
     app_info->pid = pid;
     app_info->status = APP_STATUS_RUNNING;
-    return pid;
+    return LAUNCH_OK;
   }
 
   // fork failed
   app_info->pid = -1;
   app_info->status = APP_STATUS_FAILED;
-  return -1;
+  return LAUNCH_ERR_FORK;
 }

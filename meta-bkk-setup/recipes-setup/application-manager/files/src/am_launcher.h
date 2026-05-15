@@ -3,6 +3,15 @@
 
 #include "am_types.h"
 
-int launch_app(app_config_t * app, app_info_t * app_info);
+typedef enum {
+  LAUNCH_OK,
+  LAUNCH_ERR_INVALID_CONFIG,
+  LAUNCH_ERR_INTERNAL, 
+  LAUNCH_ERR_FOLDER, 
+  LAUNCH_ERR_FORK,
+  LAUNCH_ERR_EXEC
+} launch_status_t;
+const char * launch_status_to_string(launch_status_t status);
+launch_status_t launch_app(app_config_t * app, app_info_t * app_info);
 
 #endif // AM_LAUNCHER_H
