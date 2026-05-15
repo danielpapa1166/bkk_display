@@ -67,8 +67,6 @@ int main(int argc, char * argv[])
   log_info("init", 
     "application_manager starting applications...");
 
-  char log_buf[256];
-
   for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
     const launch_status_t status = launch_app(
       &config_list.apps[i], 
@@ -76,10 +74,6 @@ int main(int argc, char * argv[])
 
     log_app_launch_status(i, &config_list.apps[i], status);
   }
-
-  
-
-
 
   // block SIGCHLD before creating the supervisor thread so that sigwaitinfo
   // in the thread is the sole recipient — inherited by all threads spawned after
