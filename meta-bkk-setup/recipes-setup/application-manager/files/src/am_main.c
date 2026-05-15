@@ -16,7 +16,7 @@
 // internal helper functions
 // ----------------------------------------------------------------------------
 static const int LOGGER_APP_INDEX = 0;
-static void start_logger_process(
+static void start_logger_process(boot_mode_t boot_mode,
   app_config_t * logger_cfg, app_info_t * logger_info); 
 static void log_app_launch_status(
   int app_index, app_config_t * app_cfg, launch_status_t status); 
@@ -55,6 +55,7 @@ int main(int argc, char * argv[])
 
   // --- start logger first --- 
   start_logger_process(
+    boot_mode,
     &config_list.apps[LOGGER_APP_INDEX], 
     &app_infos[LOGGER_APP_INDEX]);
   usleep(1000000); 
@@ -78,6 +79,7 @@ int main(int argc, char * argv[])
 
   for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
     const launch_status_t status = launch_app(
+      boot_mode,
       &config_list.apps[i], 
       &app_infos[i]);
 
@@ -121,10 +123,11 @@ int main(int argc, char * argv[])
 
 
 
-static void start_logger_process(
+static void start_logger_process(boot_mode_t boot_mode,
     app_config_t * logger_cfg, app_info_t * logger_info) {
     
-  const launch_status_t status = launch_app(logger_cfg, logger_info);
+  const launch_status_t status = launch_app(boot_mode, 
+    logger_cfg, logger_info);
   if (status != LAUNCH_OK) {
     fprintf(stderr, "am: failed to launch logger '%s'\n", logger_cfg->name);
   }
@@ -147,6 +150,14 @@ static void log_app_launch_status(
 
     log_error("main", log_buf);
   } 
+  else if(status == LAUNCH_OK_NOT_LAUNCHED) {
+    snprintf(log_buf, sizeof(log_buf), 
+      "App #%d '%s' is not valid for this boot mode, skipping launch", 
+      app_index, 
+      app_cfg->name);
+
+    log_info("main", log_buf);
+  }
   else {
     snprintf(log_buf, sizeof(log_buf), 
       "Launched app #%d '%s' successfully", 

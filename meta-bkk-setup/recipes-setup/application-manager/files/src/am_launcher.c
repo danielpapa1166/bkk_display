@@ -7,6 +7,17 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+
+static int check_app_valid_for_boot_mode(boot_mode_t boot_mode, app_config_t * app) {
+  for (int i = 0; i < app->num_phases; i++) {
+    if (strcmp(app->phases[i], boot_mode_to_string(boot_mode)) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+
 const char * launch_status_to_string(launch_status_t status) {
   switch (status) {
     case LAUNCH_OK:
@@ -27,13 +38,20 @@ const char * launch_status_to_string(launch_status_t status) {
 }
 
 
-launch_status_t launch_app(app_config_t * app, app_info_t * app_info) {
+launch_status_t launch_app(boot_mode_t boot_mode, 
+    app_config_t * app, app_info_t * app_info) {
 
   app_info->name = strdup(app->name);
   if (!app_info->name) {
     app_info->pid = -1;
     app_info->status = APP_STATUS_FAILED;
     return LAUNCH_ERR_INTERNAL;
+  }
+
+  if(!check_app_valid_for_boot_mode(boot_mode, app)) {
+    app_info->pid = -1;
+    app_info->status = APP_STATUS_NOT_IN_THIS_PHASE;
+    return LAUNCH_OK_NOT_LAUNCHED;
   }
 
   if (app->folder != NULL) {
