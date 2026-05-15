@@ -8,7 +8,7 @@ typedef enum {
   BOOT_MODE_NORMAL
 } boot_mode_t;
 
-
+const char * boot_mode_to_string(boot_mode_t mode);
 boot_mode_t determine_boot_mode(void);
 
 #endif // AM_BOOT_MODE_H

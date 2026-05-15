@@ -4,6 +4,21 @@
 static const char * api_config_flag = "/etc/bkk-display-config/api-configured"; 
 static const char * wifi_config_flag = "/etc/bkk-display-config/wifi-configured";
 
+const char * boot_mode_to_string(boot_mode_t mode) {
+  switch (mode) {
+    case BOOT_MODE_WIFI_CONFIG:
+      return "WIFI_CONFIG";
+    case BOOT_MODE_API_CONFIG:
+      return "API_CONFIG";
+    case BOOT_MODE_NORMAL:
+      return "NORMAL";
+    case BOOT_MODE_UNDEFINED:
+      return "UNDEFINED";
+    default:
+      return "UNKNOWN_BOOT_MODE";
+  }
+}
+
 boot_mode_t determine_boot_mode(void) {
   const int api_configured = (
     access(api_config_flag, F_OK) == 0

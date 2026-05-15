@@ -10,6 +10,7 @@
 #include "am_types.h"
 #include "am_supervisor.h"
 #include "am_logger.h"
+#include "am_boot_mode.h"
 
 // ----------------------------------------------------------------------------
 // internal helper functions
@@ -43,15 +44,14 @@ int main(int argc, char * argv[])
     return 1;
   }
 
+  const boot_mode_t boot_mode = determine_boot_mode();
 
-  // --- launch all apps ---
   app_info_t * app_infos = (app_info_t *)malloc(
       sizeof(app_info_t) * config_list.num_apps);
   if (app_infos == NULL) {
     fprintf(stderr, "am: failed to allocate app_info array\n");
     return 1;
   }
-
 
   // --- start logger first --- 
   start_logger_process(
@@ -64,8 +64,17 @@ int main(int argc, char * argv[])
     fprintf(stderr, 
       "am: rbuflogd not yet available, continuing with stderr only\n");
   }
-  log_info("init", 
-    "application_manager starting applications...");
+
+  char log_buf[256];
+  if(boot_mode != BOOT_MODE_UNDEFINED) {
+    snprintf(log_buf, sizeof(log_buf), 
+      "Starting application in boot mode %s", 
+      boot_mode_to_string(boot_mode));
+    log_info("main", log_buf);
+  }
+  else {
+    log_error("main", "Failed to determine boot mode");
+  }
 
   for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
     const launch_status_t status = launch_app(
