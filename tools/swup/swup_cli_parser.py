@@ -55,4 +55,15 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 	add_target_args(reset_cfg_parser)
 	reset_cfg_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
 
+	deploy_am_parser = subparsers.add_parser(
+		"deploy_AM",
+		help="Build and deploy the application-manager binary to the target.",
+	)
+	add_target_args(deploy_am_parser)
+	deploy_am_parser.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+	deploy_am_parser.add_argument(
+		"--am-binary",
+		help="Explicit local path to the compiled application-manager binary. Auto-detected when omitted.",
+	)
+
 	return parser.parse_args(argv)

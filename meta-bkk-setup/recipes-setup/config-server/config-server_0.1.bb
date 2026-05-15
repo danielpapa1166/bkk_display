@@ -63,7 +63,7 @@ SYSTEMD_SERVICE:${PN} = " \
     bkk-setup-check-wifi.service \
     bkk-setup-api.service \
 "
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 do_install:append() {
     # web assets

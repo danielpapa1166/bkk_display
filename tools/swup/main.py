@@ -27,6 +27,14 @@ HTTP_TEST_SERVER_REMOTE_BINARY = "/usr/bin/config-server"
 HTTP_TEST_SERVER_REMOTE_WWW_DIR = "/usr/share/config-server/www"
 HTTP_TEST_SERVER_WWW_SOURCE_DIR = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/config-server/files/www")
 
+# application-manager
+AM_BUILD_ROOT = Path("/data/projects/bkk_display/build-rpi/tmp/work")
+AM_REMOTE_BINARY = "/usr/bin/application_manager"
+AM_SERVICE = "application-manager.service"
+AM_LOCAL_CFG = Path("/data/projects/bkk_display/meta-bkk-setup/recipes-setup/application-manager/files/app_cfg/configuration.json")
+AM_REMOTE_CFG_DIR = "/etc/application-manager"
+AM_REMOTE_CFG = "/etc/application-manager/configuration.json"
+
 # def build(target: TargetConfig, dry_run: bool, skip_restart: bool) -> None:
 
 
@@ -205,6 +213,71 @@ def deploy_http_test_server_www(target: TargetConfig, dry_run: bool, www_files: 
 	ssh_run(target, " && ".join(install_steps), dry_run=dry_run)
 
 
+def resolve_am_binary(explicit_path: str | None) -> Path:
+	if explicit_path:
+		candidate = Path(explicit_path).expanduser().resolve()
+		if not candidate.exists():
+			raise SwupError(f"application-manager binary not found: {candidate}")
+		return candidate
+
+	try:
+		am_pkg_dirs = list(AM_BUILD_ROOT.glob("*/application-manager"))
+	except Exception as e:
+		raise SwupError(f"Error searching build directory: {e}")
+
+	if not am_pkg_dirs:
+		raise SwupError(
+			"No application-manager package directory found under build output. "
+			"Build it first with bitbake application-manager or pass --am-binary <path>."
+		)
+
+	matches = []
+	for pkg_dir in am_pkg_dirs:
+		try:
+			binaries = sorted(pkg_dir.glob("*/package/usr/bin/application_manager"))
+			matches.extend(binaries)
+		except Exception:
+			continue
+
+	if not matches:
+		raise SwupError(
+			"No compiled application-manager binary found under build output. "
+			"Build it first with bitbake application-manager or pass --am-binary <path>."
+		)
+
+	if len(matches) > 1:
+		raise SwupError(
+			"Multiple application-manager binaries found. Pass --am-binary to choose one explicitly: "
+			+ ", ".join(str(p) for p in matches)
+		)
+
+	return matches[0].resolve()
+
+
+def deploy_AM(target: TargetConfig, dry_run: bool, explicit_binary_path: str | None) -> None:
+	am_binary = resolve_am_binary(explicit_binary_path)
+	am_target = replace(
+		target,
+		local_binary=am_binary,
+		remote_binary=AM_REMOTE_BINARY,
+		service_name=AM_SERVICE,
+	)
+	deploy(am_target, dry_run=dry_run, skip_restart=False)
+
+	if not AM_LOCAL_CFG.exists():
+		raise SwupError(f"application-manager config not found: {AM_LOCAL_CFG}")
+	print(f"Uploading {AM_LOCAL_CFG} to {AM_REMOTE_CFG}")
+	scp_files_to_target(target, [str(AM_LOCAL_CFG)], "/tmp", dry_run=dry_run)
+	ssh_run(
+		target,
+		f"sudo mkdir -p {shlex.quote(AM_REMOTE_CFG_DIR)} && "
+		f"sudo install -m 0644 /tmp/{shlex.quote(AM_LOCAL_CFG.name)} {shlex.quote(AM_REMOTE_CFG)} && "
+		f"rm -f /tmp/{shlex.quote(AM_LOCAL_CFG.name)}",
+		dry_run=dry_run,
+	)
+	print("Config upload finished.")
+
+
 def deploy_http_test_server(target: TargetConfig, dry_run: bool, explicit_binary_path: str | None) -> None:
 	http_binary = resolve_http_test_server_binary(explicit_binary_path)
 	www_files = resolve_http_test_server_www_files(http_binary)
@@ -239,6 +312,12 @@ def main(argv: Sequence[str]) -> int:
 				target,
 				dry_run=args.dry_run,
 				explicit_binary_path=args.http_binary,
+			)
+		elif args.command == "deploy_AM":
+			deploy_AM(
+				target,
+				dry_run=args.dry_run,
+				explicit_binary_path=args.am_binary,
 			)
 		else:
 			raise SwupError(f"Unsupported command: {args.command}")

@@ -34,6 +34,8 @@ typedef struct {
   int num_phases;
   char * after;
   char * folder;
+  char ** env; 
+  int num_env; 
 } app_config_t;
 
 
