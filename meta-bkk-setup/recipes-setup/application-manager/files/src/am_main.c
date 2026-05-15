@@ -133,6 +133,8 @@ static void start_logger_process(
 
 static void log_app_launch_status(
     int app_index, app_config_t * app_cfg, launch_status_t status) {
+
+  char log_buf[256];
   if (status != LAUNCH_OK) {
     snprintf(log_buf, sizeof(log_buf), 
       "Failed to launch app #%d'%s': %s", 
