@@ -1,5 +1,6 @@
 #include "am_supervisor.h"
 #include "am_logger.h"
+#include "am_types.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,13 +28,15 @@ static void reap_children(app_info_t * app_infos, int num_apps, const siginfo_t 
       }
       if (WIFEXITED(wstatus)) {
         app_infos[i].status = APP_STATUS_EXITED;
+        app_infos[i].exit_code = WEXITSTATUS(wstatus);
         char msg[128];
         snprintf(msg, sizeof(msg), "'%s' (pid %d) exited with code %d",
-                 app_infos[i].name, pid, WEXITSTATUS(wstatus));
+                 app_infos[i].name, pid, app_infos[i].exit_code);
         log_info("supervisor", msg);
       } 
       else if (WIFSIGNALED(wstatus)) {
-        app_infos[i].status = APP_STATUS_EXITED;
+        app_infos[i].status = APP_STATUS_KILLED;
+        app_infos[i].exit_code = -1; // Indicate killed by signal
         int sig = WTERMSIG(wstatus);
         char msg[256];
         snprintf(msg, sizeof(msg), "'%s' (pid %d) killed by signal %d (%s)%s",

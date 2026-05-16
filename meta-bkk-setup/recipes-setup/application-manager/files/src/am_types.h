@@ -50,6 +50,7 @@ typedef enum {
   APP_STATUS_NOT_IN_THIS_PHASE,
   APP_STATUS_RUNNING,
   APP_STATUS_EXITED, 
+  APP_STATUS_KILLED, 
   APP_STATUS_FAILED
 } app_status_enum_t;
 
@@ -57,6 +58,7 @@ typedef struct {
   char * name; 
   int pid; 
   app_status_enum_t status;
+  int exit_code;
 } app_info_t;
 
 #endif // AM_TYPES_H
