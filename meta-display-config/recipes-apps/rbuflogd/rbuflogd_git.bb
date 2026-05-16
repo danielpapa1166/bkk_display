@@ -8,7 +8,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}:"
 SRC_URI = "git://${TOPDIR}/../rbuflogd;protocol=file;nobranch=1 \
            file://rbuflogd.service \
            "
-SRCREV = "9793daba78f2e22200eecc3ce8527b780c26178e"
+SRCREV = "379f9d8e3988fb5bc1e91d196f041f32b4820525"
 
 PV = "1.0+git${SRCPV}"
 
@@ -37,4 +37,4 @@ FILES:${PN} += "${systemd_system_unitdir}/rbuflogd.service"
 INSANE_SKIP:${PN} += "dev-so"
 
 SYSTEMD_SERVICE:${PN} = "rbuflogd.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
