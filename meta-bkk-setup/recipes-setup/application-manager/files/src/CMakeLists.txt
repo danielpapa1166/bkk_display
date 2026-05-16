@@ -79,6 +79,11 @@ install(TARGETS application_manager
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+# ---------------------------------------------------------------------------
+# Sub-components
+# ---------------------------------------------------------------------------
+add_subdirectory(wpa_helper)
+
 if(TARGET cjson)
     get_target_property(CJSON_TARGET_IMPORTED cjson IMPORTED)
     if(NOT CJSON_TARGET_IMPORTED)

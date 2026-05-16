@@ -22,6 +22,8 @@ SRC_URI = " \
     file://src/am_types.h                   \
     file://app_cfg/configuration.json       \
     file://application-manager.service      \
+    file://src/wpa_helper/CMakeLists.txt    \
+    file://src/wpa_helper/wpa_helper_main.c \
 "
 
 DEPENDS = "rbuflogd cjson"
@@ -33,6 +35,7 @@ S = "${WORKDIR}/src"
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 FILES:${PN} += "${bindir}/application_manager"
+FILES:${PN} += "${bindir}/wpa_helper"
 # configuration.json is installed to /etc/application-manager/configuration.json
 FILES:${PN} += "${sysconfdir}/application-manager/configuration.json"
 FILES:${PN} += "${systemd_system_unitdir}/application-manager.service"

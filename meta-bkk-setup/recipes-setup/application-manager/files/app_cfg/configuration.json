@@ -13,6 +13,13 @@
       "environment": []
     }, 
     {
+      "name": "wpa_helper", 
+      "binary": "/usr/bin/wpa_helper",
+      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
+      "after": "rbuflogd", 
+      "environment": []
+    }, 
+    {
       "name": "bkk-api-server", 
       "binary": "/usr/bin/bkk_uds_server",
       "phases": ["API_CONFIG", "NORMAL"],
