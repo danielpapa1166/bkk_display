@@ -55,6 +55,13 @@ static wpa_config_t wpa_ap_config = {
   .network_cfg_str      = NETWORK_CONFIG_AP
 };
 
-static wpa_config_t wpa_wifi_config; 
+static wpa_config_t wpa_wifi_config = {
+  .wpa_cfg_path         = NULL,
+  .network_cfg_path     = NULL,
+  .wpa_cfg_name         = NULL,
+  .network_cfg_name     = NULL,
+  .wpa_cfg_str          = NULL, 
+  .network_cfg_str      = NULL  // to be filled in from API
+};
 
 #endif /* WPA_CONFIG_H */
