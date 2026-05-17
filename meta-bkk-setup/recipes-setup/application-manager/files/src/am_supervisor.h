@@ -5,8 +5,7 @@
 #include <pthread.h>
 
 typedef struct {
-  app_info_t * app_infos; 
-  int num_apps;
+  app_info_list_t * app_infos; 
   pthread_mutex_t * lock;
 } supervisor_args_t;
 

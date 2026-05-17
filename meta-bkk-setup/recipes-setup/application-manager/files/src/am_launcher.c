@@ -73,18 +73,20 @@ const char * launch_status_to_string(launch_status_t status) {
 
 
 launch_status_t launch_app(boot_mode_t boot_mode, 
-    app_config_t * app, app_info_t * app_info) {
+    app_config_t * app, app_info_list_t * app_info) {
 
-  app_info->name = strdup(app->name);
-  if (!app_info->name) {
-    app_info->pid = -1;
-    app_info->status = APP_STATUS_FAILED;
+  // todo: check app info for dependencies of the given app 
+
+  app->info->name = strdup(app->name);
+  if (!app->info->name) {
+    app->info->pid = -1;
+    app->info->status = APP_STATUS_FAILED;
     return LAUNCH_ERR_INTERNAL;
   }
 
   if(!check_app_valid_for_boot_mode(boot_mode, app)) {
-    app_info->pid = -1;
-    app_info->status = APP_STATUS_NOT_IN_THIS_PHASE;
+    app->info->pid = -1;
+    app->info->status = APP_STATUS_NOT_IN_THIS_PHASE;
     return LAUNCH_OK_NOT_LAUNCHED;
   }
 
@@ -93,10 +95,10 @@ launch_status_t launch_app(boot_mode_t boot_mode,
     if (mkdir_result != 0 && errno != EEXIST) {
       fprintf(stderr, 
         "am_launcher: mkdir failed for '%s': %s\n", app->folder, strerror(errno));
-      free(app_info->name);
-      app_info->name = NULL;
-      app_info->pid = -1;
-      app_info->status = APP_STATUS_FAILED;
+      free(app->info->name);
+      app->info->name = NULL;
+      app->info->pid = -1;
+      app->info->status = APP_STATUS_FAILED;
       return LAUNCH_ERR_FOLDER;
     }
   }
@@ -107,8 +109,8 @@ launch_status_t launch_app(boot_mode_t boot_mode,
   if (!argv) {
     fprintf(stderr, 
       "am_launcher: failed to build argv for '%s'\n", app->name);
-    app_info->pid = -1;
-    app_info->status = APP_STATUS_FAILED;
+    app->info->pid = -1;
+    app->info->status = APP_STATUS_FAILED;
     return LAUNCH_ERR_INTERNAL;
   }
 
@@ -117,8 +119,8 @@ launch_status_t launch_app(boot_mode_t boot_mode,
     fprintf(stderr, 
       "am_launcher: failed to build envp for '%s'\n", app->name);
     free(argv);
-    app_info->pid = -1;
-    app_info->status = APP_STATUS_FAILED;
+    app->info->pid = -1;
+    app->info->status = APP_STATUS_FAILED;
     return LAUNCH_ERR_INTERNAL;
   }
 
@@ -142,13 +144,13 @@ launch_status_t launch_app(boot_mode_t boot_mode,
 
   if (pid > 0) {
     // parent process: record child PID
-    app_info->pid = pid;
-    app_info->status = APP_STATUS_RUNNING;
+    app->info->pid = pid;
+    app->info->status = APP_STATUS_RUNNING;
     return LAUNCH_OK;
   }
 
   // fork failed
-  app_info->pid = -1;
-  app_info->status = APP_STATUS_FAILED;
+  app->info->pid = -1;
+  app->info->status = APP_STATUS_FAILED;
   return LAUNCH_ERR_FORK;
 }

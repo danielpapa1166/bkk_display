@@ -14,6 +14,6 @@ typedef enum {
 } launch_status_t;
 const char * launch_status_to_string(launch_status_t status);
 launch_status_t launch_app(boot_mode_t boot_mode, 
-  app_config_t * app, app_info_t * app_info);
+  app_config_t * app, app_info_list_t * app_info);
 
 #endif // AM_LAUNCHER_H

@@ -18,7 +18,7 @@
 // ----------------------------------------------------------------------------
 static const int LOGGER_APP_INDEX = 0;
 static void start_logger_process(boot_mode_t boot_mode,
-  app_config_t * logger_cfg, app_info_t * logger_info); 
+  app_config_t * logger_cfg, app_info_list_t * app_info_list); 
 static void log_app_launch_status(
   int app_index, app_config_t * app_cfg, launch_status_t status); 
 
@@ -47,18 +47,23 @@ int main(int argc, char * argv[])
 
   const boot_mode_t boot_mode = determine_boot_mode();
 
-  app_info_t * app_infos = (app_info_t *)malloc(
-      sizeof(app_info_t) * config_list.num_apps);
-  if (app_infos == NULL) {
+  app_info_list_t app_info_list = {
+    .app = (app_info_t *)malloc(
+      sizeof(app_info_t) * config_list.num_apps),
+    .num_apps = config_list.num_apps
+  };
+
+  if (app_info_list.app == NULL) {
     fprintf(stderr, "am: failed to allocate app_info array\n");
     return 1;
   }
 
   // --- start logger first --- 
+  config_list.apps[LOGGER_APP_INDEX].info = &app_info_list.app[LOGGER_APP_INDEX];
   start_logger_process(
     boot_mode,
     &config_list.apps[LOGGER_APP_INDEX], 
-    &app_infos[LOGGER_APP_INDEX]);
+    &app_info_list);
   usleep(1000000); 
 
   // --- open logger after launching rbuflogd ---
@@ -79,10 +84,13 @@ int main(int argc, char * argv[])
   }
 
   for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
+    // reference to app info struct for monitoring 
+    config_list.apps[i].info = &app_info_list.app[i];
+
     const launch_status_t status = launch_app(
       boot_mode,
       &config_list.apps[i], 
-      &app_infos[i]);
+      &app_info_list);
 
     log_app_launch_status(i, &config_list.apps[i], status);
   }
@@ -99,8 +107,7 @@ int main(int argc, char * argv[])
 
   pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   supervisor_args_t sup_args = {
-    .app_infos = app_infos,
-    .num_apps = config_list.num_apps,
+    .app_infos = &app_info_list,
     .lock = &lock
   };
   pthread_t sup_thread;
@@ -123,7 +130,7 @@ int main(int argc, char * argv[])
   }
 
   // unreachable — kept for completeness
-  free(app_infos);
+  free(app_info_list.app);
   rbuflogd_logger_close();
   return 0;
 }
@@ -131,10 +138,10 @@ int main(int argc, char * argv[])
 
 
 static void start_logger_process(boot_mode_t boot_mode,
-    app_config_t * logger_cfg, app_info_t * logger_info) {
+    app_config_t * logger_cfg, app_info_list_t * app_info) {
     
   const launch_status_t status = launch_app(boot_mode, 
-    logger_cfg, logger_info);
+    logger_cfg, app_info);
   if (status != LAUNCH_OK) {
     fprintf(stderr, "am: failed to launch logger '%s'\n", logger_cfg->name);
   }
