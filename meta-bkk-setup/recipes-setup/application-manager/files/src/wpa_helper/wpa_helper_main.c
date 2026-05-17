@@ -70,7 +70,8 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
 
   /* First argument is mandatory: boot_mode=<value> */
   char *mode_val = NULL;
-  if (!match_key(argv[1], "boot_mode", (const char **)&mode_val)) {
+  if (!match_key(argv[1], "boot_mode", 
+      (const char **)&mode_val)) {
     return boot_mode;
   }
 
@@ -132,17 +133,20 @@ static int ensure_dir(const char *path) {
     if (S_ISDIR(st.st_mode)) {
       return 0;
     }
-    fprintf(stderr, "prepare_config_folder: path exists but is not a directory: %s\n", path);
+    fprintf(stderr, 
+      "prepare_config_folder: path exists but is not a directory: %s\n", path);
     return -1;
   }
 
   if (errno != ENOENT) {
-    fprintf(stderr, "prepare_config_folder: stat failed for %s: %m\n", path);
+    fprintf(stderr, 
+      "prepare_config_folder: stat failed for %s: %m\n", path);
     return -1;
   }
 
   if (mkdir(path, 0755) != 0 && errno != EEXIST) {
-    fprintf(stderr, "prepare_config_folder: failed to create directory %s: %m\n", path);
+    fprintf(stderr, 
+      "prepare_config_folder: failed to create directory %s: %m\n", path);
     return -1;
   }
 
@@ -162,10 +166,12 @@ static int prepare_config_folder(const wpa_config_t * const config) {
 
 
 static int write_wpa_config(const wpa_config_t * const config) {
-  if (write_file(config->wpa_cfg_path, config->wpa_cfg_name, config->wpa_cfg_str) != 0) {
+  if (write_file(config->wpa_cfg_path, 
+      config->wpa_cfg_name, config->wpa_cfg_str) != 0) {
     return -1;
   }
-  if (write_file(config->network_cfg_path, config->network_cfg_name, config->network_cfg_str) != 0) {
+  if (write_file(config->network_cfg_path, 
+      config->network_cfg_name, config->network_cfg_str) != 0) {
     return -1;
   }
   return 0;
