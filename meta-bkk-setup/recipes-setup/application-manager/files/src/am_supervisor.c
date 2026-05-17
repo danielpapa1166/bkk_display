@@ -61,9 +61,9 @@ static void reap_children(app_info_t * app_infos, int num_apps, const siginfo_t 
 void * supervisor_thread(void * args) {
   
   supervisor_args_t * sup_args = (supervisor_args_t *)args;
-  app_info_t * app_infos = sup_args->app_infos;
-  int num_apps = sup_args->num_apps;
-  pthread_mutex_t * lock = sup_args->lock;
+  app_info_t * app_infos  = sup_args->app_infos->app;
+  int num_apps            = sup_args->app_infos->num_apps;
+  pthread_mutex_t * lock  = sup_args->lock;
   
   sigset_t mask;
   sigemptyset(&mask);
