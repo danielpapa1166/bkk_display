@@ -24,6 +24,7 @@ SRC_URI = " \
     file://application-manager.service      \
     file://src/wpa_helper/CMakeLists.txt    \
     file://src/wpa_helper/wpa_helper_main.c \
+    file://src/wpa_helper/wpa_config.h      \
 "
 
 DEPENDS = "rbuflogd cjson"
