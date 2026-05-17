@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <limits.h>
 #include "wpa_config.h"
 
 // ----------------------------------------------------------------------------
@@ -23,6 +24,7 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config);
 static int ensure_dir(const char *path); 
 static int match_key(const char *arg, const char *key, const char **value);
 static int prepare_config_folder(const wpa_config_t * const config);
+static int write_file(const char *path, const char *name, const char *content);
 static int write_wpa_config(const wpa_config_t * const config);
 
 
@@ -146,5 +148,43 @@ static int prepare_config_folder(const wpa_config_t * const config) {
 
 
 static int write_wpa_config(const wpa_config_t * const config) {
+  if (write_file(config->wpa_cfg_path, config->wpa_cfg_name, config->wpa_cfg_str) != 0) {
+    return -1;
+  }
+  if (write_file(config->network_cfg_path, config->network_cfg_name, config->network_cfg_str) != 0) {
+    return -1;
+  }
+  return 0;
+}
 
+
+static int write_file(const char *path, const char *name, const char *content) {
+  if (path == NULL || name == NULL || content == NULL) {
+    fprintf(stderr, "write_file: NULL argument\n");
+    return -1;
+  }
+
+  char full_path[PATH_MAX];
+  int n = snprintf(full_path, sizeof(full_path), "%s/%s", path, name);
+  if (n < 0 || (size_t)n >= sizeof(full_path)) {
+    fprintf(stderr, "write_file: path too long: %s/%s\n", path, name);
+    return -1;
+  }
+
+  FILE *f = fopen(full_path, "w");
+  if (f == NULL) {
+    fprintf(stderr, "write_file: failed to open %s: %m\n", full_path);
+    return -1;
+  }
+
+  const size_t content_len = strlen(content);
+  const size_t written = fwrite(content, 1, content_len, f);
+  fclose(f);
+
+  if (written != content_len) {
+    fprintf(stderr, "write_file: incomplete write to %s\n", full_path);
+    return -1;
+  }
+
+  return 0;
 }
