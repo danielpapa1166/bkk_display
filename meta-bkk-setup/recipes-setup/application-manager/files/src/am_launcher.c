@@ -157,6 +157,10 @@ const char * launch_status_to_string(launch_status_t status) {
 launch_status_t launch_app(boot_mode_t boot_mode, 
     app_config_t * app, app_info_list_t * app_info) {
 
+  if(app->info->status != APP_STATUS_NOT_STARTED) {
+    return LAUNCH_OK_NOT_LAUNCHED; 
+  }
+
   const prereq_status_t prereq_status = check_prerequisites(app, app_info);
   if(prereq_status != PREREQ_OK) {
     if(prereq_status == PREREQ_INVALID_CONFIG) {

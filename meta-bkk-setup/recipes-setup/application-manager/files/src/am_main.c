@@ -83,20 +83,8 @@ int main(int argc, char * argv[])
     log_error("main", "Failed to determine boot mode");
   }
 
-  for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
-    // reference to app info struct for monitoring 
-    config_list.apps[i].info = &app_info_list.app[i];
-
-    const launch_status_t status = launch_app(
-      boot_mode,
-      &config_list.apps[i], 
-      &app_info_list);
-
-    log_app_launch_status(i, &config_list.apps[i], status);
-  }
-
-  // block SIGCHLD before creating the supervisor thread so that sigwaitinfo
-  // in the thread is the sole recipient — inherited by all threads spawned after
+  // --- block SIGCHLD before forking any children so the supervisor thread
+  //     is the sole recipient via sigwaitinfo — must happen before fork calls
   sigset_t sigchld_mask;
   sigemptyset(&sigchld_mask);
   sigaddset(&sigchld_mask, SIGCHLD);
@@ -124,9 +112,35 @@ int main(int argc, char * argv[])
   else {
     log_info("main", "supervisor thread started");
   }
-  
+
+  for (int i = LOGGER_APP_INDEX + 1; i < config_list.num_apps; i++) {
+    // reference to app info struct for monitoring 
+    config_list.apps[i].info = &app_info_list.app[i];
+    app_info_list.app[i].status = APP_STATUS_NOT_STARTED;
+
+    const launch_status_t status = launch_app(
+      boot_mode,
+      &config_list.apps[i], 
+      &app_info_list);
+
+    log_app_launch_status(i, &config_list.apps[i], status);
+  }
+
+  int cnt = 0; 
   while (1) {
-    pause();
+
+    const int app_idx = cnt % config_list.num_apps;
+    const launch_status_t status = launch_app(
+      boot_mode,
+      &config_list.apps[app_idx], 
+      &app_info_list);
+
+    log_app_launch_status(
+      app_idx, 
+      &config_list.apps[app_idx], status);
+
+    usleep(1000000);
+    cnt++;
   }
 
   // unreachable — kept for completeness
@@ -164,12 +178,8 @@ static void log_app_launch_status(
     log_info("main", log_buf);
   } 
   else if(status == LAUNCH_OK_NOT_LAUNCHED) {
-    snprintf(log_buf, sizeof(log_buf), 
-      "App #%d '%s' is not valid for this boot mode, skipping launch", 
-      app_index, 
-      app_cfg->name);
-
-    log_info("main", log_buf);
+    (void) status; 
+    // do nothing 
   }
   else if(status == LAUNCH_OK_DELAYED_LAUNCH) {
     snprintf(log_buf, sizeof(log_buf), 
