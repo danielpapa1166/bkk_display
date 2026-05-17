@@ -155,14 +155,13 @@ static void log_app_launch_status(
     int app_index, app_config_t * app_cfg, launch_status_t status) {
 
   char log_buf[256];
-  if (status != LAUNCH_OK) {
+  if (status == LAUNCH_OK) {
     snprintf(log_buf, sizeof(log_buf), 
-      "Failed to launch app #%d'%s': %s", 
-      app_index,
-      app_cfg->name, 
-      launch_status_to_string(status));
+      "Launched app #%d '%s' successfully", 
+      app_index, 
+      app_cfg->name);
 
-    log_error("main", log_buf);
+    log_info("main", log_buf);
   } 
   else if(status == LAUNCH_OK_NOT_LAUNCHED) {
     snprintf(log_buf, sizeof(log_buf), 
@@ -172,12 +171,22 @@ static void log_app_launch_status(
 
     log_info("main", log_buf);
   }
-  else {
+  else if(status == LAUNCH_OK_DELAYED_LAUNCH) {
     snprintf(log_buf, sizeof(log_buf), 
-      "Launched app #%d '%s' successfully", 
+      "App #%d '%s' prerequisites not met, will attempt delayed launch", 
       app_index, 
       app_cfg->name);
 
     log_info("main", log_buf);
+  }
+  else {
+    snprintf(log_buf, sizeof(log_buf), 
+      "Failed to launch app #%d'%s': %s", 
+      app_index,
+      app_cfg->name, 
+      launch_status_to_string(status));
+
+    log_error("main", log_buf);
+
   }
 }

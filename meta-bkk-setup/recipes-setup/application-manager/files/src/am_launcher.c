@@ -1,5 +1,6 @@
 #include "am_launcher.h"
 #include "am_types.h"
+#include "rbuflogd/logger.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+char msg_buf[256];
 
 static int check_app_valid_for_boot_mode(boot_mode_t boot_mode, app_config_t * app) {
   for (int i = 0; i < app->num_phases; i++) {
@@ -48,6 +50,86 @@ static char ** build_envp(app_config_t * app) {
 }
 
 
+typedef enum {
+  PREREQ_OK,
+  PREREQ_STILL_RUNNING,
+  PREREQ_FAILED, 
+  PREREQ_INVALID_CONFIG,
+  PREREQ_OTHER_ERROR
+} prereq_status_t;
+
+static prereq_status_t check_prerequisites(
+    app_config_t * app, app_info_list_t * app_info) {
+
+  const char * wait_for = app->after; 
+
+  if (wait_for == NULL) {
+    // no prerequisites
+    return PREREQ_OK;
+  }
+
+  const int prereq_app_id = find_app_by_name(
+    app_info->app, app_info->num_apps, wait_for);
+
+  if (prereq_app_id < 0) {
+    snprintf(
+      msg_buf, 
+      sizeof(msg_buf), 
+      "check_prerequisites: app '%s' "
+      "depends on unknown app '%s', or not yet started", 
+      app->name, wait_for);
+    log_warning("prereq check", msg_buf);
+    return PREREQ_INVALID_CONFIG;
+  }
+
+  app_info_t * prereq_app_info = &app_info->app[prereq_app_id];
+
+  if(prereq_app_info->status == APP_STATUS_EXITED) {
+    if(prereq_app_info->exit_code == 0) {
+      return PREREQ_OK;
+    }
+    else {
+      snprintf(
+        msg_buf, 
+        sizeof(msg_buf), 
+        "check_prerequisites: app '%s' "
+        "depends on app '%s' which has already exited with code %d", 
+        app->name, wait_for, prereq_app_info->exit_code);
+      log_error("prereq check", msg_buf);
+      return PREREQ_FAILED;
+    }
+  }
+  else if (prereq_app_info->status == APP_STATUS_RUNNING) {
+    snprintf(
+      msg_buf, 
+      sizeof(msg_buf), 
+      "check_prerequisites: app '%s' "
+      "depends on app '%s' which is still running", 
+      app->name, wait_for);
+    log_warning("prereq check", msg_buf);
+    return PREREQ_STILL_RUNNING;
+  }
+  else if (prereq_app_info->status == APP_STATUS_FAILED) {
+    snprintf(
+      msg_buf, 
+      sizeof(msg_buf), 
+      "check_prerequisites: app '%s' "
+      "depends on app '%s' which has already failed", 
+      app->name, wait_for);
+    log_error("prereq check", msg_buf);
+    return PREREQ_FAILED;
+  }
+  else {
+    snprintf(
+      msg_buf, 
+      sizeof(msg_buf), 
+      "check_prerequisites: app '%s' "
+      "depends on app '%s' which is in unexpected status %d", 
+      app->name, wait_for, prereq_app_info->status);
+    log_error("prereq check", msg_buf);
+    return PREREQ_OTHER_ERROR;
+  }
+} 
 
 
 const char * launch_status_to_string(launch_status_t status) {
@@ -75,7 +157,18 @@ const char * launch_status_to_string(launch_status_t status) {
 launch_status_t launch_app(boot_mode_t boot_mode, 
     app_config_t * app, app_info_list_t * app_info) {
 
-  // todo: check app info for dependencies of the given app 
+  const prereq_status_t prereq_status = check_prerequisites(app, app_info);
+  if(prereq_status != PREREQ_OK) {
+    if(prereq_status == PREREQ_INVALID_CONFIG) {
+      return LAUNCH_ERR_INVALID_CONFIG;
+    }
+    else if (prereq_status == PREREQ_FAILED) {
+      return LAUNCH_ERR_EXEC;
+    }
+    else {
+      return LAUNCH_OK_DELAYED_LAUNCH;
+    }
+  }
 
   app->info->name = strdup(app->name);
   if (!app->info->name) {
