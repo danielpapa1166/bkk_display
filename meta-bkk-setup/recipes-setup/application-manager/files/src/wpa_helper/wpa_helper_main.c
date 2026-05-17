@@ -34,7 +34,7 @@ static int write_wpa_config(const wpa_config_t * const config);
 
 int main(int argc, char *argv[])
 {
-  wpa_config_t config = wpa_ap_config;
+  wpa_config_t config = {0};
   const boot_mode_t boot_mode = parse_args(argc, argv, &config);
 
   if(boot_mode == BOOT_MODE_UNKNOWN) {
@@ -76,15 +76,29 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
 
   if (strcmp(mode_val, "wifi_config") == 0) {
     boot_mode = BOOT_MODE_WIFI_CONFIG;
-  } else if (strcmp(mode_val, "api_config") == 0) {
+  } 
+  else if (strcmp(mode_val, "api_config") == 0) {
     boot_mode = BOOT_MODE_API_CONFIG;
-  } else if (strcmp(mode_val, "normal") == 0) {
+  } 
+  else if (strcmp(mode_val, "normal") == 0) {
     boot_mode = BOOT_MODE_NORMAL;
-  } else {
+  } 
+  else {
     return boot_mode;
   }
 
-  /* Remaining arguments are optional key=value pairs */
+  // assign default config:
+  if(boot_mode == BOOT_MODE_WIFI_CONFIG) {
+    *config = wpa_ap_config;
+  }
+  else if(boot_mode == BOOT_MODE_API_CONFIG || boot_mode == BOOT_MODE_NORMAL) {
+    *config = wpa_wifi_config;
+  }
+  else {
+    return boot_mode;
+  }
+
+  // Remaining arguments are optional key=value pairs 
   for (int i = 2; i < argc; i++) {
     const char *val = NULL;
     if      (match_key(argv[i], "wpa_cfg_path",     &val)) { 
