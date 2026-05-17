@@ -41,29 +41,24 @@ int main(int argc, char *argv[])
 
   
   if(boot_mode == BOOT_MODE_WIFI_CONFIG) {
-    log_info("main", "Writing WPA config in WIFI_CONFIG mode");
+    log_info("main", "WIFI_CONFIG mode: writing wpa + network config");
   }
   else if(boot_mode == BOOT_MODE_API_CONFIG) {
-    log_info("main", "Writing WPA config in API_CONFIG mode");
+    log_info("main", "API_CONFIG mode: writing network config only");
   }
   else if(boot_mode == BOOT_MODE_NORMAL) {
-    log_info("main", "Writing WPA config in NORMAL mode");
+    log_info("main", "NORMAL mode: nothing to configure");
+    rbuflogd_logger_close();
+    return 0;
   }
   else {
     log_error("main", "Invalid or missing boot_mode argument");
     rbuflogd_logger_close(); 
     return -1;
   }
-  
-  int res = prepare_config_folder(config.wpa_cfg_path);
-  if (res != 0) {
-    log_error("main", "Fatal. "
-      "Failed to prepare WPA config folder. App exiting.");
-    rbuflogd_logger_close();
-    return -1;
-  }
 
-  res = prepare_config_folder(config.network_cfg_path);
+  /* Both WIFI_CONFIG and API_CONFIG need the network config folder/file */
+  int res = prepare_config_folder(config.network_cfg_path);
   if (res != 0) {
     log_error("main", "Fatal. "
       "Failed to prepare network config folder. App exiting.");
@@ -72,25 +67,36 @@ int main(int argc, char *argv[])
   }
 
   res = write_wpa_config(
-    config.wpa_cfg_path, 
-    config.wpa_cfg_name, 
-    config.wpa_cfg_str);
-  if (res != 0) {
-    log_error("main", "Fatal. "
-      "Failed to write WPA config. App exiting.");
-    rbuflogd_logger_close();
-    return -1;
-  }
-
-  res = write_wpa_config(
-    config.network_cfg_path, 
-    config.network_cfg_name, 
+    config.network_cfg_path,
+    config.network_cfg_name,
     config.network_cfg_str);
   if (res != 0) {
     log_error("main", "Fatal. "
       "Failed to write network config. App exiting.");
     rbuflogd_logger_close();
     return -1;
+  }
+
+  /* Only WIFI_CONFIG writes the wpa_supplicant config (AP credentials) */
+  if (boot_mode == BOOT_MODE_WIFI_CONFIG) {
+    res = prepare_config_folder(config.wpa_cfg_path);
+    if (res != 0) {
+      log_error("main", "Fatal. "
+        "Failed to prepare WPA config folder. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+
+    res = write_wpa_config(
+      config.wpa_cfg_path,
+      config.wpa_cfg_name,
+      config.wpa_cfg_str);
+    if (res != 0) {
+      log_error("main", "Fatal. "
+        "Failed to write WPA config. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
   }
 
   log_info("main", "WPA config written successfully. App exiting.");
