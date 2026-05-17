@@ -4,13 +4,14 @@
 #include <pthread.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "rbuflogd/logger.h"
 
 #include "am_config_parser.h"
 #include "am_launcher.h"
 #include "am_types.h"
 #include "am_supervisor.h"
-#include "am_logger.h"
 #include "am_boot_mode.h"
+
 
 // ----------------------------------------------------------------------------
 // internal helper functions
@@ -61,7 +62,7 @@ int main(int argc, char * argv[])
   usleep(1000000); 
 
   // --- open logger after launching rbuflogd ---
-  if (init_logger() != 0) {
+  if (rbuflogd_logger_init("   AM   ") != 0) {
     fprintf(stderr, 
       "am: rbuflogd not yet available, continuing with stderr only\n");
   }
@@ -123,7 +124,7 @@ int main(int argc, char * argv[])
 
   // unreachable — kept for completeness
   free(app_infos);
-  cleanup_logger();
+  rbuflogd_logger_close();
   return 0;
 }
 

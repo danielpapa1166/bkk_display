@@ -58,7 +58,6 @@ add_executable(application_manager
     am_config_parser.c
     am_launcher.c
     am_supervisor.c
-    am_logger.c
     am_boot_mode.c
 )
 

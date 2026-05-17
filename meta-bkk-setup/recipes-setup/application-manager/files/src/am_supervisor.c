@@ -1,5 +1,5 @@
+#include "rbuflogd/logger.h"
 #include "am_supervisor.h"
-#include "am_logger.h"
 #include "am_types.h"
 #include <signal.h>
 #include <stdio.h>
