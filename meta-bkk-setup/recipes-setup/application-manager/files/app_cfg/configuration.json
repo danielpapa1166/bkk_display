@@ -13,20 +13,29 @@
       "environment": []
     }, 
     {
+      "name": "setup_sleep", 
+      "binary": "/bin/sleep",
+      "args": ["1"],
+      "phases": ["WIFI_CONFIG", "API_CONFIG"]
+    },
+    {
       "name": "wpa_helper", 
       "binary": "/usr/bin/wpa_helper",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "rbuflogd", 
+      "after": "setup_sleep", 
       "environment": []
-    }, 
+    },
     {
-      "name": "bkk-api-server", 
-      "binary": "/usr/bin/bkk_uds_server",
-      "phases": ["API_CONFIG", "NORMAL"],
+      "name": "wpa_supplicant",
+      "binary": "/usr/sbin/wpa_supplicant",
       "args": [
-        "-k", "/etc/bkk-api/api-key.txt"
-      ]
-    }, 
+        "-i", "wlan0", 
+        "-c", "/run/wpa_supplicant-ap.conf", 
+        "-B"
+      ], 
+      "phases": ["WIFI_CONFIG"], 
+      "after": "wpa_helper"
+    },  
     {
       "name": "web-setup-helper", 
       "binary": "/usr/bin/bkk-web-setup-helper",
@@ -34,17 +43,8 @@
       "environment": [
         "QT_QPA_PLATFORM=eglfs", 
         "QT_QPA_EGLFS_HIDECURSOR=1"
-      ] 
-    }, 
-    {
-      "name": "WPA_SUPPLICANT",
-      "binary": "/usr/sbin/wpa_supplicant",
-      "args": [
-        "-i", "wlan0", 
-        "-c", "/run/wpa_supplicant-ap.conf", 
-        "-B"
       ], 
-      "phases": ["WIFI_CONFIG"]
+      "after": "wpa_supplicant"
     }, 
     { 
       "name": "web-setup-server:wifi_config",
@@ -52,42 +52,8 @@
       "args": [
         "--mode=wifi"
       ], 
-      "phases": ["WIFI_CONFIG"]
-    }, 
-    { 
-      "name": "web-setup-server:api_config",
-      "binary": "/usr/bin/config-server",
-      "args": [
-        "--mode=api"
-      ], 
-      "phases": ["API_CONFIG"]
-    }, 
-    {
-      "name": "BKK Display", 
-      "binary": "/usr/bin/bkk-qt-app",
-      "phases": ["NORMAL"],
-      "environment": [
-        "QT_QPA_PLATFORM=eglfs", 
-        "QT_QPA_EGLFS_HIDECURSOR=1", 
-        "QT_FATAL_WARNINGS=1"
-      ]
-    }, 
-    {
-      "name": "sleep1",
-      "binary": "/bin/sleep",
-      "args": ["1"],
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "rbuflogd", 
-      "environment": []
-    }, 
-    {
-      "name": "sleep3",
-      "binary": "/bin/sleep",
-      "args": ["5"],
-      "phases": ["NORMAL"], 
-      "after": "rbuflogd", 
-      "environment": []
+      "phases": ["WIFI_CONFIG"], 
+      "after": "wpa_supplicant"
     }
-
   ]
 }
