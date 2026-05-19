@@ -102,7 +102,12 @@ static parse_status_t parse_json_element(
 
   cJSON * after = cJSON_GetObjectItem(element, "after");
   if (cJSON_IsString(after)) {
-    app_out->after = strdup(after->valuestring);
+    if(strlen(after->valuestring) == 0) {
+      app_out->after = NULL;
+    }
+    else {
+      app_out->after = strdup(after->valuestring);
+    }
   } 
   else {
     app_out->after = NULL;
