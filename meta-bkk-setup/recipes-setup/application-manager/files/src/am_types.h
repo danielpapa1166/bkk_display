@@ -74,7 +74,7 @@ static int find_app_by_name(
     app_info_t * app_infos, int num_apps, const char * name) {
 
   for (int i = 0; i < num_apps; i++) {
-    if (strcmp(app_infos[i].name, name) == 0) {
+    if (app_infos[i].name != NULL && strcmp(app_infos[i].name, name) == 0) {
       return i;
     }
   }

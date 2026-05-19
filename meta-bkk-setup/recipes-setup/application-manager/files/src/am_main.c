@@ -48,8 +48,8 @@ int main(int argc, char * argv[])
   const boot_mode_t boot_mode = determine_boot_mode();
 
   app_info_list_t app_info_list = {
-    .app = (app_info_t *)malloc(
-      sizeof(app_info_t) * config_list.num_apps),
+    .app = (app_info_t *)calloc(
+      config_list.num_apps, sizeof(app_info_t)),
     .num_apps = config_list.num_apps
   };
 
