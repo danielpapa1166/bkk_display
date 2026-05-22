@@ -8,7 +8,7 @@
         "-l", "0"
       ],
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "", 
+      "after_exited": "", 
       "folder": "/etc/rbuflogd", 
       "environment": []
     }, 
@@ -22,7 +22,7 @@
       "name": "wpa_helper", 
       "binary": "/usr/bin/wpa_helper",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
-      "after": "setup_sleep", 
+      "after_exited": "setup_sleep", 
       "environment": []
     },
     {
@@ -34,7 +34,7 @@
         "-B"
       ], 
       "phases": ["WIFI_CONFIG"], 
-      "after": "wpa_helper"
+      "after_exited": "wpa_helper"
     },  
     {
       "name": "web-setup-helper", 
@@ -44,7 +44,7 @@
         "QT_QPA_PLATFORM=eglfs", 
         "QT_QPA_EGLFS_HIDECURSOR=1"
       ], 
-      "after": "wpa_supplicant"
+      "after_exited": "wpa_supplicant"
     }, 
     { 
       "name": "web-setup-server:wifi_config",
@@ -53,7 +53,7 @@
         "--mode=wifi"
       ], 
       "phases": ["WIFI_CONFIG"], 
-      "after": "wpa_supplicant"
+      "after_exited": "wpa_supplicant"
     }
   ]
 }

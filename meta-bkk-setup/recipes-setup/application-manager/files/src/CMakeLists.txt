@@ -1,3 +1,7 @@
+# output binary: 
+# /data/projects/bkk_display/build-rpi/tmp/work/cortexa7t2hf-neon-vfpv4-poky-linux-gnueabi/application-manager/0.1-r0/packages-split/application-manager/usr/bin/application_manager
+
+
 cmake_minimum_required(VERSION 3.10)
 
 project(application_manager C)
@@ -30,10 +34,10 @@ if(EXISTS "${CJSON_SOURCE_DIR}/CMakeLists.txt")
 else()
     find_library(CJSON_LIB REQUIRED NAMES cjson)
     find_path(CJSON_INCLUDE_DIR REQUIRED NAMES cJSON.h PATH_SUFFIXES cjson cJSON)
-    add_library(cjson SHARED IMPORTED)
-    set_target_properties(cjson PROPERTIES
-        IMPORTED_LOCATION "${CJSON_LIB}"
-        INTERFACE_INCLUDE_DIRECTORIES "${CJSON_INCLUDE_DIR}")
+        add_library(cjson SHARED IMPORTED)
+        set_target_properties(cjson PROPERTIES
+            IMPORTED_LOCATION "${CJSON_LIB}"
+            INTERFACE_INCLUDE_DIRECTORIES "${CJSON_INCLUDE_DIR}")
 endif()
 
 # ---------------------------------------------------------------------------
