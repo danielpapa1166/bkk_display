@@ -82,6 +82,7 @@ install(TARGETS application_manager
 # Sub-components
 # ---------------------------------------------------------------------------
 add_subdirectory(wpa_helper)
+add_subdirectory(logger_check)
 
 if(TARGET cjson)
     get_target_property(CJSON_TARGET_IMPORTED cjson IMPORTED)
