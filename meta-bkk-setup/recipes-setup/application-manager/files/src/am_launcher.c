@@ -11,6 +11,8 @@
 char msg_buf[256];
 
 static int check_app_valid_for_boot_mode(boot_mode_t boot_mode, app_config_t * app) {
+  // obsolete function, as we now filter app configs by boot mode before passing to launcher
+  // keeping this function in case we want to re-use it for more complex boot mode checks in the future
   for (int i = 0; i < app->num_phases; i++) {
     if (strcmp(app->phases[i], boot_mode_to_string(boot_mode)) == 0) {
       return 1;
@@ -50,6 +52,34 @@ static char ** build_envp(app_config_t * app) {
 }
 
 
+typedef struct {
+  app_status_enum_t app_status;
+  int exit_code;
+} app_prereq_status_t; 
+
+
+static app_prereq_status_t get_app_prereq_status(
+    const char * const app_name, app_info_list_t * app_info) {
+  const int app_id = find_app_by_name(
+    app_info->app, 
+    app_info->num_apps, 
+    app_name);
+
+  if (app_id < 0) {
+    app_prereq_status_t status = {
+      .app_status = APP_STATUS_OTHER_ERROR,
+      .exit_code = -1
+    };
+    return status;
+  }
+  app_prereq_status_t status = {
+    .app_status = app_info->app[app_id].status,
+    .exit_code = app_info->app[app_id].exit_code
+  };
+  return status;
+}
+
+
 typedef enum {
   PREREQ_OK,
   PREREQ_STILL_RUNNING,
@@ -61,75 +91,58 @@ typedef enum {
 static prereq_status_t check_prerequisites(
     app_config_t * app, app_info_list_t * app_info) {
 
-  const char * wait_for = app->after; 
+  const char * log_cat = "req_chk";
+  const char * wait_for_exited = app->after_exited;
+  const char * wait_for_started = app->after_started;
 
-  if (wait_for == NULL) {
-    // no prerequisites
+  if (wait_for_exited == NULL && wait_for_started == NULL) {
     return PREREQ_OK;
   }
 
-  const int prereq_app_id = find_app_by_name(
-    app_info->app, app_info->num_apps, wait_for);
+  if (wait_for_exited != NULL) {
+    const app_prereq_status_t prereq_exited
+      = get_app_prereq_status(wait_for_exited, app_info);
 
-  if (prereq_app_id < 0) {
-    snprintf(
-      msg_buf, 
-      sizeof(msg_buf), 
-      "check_prerequisites: app '%s' "
-      "depends on unknown app '%s', or not yet started", 
-      app->name, wait_for);
-    log_warning("prereq check", msg_buf);
-    return PREREQ_INVALID_CONFIG;
-  }
-
-  app_info_t * prereq_app_info = &app_info->app[prereq_app_id];
-
-  if(prereq_app_info->status == APP_STATUS_EXITED) {
-    if(prereq_app_info->exit_code == 0) {
-      return PREREQ_OK;
-    }
-    else {
+    if (prereq_exited.app_status == APP_STATUS_OTHER_ERROR) {
       snprintf(
-        msg_buf, 
-        sizeof(msg_buf), 
-        "check_prerequisites: app '%s' "
-        "depends on app '%s' which has already exited with code %d", 
-        app->name, wait_for, prereq_app_info->exit_code);
-      log_error("prereq check", msg_buf);
+        msg_buf,
+        sizeof(msg_buf),
+        "check_prerequisites: app '%s' has invalid prerequisite app '%s'",
+        app->name, wait_for_exited);
+      log_warning(log_cat, msg_buf);
+      return PREREQ_INVALID_CONFIG;
+    }
+
+    if (prereq_exited.app_status != APP_STATUS_EXITED) {
+      return PREREQ_STILL_RUNNING;
+    }
+
+    if (prereq_exited.exit_code != 0) {
       return PREREQ_FAILED;
     }
   }
-  else if (prereq_app_info->status == APP_STATUS_RUNNING) {
-    snprintf(
-      msg_buf, 
-      sizeof(msg_buf), 
-      "check_prerequisites: app '%s' "
-      "depends on app '%s' which is still running", 
-      app->name, wait_for);
-    log_warning("prereq check", msg_buf);
-    return PREREQ_STILL_RUNNING;
+
+  if (wait_for_started != NULL) {
+    const app_prereq_status_t prereq_started
+      = get_app_prereq_status(wait_for_started, app_info);
+
+    if (prereq_started.app_status == APP_STATUS_OTHER_ERROR) {
+      snprintf(
+        msg_buf,
+        sizeof(msg_buf),
+        "check_prerequisites: app '%s' has invalid prerequisite app '%s'",
+        app->name, wait_for_started);
+      log_warning(log_cat, msg_buf);
+      return PREREQ_INVALID_CONFIG;
+    }
+
+    if (prereq_started.app_status != APP_STATUS_RUNNING) {
+      return PREREQ_STILL_RUNNING;
+    }
   }
-  else if (prereq_app_info->status == APP_STATUS_FAILED) {
-    snprintf(
-      msg_buf, 
-      sizeof(msg_buf), 
-      "check_prerequisites: app '%s' "
-      "depends on app '%s' which has already failed", 
-      app->name, wait_for);
-    log_error("prereq check", msg_buf);
-    return PREREQ_FAILED;
-  }
-  else {
-    snprintf(
-      msg_buf, 
-      sizeof(msg_buf), 
-      "check_prerequisites: app '%s' "
-      "depends on app '%s' which is in unexpected status %d", 
-      app->name, wait_for, prereq_app_info->status);
-    log_error("prereq check", msg_buf);
-    return PREREQ_OTHER_ERROR;
-  }
-} 
+
+  return PREREQ_OK;
+}
 
 
 const char * launch_status_to_string(launch_status_t status) {
@@ -138,6 +151,8 @@ const char * launch_status_to_string(launch_status_t status) {
       return "OK";
     case LAUNCH_OK_NOT_LAUNCHED: 
       return "OK_NOT_LAUNCHED"; 
+    case LAUNCH_OK_DELAYED_LAUNCH:
+      return "OK_DELAYED_LAUNCH";
     case LAUNCH_ERR_INVALID_CONFIG:
       return "ERR_INVALID_CONFIG";
     case LAUNCH_ERR_INTERNAL:
@@ -154,8 +169,7 @@ const char * launch_status_to_string(launch_status_t status) {
 }
 
 
-launch_status_t launch_app(boot_mode_t boot_mode, 
-    app_config_t * app, app_info_list_t * app_info) {
+launch_status_t launch_app(app_config_t * app, app_info_list_t * app_info) {
 
   if(app->info->status != APP_STATUS_NOT_STARTED) {
     return LAUNCH_OK_NOT_LAUNCHED; 
@@ -174,18 +188,9 @@ launch_status_t launch_app(boot_mode_t boot_mode,
     }
   }
 
-  app->info->name = strdup(app->name);
-  if (!app->info->name) {
-    app->info->pid = -1;
-    app->info->status = APP_STATUS_FAILED;
-    return LAUNCH_ERR_INTERNAL;
-  }
-
-  if(!check_app_valid_for_boot_mode(boot_mode, app)) {
-    app->info->pid = -1;
-    app->info->status = APP_STATUS_NOT_IN_THIS_PHASE;
-    return LAUNCH_OK_NOT_LAUNCHED;
-  }
+  // no need to check boot mode, 
+  // as only the filtered app configs 
+  // for the current boot mode are passed to this function
 
   if (app->folder != NULL) {
     const int mkdir_result = mkdir(app->folder, 0755);

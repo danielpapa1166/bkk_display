@@ -31,7 +31,8 @@ typedef enum {
   APP_STATUS_RUNNING,
   APP_STATUS_EXITED, 
   APP_STATUS_KILLED, 
-  APP_STATUS_FAILED
+  APP_STATUS_FAILED, 
+  APP_STATUS_OTHER_ERROR
 } app_status_enum_t;
 
 
@@ -55,7 +56,8 @@ typedef struct {
   int num_args;
   char ** phases;
   int num_phases;
-  char * after;
+  char * after_started;
+  char * after_exited;
   char * folder;
   char ** env; 
   int num_env; 
@@ -64,7 +66,7 @@ typedef struct {
 
 
 typedef struct {
-  app_config_t * apps;
+  app_config_t * app;
   int num_apps;
 } app_config_list_t;
 

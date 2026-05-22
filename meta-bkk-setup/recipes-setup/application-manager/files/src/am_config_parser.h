@@ -11,7 +11,12 @@ typedef enum {
   PARSE_ERR_JSON_INVALID
 } parse_status_t;
 
-parse_status_t parse_cli(int argc, char ** argv, char ** config_path_out);
+typedef struct {
+  char * config_path;
+  char * boot_flags_dir;
+} am_cli_args_t;
+
+parse_status_t parse_cli(int argc, char ** argv, am_cli_args_t * cli_args_out);
 parse_status_t parse_config(const char * config_path, 
   app_config_list_t * config_list_out);
 

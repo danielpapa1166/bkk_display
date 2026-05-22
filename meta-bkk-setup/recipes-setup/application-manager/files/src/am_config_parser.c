@@ -100,17 +100,30 @@ static parse_status_t parse_json_element(
     return status;
   }
 
-  cJSON * after = cJSON_GetObjectItem(element, "after");
+  cJSON * after = cJSON_GetObjectItem(element, "after_exited");
   if (cJSON_IsString(after)) {
     if(strlen(after->valuestring) == 0) {
-      app_out->after = NULL;
+      app_out->after_exited = NULL;
     }
     else {
-      app_out->after = strdup(after->valuestring);
+      app_out->after_exited = strdup(after->valuestring);
     }
   } 
   else {
-    app_out->after = NULL;
+    app_out->after_exited = NULL;
+  }
+
+  cJSON * after_started = cJSON_GetObjectItem(element, "after_started");
+  if (cJSON_IsString(after_started)) {
+    if(strlen(after_started->valuestring) == 0) {
+      app_out->after_started = NULL;
+    }
+    else {
+      app_out->after_started = strdup(after_started->valuestring);
+    }
+  } 
+  else {
+    app_out->after_started = NULL;
   }
 
   cJSON * folder = cJSON_GetObjectItem(element, "folder");
@@ -164,7 +177,7 @@ static parse_status_t parse_json_config(
     }
   }
 
-  config_list_out->apps = apps;
+  config_list_out->app = apps;
   config_list_out->num_apps = num_apps;
 
   cJSON_Delete(json);
@@ -176,8 +189,11 @@ static parse_status_t parse_json_config(
 // --- main parsing functions ---
 // ----------------------------------------------------------------------------
 
-// this function parses the command line arguments to find the config file path
-parse_status_t parse_cli(int argc, char ** argv, char ** config_path_out) {
+// this function parses the command line arguments into an am_cli_args_t struct
+parse_status_t parse_cli(int argc, char ** argv, am_cli_args_t * cli_args_out) {
+
+  cli_args_out->config_path       = NULL;
+  cli_args_out->boot_flags_dir     = NULL;
 
   for (int i = 1; i < argc; i++) {
     const char * arg = argv[i];
@@ -186,12 +202,21 @@ parse_status_t parse_cli(int argc, char ** argv, char ** config_path_out) {
         return PARSE_ERR_CLI;
       }
       i++;
-      *config_path_out = argv[i];
-      return PARSE_OK;
+      cli_args_out->config_path = argv[i];
+    }
+    else if (strcmp(arg, "--boot-flags-dir") == 0) {
+      if (i + 1 >= argc) {
+        return PARSE_ERR_CLI;
+      }
+      i++;
+      cli_args_out->boot_flags_dir = argv[i];
     }
   }
 
-  return PARSE_ERR_CLI;
+  if (cli_args_out->config_path == NULL) {
+    return PARSE_ERR_CLI;
+  }
+  return PARSE_OK;
 }
 
 
