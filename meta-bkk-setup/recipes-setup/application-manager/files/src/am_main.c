@@ -7,7 +7,6 @@
 #include "rbuflogd/logger.h"
 
 #include "am_config_parser.h"
-#include "am_launcher.h"
 #include "am_types.h"
 #include "am_supervisor.h"
 #include "am_boot_mode.h"
