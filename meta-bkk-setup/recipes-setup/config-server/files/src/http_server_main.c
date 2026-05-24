@@ -3,7 +3,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "http_server_client_handler.h"
 #include "http_server_config.h"
 #include "rbuflogd/logger.h"
 

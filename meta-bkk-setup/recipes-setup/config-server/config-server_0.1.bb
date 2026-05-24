@@ -10,8 +10,6 @@ SRC_URI = " \
     file://src/CMakeLists.txt \
     file://src/http_server_main.c \
     file://src/http_server_config.h \
-    file://src/http_server_client_handler.c \
-    file://src/http_server_client_handler.h \
     file://src/http_server_post_handler.c \
     file://src/http_server_post_handler.h \
     file://src/http_server_get_handler.c \

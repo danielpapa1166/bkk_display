@@ -6,40 +6,19 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <chttp.h>
 
 
-// malloced buffer with the full HTTP response. Caller must free(*out_buf).
+// Fills a chttp_response_t with a heap-allocated copy of body.
+// chttp frees resp->body after sending.
 
-static int build_simple_response(char **out_buf, size_t *out_len,
+static void set_simple_response(chttp_response_t *resp,
   const char *status, const char *content_type, const char *body) {
 
-  char header[512] = { 0 };
-  size_t body_len = strlen(body);
-  int header_len = snprintf(
-    header,
-    sizeof(header),
-    "HTTP/1.1 %s\r\n"
-    "Content-Type: %s\r\n"
-    "Content-Length: %zu\r\n"
-    "Connection: close\r\n\r\n",
-    status, content_type, body_len);
-
-  if (header_len <= 0) {
-    return -1;
-  }
-
-  size_t total = (size_t)header_len + body_len;
-  char *buf = (char*)malloc(total);
-  if (buf == NULL) {
-    return -1;
-  }
-
-  memcpy(buf, header, (size_t)header_len);
-  memcpy(buf + header_len, body, body_len);
-
-  *out_buf = buf;
-  *out_len = total;
-  return 0;
+  resp->status       = status;
+  resp->content_type = content_type;
+  resp->body         = strdup(body);
+  resp->body_len     = resp->body != NULL ? strlen(body) : 0;
 }
 
 

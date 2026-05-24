@@ -54,7 +54,6 @@ endif()
 # ---------------------------------------------------------------------------
 add_executable(config-server
     http_server_main.c
-    http_server_client_handler.c
     http_server_get_handler.c
     http_server_post_handler.c
     http_server_user_action_handler.c

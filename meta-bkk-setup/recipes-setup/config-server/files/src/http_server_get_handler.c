@@ -1,5 +1,6 @@
 #include "http_server_get_handler.h"
 #include "http_server_utils.h"
+#include "http_server_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,137 +10,106 @@
 #define HTTP_SERVER_STATIC_ROOT "/usr/share/config-server/www"
 
 
-int http_server_handle_resource_request(const char *request_text,
-                                        char **out_buf, size_t *out_len) {
-  char method[8] = { 0 };
-  char request_path[256] = { 0 };
-  char http_version[16] = { 0 };
+void http_server_handle_resource_request(const chttp_request_t *req,
+                                         chttp_response_t *resp,
+                                         void *user_data) {
+  (void)user_data;
 
-  if (sscanf(request_text, "%7s %255s %15s", method, request_path, http_version) != 3) {
-    return build_simple_response(out_buf, out_len,
-      "400 Bad Request",
-      "text/plain; charset=utf-8",
-      "Bad Request\n");
+  const char *path = req->path;
+
+  if (!is_safe_request_path(path)) {
+    set_simple_response(resp, "403 Forbidden",
+      "text/plain; charset=utf-8", "Forbidden\n");
+    return;
   }
 
-  if (!is_safe_request_path(request_path)) {
-    return build_simple_response(out_buf, out_len,
-      "403 Forbidden",
-      "text/plain; charset=utf-8",
-      "Forbidden\n");
+  char path_clean[256] = { 0 };
+  if (strcmp(path, "/") == 0) {
+    strncpy(path_clean, "/index.html", sizeof(path_clean) - 1);
+  } else {
+    strncpy(path_clean, path, sizeof(path_clean) - 1);
   }
 
-  char path_without_query[256] = { 0 };
-  size_t copy_len = strcspn(request_path, "?");
-  if (copy_len >= sizeof(path_without_query)) {
-    return build_simple_response(out_buf, out_len,
-      "414 URI Too Long",
-      "text/plain; charset=utf-8",
-      "URI Too Long\n");
-  }
-  memcpy(path_without_query, request_path, copy_len);
-  path_without_query[copy_len] = '\0';
-
-  if (strcmp(path_without_query, "/") == 0) {
-    strncpy(path_without_query, "/index.html", sizeof(path_without_query) - 1);
-  }
-
-  for (size_t i = 0; path_without_query[i] != '\0'; i++) {
-    if ((unsigned char)path_without_query[i] < 32) {
-      return build_simple_response(out_buf, out_len,
-        "400 Bad Request",
-        "text/plain; charset=utf-8",
-        "Bad Request\n");
+  for (size_t i = 0; path_clean[i] != '\0'; i++) {
+    if ((unsigned char)path_clean[i] < 32) {
+      set_simple_response(resp, "400 Bad Request",
+        "text/plain; charset=utf-8", "Bad Request\n");
+      return;
     }
   }
 
   char full_path[512] = { 0 };
-
   int snprintf_res = snprintf(
-    full_path,
-    sizeof(full_path),
-    "%s/%s",
+    full_path, sizeof(full_path), "%s/%s",
     HTTP_SERVER_STATIC_ROOT,
-    (path_without_query[0] == '/') ? path_without_query + 1 : path_without_query);
+    (path_clean[0] == '/') ? path_clean + 1 : path_clean);
 
   if (snprintf_res >= (int)sizeof(full_path)) {
-    return build_simple_response(out_buf, out_len,
-      "414 URI Too Long",
-      "text/plain; charset=utf-8",
-      "URI Too Long\n");
+    set_simple_response(resp, "414 URI Too Long",
+      "text/plain; charset=utf-8", "URI Too Long\n");
+    return;
   }
 
   const char *mime_type = get_mime_type(full_path);
   if (mime_type == NULL) {
-    return build_simple_response(out_buf, out_len,
-      "415 Unsupported Media Type",
+    set_simple_response(resp, "415 Unsupported Media Type",
       "text/plain; charset=utf-8",
       "Only .html, .css, and .js files are served\n");
+    return;
   }
 
   struct stat file_stat = { 0 };
   if (stat(full_path, &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) {
-    return build_simple_response(out_buf, out_len,
-      "404 Not Found",
-      "text/plain; charset=utf-8",
-      "Not Found\n");
+    set_simple_response(resp, "404 Not Found",
+      "text/plain; charset=utf-8", "Not Found\n");
+    return;
   }
 
   FILE *file = fopen(full_path, "rb");
   if (file == NULL) {
-    return build_simple_response(out_buf, out_len,
-      "500 Internal Server Error",
-      "text/plain; charset=utf-8",
-      "Internal Server Error\n");
-  }
-
-  char header[512] = { 0 };
-  int header_len = snprintf(
-    header,
-    sizeof(header),
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Type: %s\r\n"
-    "Content-Length: %ld\r\n"
-    "Connection: close\r\n\r\n",
-    mime_type, (long)file_stat.st_size);
-
-  if (header_len <= 0) {
-    fclose(file);
-    return -1;
+    set_simple_response(resp, "500 Internal Server Error",
+      "text/plain; charset=utf-8", "Internal Server Error\n");
+    return;
   }
 
   size_t file_size = (size_t)file_stat.st_size;
-  size_t total = (size_t)header_len + file_size;
-  char *buf = malloc(total);
+  char *buf = malloc(file_size);
   if (buf == NULL) {
     fclose(file);
-    return -1;
+    set_simple_response(resp, "500 Internal Server Error",
+      "text/plain; charset=utf-8", "Internal Server Error\n");
+    return;
   }
 
-  memcpy(buf, header, (size_t)header_len);
-  size_t read_total = fread(buf + header_len, 1, file_size, file);
+  size_t read_total = fread(buf, 1, file_size, file);
   fclose(file);
 
   if (read_total != file_size) {
     free(buf);
-    return -1;
+    set_simple_response(resp, "500 Internal Server Error",
+      "text/plain; charset=utf-8", "Internal Server Error\n");
+    return;
   }
 
-  *out_buf = buf;
-  *out_len = total;
-  return 0;
+  resp->status       = "200 OK";
+  resp->content_type = mime_type;
+  resp->body         = buf;
+  resp->body_len     = file_size;
 }
 
-int http_server_handle_get_api(const char *request_path, server_mode_t mode,
-                                char **out_buf, size_t *out_len) {
-  if (strcmp(request_path, "/api/mode") == 0) {
+void http_server_handle_get_api(const chttp_request_t *req,
+                                chttp_response_t *resp,
+                                void *user_data) {
+  server_mode_t mode = *(server_mode_t *)user_data;
+
+  if (strcmp(req->path, "/api/mode") == 0) {
     const char *body = (mode == SERVER_MODE_API)
         ? "{\"mode\":\"api\"}\n"
         : "{\"mode\":\"wifi\"}\n";
-    return build_simple_response(out_buf, out_len,
-        "200 OK", "application/json; charset=utf-8", body);
+    set_simple_response(resp, "200 OK", "application/json; charset=utf-8", body);
+    return;
   }
 
-  return build_simple_response(out_buf, out_len,
-      "404 Not Found", "text/plain; charset=utf-8", "Not Found\n");
+  set_simple_response(resp, "404 Not Found",
+    "text/plain; charset=utf-8", "Not Found\n");
 }
