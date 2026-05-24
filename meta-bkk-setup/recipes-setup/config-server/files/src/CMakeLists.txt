@@ -17,6 +17,10 @@ set(CJSON_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../cJSON"
     CACHE PATH "Path to the vendored cJSON source tree")
 
+set(CHTTP_SOURCE_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../chttp"
+    CACHE PATH "Path to the chttp submodule")
+
 # ---------------------------------------------------------------------------
 # cJSON shared library
 # ---------------------------------------------------------------------------
@@ -50,6 +54,20 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# chttp static library
+# ---------------------------------------------------------------------------
+if(EXISTS "${CHTTP_SOURCE_DIR}/CMakeLists.txt")
+    add_subdirectory("${CHTTP_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/chttp")
+else()
+    find_library(CHTTP_LIB REQUIRED NAMES chttp)
+    find_path(CHTTP_INCLUDE_DIR REQUIRED NAMES chttp.h)
+    add_library(chttp STATIC IMPORTED)
+    set_target_properties(chttp PROPERTIES
+        IMPORTED_LOCATION "${CHTTP_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${CHTTP_INCLUDE_DIR}")
+endif()
+
+# ---------------------------------------------------------------------------
 # config-server executable
 # ---------------------------------------------------------------------------
 add_executable(config-server
@@ -66,6 +84,7 @@ target_include_directories(config-server PRIVATE
 )
 
 target_link_libraries(config-server PRIVATE
+    chttp
     cjson
     rbuflogd_producer
 )
