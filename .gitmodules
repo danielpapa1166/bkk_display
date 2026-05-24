@@ -12,3 +12,6 @@
 	path = cJSON
 	url = git@github.com:DaveGamble/cJSON.git
 	branch = master
+[submodule "chttp"]
+	path = chttp
+	url = https://github.com/danielpapa1166/chttp
