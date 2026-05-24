@@ -1,12 +1,12 @@
 #ifndef HTTP_SERVER_POST_HANDLER_H
 #define HTTP_SERVER_POST_HANDLER_H
 
-#include <stddef.h>
-#include "http_server_config.h"
+#include <chttp.h>
 
-int http_server_handle_post(const char *request_text,
-                                char **out_buf, size_t *out_len,
-                                server_mode_t mode);
+void http_server_handle_button_post(
+    const chttp_request_t *req, chttp_response_t *resp, void *user_data);
 
+void http_server_handle_finish_post(
+    const chttp_request_t *req, chttp_response_t *resp, void *user_data);
 
 #endif // HTTP_SERVER_POST_HANDLER_H

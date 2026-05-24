@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <chttp.h>
 #include "http_server_config.h"
+#include "http_server_get_handler.h"
+#include "http_server_post_handler.h"
 #include "rbuflogd/logger.h"
 
 
@@ -37,8 +37,6 @@ static int parse_args(int argc, char *argv[], server_mode_t *out_mode)
   return -1;
 }
 
-static struct sockaddr_in server_addr = { 0 };
-
 
 int main(int argc, char *argv[])
 {
@@ -46,8 +44,8 @@ int main(int argc, char *argv[])
 
   server_mode_t mode = SERVER_MODE_WIFI;
   if (parse_args(argc, argv, &mode) != 0) {
-
     log_error("main", "Failed to parse arguments. Exiting.");
+    rbuflogd_logger_close();
     return 1;
   }
 
@@ -58,55 +56,25 @@ int main(int argc, char *argv[])
         ? "HTTP server starting in API mode"
         : "HTTP server starting in WiFi mode");
 
-  int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (listen_fd < 0) {
-    printf("Socket error %d \n", listen_fd);
-    log_error("main", "Socket error");
+  chttp_server_t *srv = chttp_server_create(PORT);
+  if (srv == NULL) {
+    log_error("main", "Failed to create HTTP server.");
+    rbuflogd_logger_close();
     return 1;
   }
 
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_addr.sin_port = htons(PORT);
+  chttp_server_register_route(srv, "GET",  "/api/mode",   http_server_handle_get_api,          &mode);
+  chttp_server_register_route(srv, "GET",  "/",           http_server_handle_resource_request, NULL);
+  chttp_server_register_route(srv, "GET",  "/index.html", http_server_handle_resource_request, NULL);
+  chttp_server_register_route(srv, "GET",  "/styles.css", http_server_handle_resource_request, NULL);
+  chttp_server_register_route(srv, "GET",  "/app.js",     http_server_handle_resource_request, NULL);
+  chttp_server_register_route(srv, "POST", "/api/button", http_server_handle_button_post,      &mode);
+  chttp_server_register_route(srv, "POST", "/api/finish", http_server_handle_finish_post,      &mode);
 
-  int bind_retval = bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-  if(bind_retval < 0) {
-    printf("Bind error %d \n", bind_retval);
-    log_error("main", "Bind error");
-    return 1;
-  }
+  log_info("main", "HTTP server running.");
+  chttp_server_run(srv);
 
-  int listen_retval = listen(listen_fd, 5);
-  if (listen_retval < 0) {
-    printf("Listen error %d \n", listen_retval);
-    log_error("main", "Listen error");
-    return 1;
-  }
-
-  int request_cnt = 0; 
-
-  while(1) {
-    int client_fd = accept(listen_fd, NULL, NULL);
-    if(client_fd < 0) {
-      continue;
-    }
-
-    request_cnt++;
-    printf("Client connected! %d\n", request_cnt);
-
-    int pid = fork();
-    if (pid == 0) {
-      close(listen_fd);
-      client_handler(client_fd, mode);
-      return 0;
-    }
-    else {
-      close(client_fd);
-      continue;
-    }
-  }
-
+  chttp_server_destroy(srv);
   rbuflogd_logger_close();
-
   return 0;
 }
