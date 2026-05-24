@@ -48,6 +48,13 @@
       "args": [""]
     },
     {
+      "name": "networkctl_reload",
+      "binary": "/usr/bin/networkctl",
+      "args": ["reload"],
+      "phases": ["WIFI_CONFIG"],
+      "after_exited": "wpa_helper_wifi_config"
+    },
+    {
       "name": "wpa_supplicant",
       "binary": "/usr/sbin/wpa_supplicant",
       "args": [
@@ -56,7 +63,7 @@
         "-B"
       ], 
       "phases": ["WIFI_CONFIG"], 
-      "after_exited": "wpa_helper_wifi_config"
+      "after_exited": "networkctl_reload"
     },  
     {
       "name": "web-setup-helper", 
