@@ -20,8 +20,6 @@ SRC_URI = " \
     file://src/http_server_user_action_handler.h \
     file://src/http_server_wifi_validation.c \
     file://src/http_server_wifi_validation.h \
-    file://src/http_server_logger.c \
-    file://src/http_server_logger.h \
     file://src/http_server_utils.h \
     file://www/index.html \
     file://www/styles.css \

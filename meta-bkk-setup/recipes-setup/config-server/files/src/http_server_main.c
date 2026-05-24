@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "http_server_client_handler.h"
 #include "http_server_config.h"
-#include "http_server_logger.h"
+#include "rbuflogd/logger.h"
 
 
 #define PORT 8080
@@ -43,7 +43,7 @@ static struct sockaddr_in server_addr = { 0 };
 
 int main(int argc, char *argv[])
 {
-  init_logger();
+  rbuflogd_logger_init("http_srv");
 
   server_mode_t mode = SERVER_MODE_WIFI;
   if (parse_args(argc, argv, &mode) != 0) {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  cleanup_logger();
+  rbuflogd_logger_close();
 
   return 0;
 }

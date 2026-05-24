@@ -1,7 +1,7 @@
 #include "http_server_client_handler.h"
 #include "http_server_get_handler.h"
 #include "http_server_post_handler.h"
-#include "http_server_logger.h"
+#include "rbuflogd/logger.h"
 #include <cJSON.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -68,7 +68,6 @@ void client_handler(int client_fd, server_mode_t mode)
   struct timespec ts_start, ts_end;
   clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-  rename_logger("clt_hdl", sizeof("clt_hdl") - 1);
   snprintf(logger_category, sizeof(logger_category), "p:%d", getpid());
 
   char buffer[2048] = { 0 };
@@ -162,6 +161,6 @@ void client_handler(int client_fd, server_mode_t mode)
   log_debug(logger_category, rt_msg);
 
   close(client_fd);
-  cleanup_logger(); // child cleans up its own logger instance before exiting
+  rbuflogd_logger_close(); // child cleans up its own logger instance before exiting
   return; 
 }
