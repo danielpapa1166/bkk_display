@@ -88,16 +88,19 @@ int main(int argc, char *argv[])
     "Waiting for systemd-networkd (timeout %ds)", timeout_s);
   log_info("main", msg_buf);
 
-  const time_t deadline = time(NULL) + timeout_s;
+  struct timespec start_time, act_time;
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
   int active = 0;
   sd_bus *bus = NULL;
 
-  while (time(NULL) < deadline) {
+  clock_gettime(CLOCK_MONOTONIC, &act_time);
+  while ((act_time.tv_sec - start_time.tv_sec) < timeout_s) {
     if (bus == NULL) {
       if (sd_bus_open_system(&bus) < 0) {
         /* D-Bus not up yet; keep waiting */
         bus = NULL;
         usleep(POLL_INTERVAL_US);
+        clock_gettime(CLOCK_MONOTONIC, &act_time);
         continue;
       }
       /* Cap each D-Bus call to 1 s so the wall-clock deadline governs
@@ -110,6 +113,7 @@ int main(int argc, char *argv[])
       break;
     }
     usleep(POLL_INTERVAL_US);
+    clock_gettime(CLOCK_MONOTONIC, &act_time);
   }
 
   if (bus == NULL) {
