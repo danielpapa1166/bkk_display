@@ -23,12 +23,14 @@ SRC_URI = " \
     file://src/wpa_helper/CMakeLists.txt         \
     file://src/wpa_helper/wpa_helper_main.c      \
     file://src/wpa_helper/wpa_config.h           \
-    file://src/logger_check/CMakeLists.txt       \
-    file://src/logger_check/logger_check_main.c  \
+    file://src/logger_check/CMakeLists.txt            \
+    file://src/logger_check/logger_check_main.c       \
+    file://src/networkd_check/CMakeLists.txt          \
+    file://src/networkd_check/networkd_check_main.c   \
 "
 
-DEPENDS = "rbuflogd cjson"
-RDEPENDS:${PN} += "rbuflogd cjson"
+DEPENDS = "rbuflogd cjson systemd"
+RDEPENDS:${PN} += "rbuflogd cjson libsystemd"
 
 S = "${WORKDIR}/src"
 
@@ -38,6 +40,7 @@ EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 FILES:${PN} += "${bindir}/application_manager"
 FILES:${PN} += "${bindir}/wpa_helper"
 FILES:${PN} += "${bindir}/logger_check"
+FILES:${PN} += "${bindir}/networkd_check"
 # configuration.json is installed to /etc/application-manager/configuration.json
 FILES:${PN} += "${sysconfdir}/application-manager/configuration.json"
 FILES:${PN} += "${systemd_system_unitdir}/application-manager.service"

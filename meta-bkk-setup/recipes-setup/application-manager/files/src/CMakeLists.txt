@@ -87,6 +87,7 @@ install(TARGETS application_manager
 # ---------------------------------------------------------------------------
 add_subdirectory(wpa_helper)
 add_subdirectory(logger_check)
+add_subdirectory(networkd_check)
 
 if(TARGET cjson)
     get_target_property(CJSON_TARGET_IMPORTED cjson IMPORTED)
