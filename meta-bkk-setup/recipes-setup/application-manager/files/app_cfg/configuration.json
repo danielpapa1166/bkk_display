@@ -20,39 +20,39 @@
       "after_started": "rbuflogd"
     },
     {
-      "name": "setup_sleep", 
-      "binary": "/bin/sleep",
-      "args": ["1"],
-      "phases": ["WIFI_CONFIG", "API_CONFIG"],
-      "after_exited": "logger_check"
-    },
-    {
       "name": "wpa_helper_wifi_config", 
       "binary": "/usr/bin/wpa_helper",
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
+      "phases": ["WIFI_CONFIG"], 
       "after_exited": "logger_check",
-      "args": [""]
+      "args": ["boot_mode=wifi_config"]
     },
         {
       "name": "wpa_helper_api_config", 
       "binary": "/usr/bin/wpa_helper",
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
+      "phases": ["API_CONFIG"], 
       "after_exited": "logger_check",
-      "args": [""]
+      "args": ["boot_mode=api_config"]
     },
-        {
+    {
       "name": "wpa_helper_normal", 
       "binary": "/usr/bin/wpa_helper",
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
+      "phases": ["NORMAL"], 
       "after_exited": "logger_check",
-      "args": [""]
+      "args": ["boot_mode=normal"]
     },
     {
       "name": "networkctl_reload",
-      "binary": "/usr/bin/networkctl",
-      "args": ["reload"],
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
       "phases": ["WIFI_CONFIG"],
       "after_exited": "wpa_helper_wifi_config"
+    },
+    {
+      "name": "networkctl_reload:api_config",
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
+      "phases": ["API_CONFIG"],
+      "after_exited": "wpa_helper_api_config"
     },
     {
       "name": "wpa_supplicant",
@@ -64,16 +64,37 @@
       ], 
       "phases": ["WIFI_CONFIG"], 
       "after_exited": "networkctl_reload"
+    },
+    {
+      "name": "wpa_supplicant:api_config",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0",
+        "-c", "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf",
+        "-B"
+      ],
+      "phases": ["API_CONFIG"],
+      "after_exited": "networkctl_reload:api_config"
     },  
     {
       "name": "web-setup-helper", 
       "binary": "/usr/bin/bkk-web-setup-helper",
-      "phases": ["WIFI_CONFIG", "API_CONFIG"], 
+      "phases": ["WIFI_CONFIG"], 
       "environment": [
         "QT_QPA_PLATFORM=eglfs", 
         "QT_QPA_EGLFS_HIDECURSOR=1"
       ], 
       "after_exited": "wpa_supplicant"
+    }, 
+    {
+      "name": "web-setup-helper:api_config", 
+      "binary": "/usr/bin/bkk-web-setup-helper",
+      "phases": ["API_CONFIG"], 
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs", 
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ], 
+      "after_exited": "wpa_supplicant:api_config"
     }, 
     { 
       "name": "web-setup-server:wifi_config",
@@ -83,6 +104,15 @@
       ], 
       "phases": ["WIFI_CONFIG"], 
       "after_exited": "wpa_supplicant"
+    },
+    {
+      "name": "web-setup-server:api_config",
+      "binary": "/usr/bin/config-server",
+      "args": [
+        "--mode=api"
+      ],
+      "phases": ["API_CONFIG"],
+      "after_exited": "wpa_supplicant:api_config"
     }
   ]
 }
