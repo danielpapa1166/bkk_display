@@ -113,6 +113,41 @@
       ],
       "phases": ["API_CONFIG"],
       "after_exited": "wpa_supplicant:api_config"
+    },
+    {
+      "name": "networkctl_reload:normal",
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
+      "phases": ["NORMAL"],
+      "after_exited": "wpa_helper_normal"
+    },
+    {
+      "name": "wpa_supplicant:normal",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0",
+        "-c", "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf",
+        "-B"
+      ],
+      "phases": ["NORMAL"],
+      "after_exited": "networkctl_reload:normal"
+    },
+    {
+      "name": "bkk_uds_server",
+      "binary": "/usr/bin/bkk_uds_server",
+      "args": ["-k", "/etc/bkk-api/api-key.txt"],
+      "phases": ["NORMAL"],
+      "after_exited": "wpa_supplicant:normal"
+    },
+    {
+      "name": "bkk-qt-app",
+      "binary": "/usr/bin/bkk-qt-app",
+      "phases": ["NORMAL"],
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs",
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ],
+      "after_started": "bkk_uds_server"
     }
   ]
 }
