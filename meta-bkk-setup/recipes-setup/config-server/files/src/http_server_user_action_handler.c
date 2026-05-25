@@ -17,31 +17,45 @@
 static const char *TAG = "usr_act";
 
 static int usr_act_wifi_apply(const api_button_request_t *request);
+static int usr_act_api_key_apply(const api_button_request_t *request);
+static int usr_act_station_ids_apply(const api_button_request_t *request);
 
-int handle_user_action(const api_button_request_t *request, server_mode_t mode) {
+int handle_user_action(
+    const api_button_request_t *request, server_mode_t mode) {
   (void) mode;
+
+  char msg[100];
+  snprintf(msg, sizeof(msg), 
+    "Handling user action: %s from page: %s", request->action, request->from_page);
+  log_debug(TAG, msg);
 
   if (strcmp(request->action, ACTION_TYPE_NEXT_STR) == 0) {
     if(strcmp(request->from_page, ACTION_PAGE_WIFI) == 0) {
       const int wifi_result = usr_act_wifi_apply(request);
     }
     else if(strcmp(request->from_page, ACTION_PAGE_API_KEY) == 0) {
-      printf("Apply API key setup: %s\n", request->api_key);
+      const int api_key_result = usr_act_api_key_apply(request);
     }
     else if(strcmp(request->from_page, ACTION_PAGE_STATION_IDS) == 0) {
-      printf("Apply station IDs setup: %s\n", request->station_ids);
+      const int station_ids_result = usr_act_station_ids_apply(request);
     }
     else {
-      printf("Unknown source page: '%s'\n", request->from_page);
+      char msg[100]; 
+      snprintf(msg, sizeof(msg), 
+      "Unknown source page: %s", request->from_page);
+      log_error(TAG, msg);
       return -1;
     }
 
   }
   else if (strcmp(request->action, ACTION_TYPE_BACK_STR) == 0) {
-    printf("Handling 'back' action\n");
+    // handling back action if needed, currently no specific logic for back action
   }
   else {
-    printf("Unknown action: '%s'\n", request->action);
+    char msg[100]; 
+    snprintf(msg, sizeof(msg), 
+    "Unknown action: %s", request->action);
+    log_error(TAG, msg);
     return -1;
   
   }
@@ -77,4 +91,37 @@ static int usr_act_wifi_apply(const api_button_request_t *request) {
   system("(sleep 2 && reboot) &");
 
   return wifi_validation_result;
+}
+
+
+static int usr_act_api_key_apply(const api_button_request_t *request) {
+  printf("Applying API key: %s\n", request->api_key);
+
+  const int api_key_validation_result = 42; // Placeholder for actual validation logic
+
+  log_info(TAG, "API key applied");
+
+  return api_key_validation_result;
+}
+
+static int usr_act_station_ids_apply(const api_button_request_t *request) {
+  printf("Applying station IDs: %s\n", request->station_ids);
+
+  const int station_ids_validation_result = 42; // Placeholder for actual validation logic
+
+  log_info(TAG, "Station IDs applied");
+
+  FILE *flag_file = fopen("/etc/bkk-display-config/api-configured", "w");
+  if (flag_file == NULL) {
+    log_error(TAG, "Failed to open api-configured file for writing");
+    return -1;
+  }
+  fprintf(flag_file, "1");
+  fclose(flag_file);
+
+  // Schedule a reboot in x seconds
+  log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
+  system("(sleep 2 && reboot) &");
+
+  return station_ids_validation_result;
 }
