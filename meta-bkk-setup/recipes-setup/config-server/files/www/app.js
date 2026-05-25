@@ -170,7 +170,7 @@ function finishApi() {
         station_ids: document.getElementById("station-ids").value.trim()
     };
 
-    postJson("/api/finish", payload)
+    postJson("/api/button", payload)
         .then(function() {
             document.getElementById("done-title").textContent = "Setup Complete";
             document.getElementById("done-message").textContent =
