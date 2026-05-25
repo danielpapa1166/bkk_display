@@ -7,7 +7,7 @@
 #define WPA_CFG_PATH_DEFAULT             "/run"
 #define WPA_CFG_NAME_DEFAULT             "wpa_supplicant-ap.conf"
 #define NETWORK_CFG_PATH_DEFAULT         "/run/systemd/network"
-#define NETWORK_CFG_NAME_DEFAULT         "20-wlan0-ap.network"
+#define NETWORK_CFG_NAME_DEFAULT         "05-wlan0-ap.network"
 
 // Default paths and filenames — WiFi client mode (persistent, survives reboot)
 #define WPA_WIFI_CFG_PATH_DEFAULT        "/etc/wpa_supplicant"
@@ -58,7 +58,7 @@ static const char WPA_CONFIG_WIFI[] =
     "network={\n"
     "    ssid=\"TeveClub\"\n"
     "    key_mgmt=WPA-PSK\n"
-    "    psk=\"PirosTeve\"\n"
+    "    psk=\"PirosTeve32\"\n"
     "}";
 
 static const char NETWORK_CONFIG_WIFI[] =
