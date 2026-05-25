@@ -1,5 +1,6 @@
 #include "http_server_user_action_handler.h"
 #include "rbuflogd/logger.h"
+#include "cJSON.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,9 +108,80 @@ static int usr_act_api_key_apply(const api_button_request_t *request) {
 static int usr_act_station_ids_apply(const api_button_request_t *request) {
   printf("Applying station IDs: %s\n", request->station_ids);
 
-  const int station_ids_validation_result = 42; // Placeholder for actual validation logic
+  // Create /etc/bkk-api directory if it does not exist
+  const char *bkk_api_dir = "/etc/bkk-api";
+  if (mkdir(bkk_api_dir, 0755) != 0 && errno != EEXIST) {
+    log_error(TAG, "Failed to create /etc/bkk-api directory");
+    return -1;
+  }
 
-  log_info(TAG, "Station IDs applied");
+  // --- Write api-key.txt ---
+  if (request->api_key[0] != '\0' && strlen(request->api_key) > 10) {
+    FILE *key_file = fopen("/etc/bkk-api/api-key.txt", "w");
+    if (key_file == NULL) {
+      log_error(TAG, "Failed to open /etc/bkk-api/api-key.txt for writing");
+      return -1;
+    }
+      
+    fprintf(key_file, "%s", request->api_key);
+    fclose(key_file);
+    log_info(TAG, "API key written to /etc/bkk-api/api-key.txt");
+  }
+  else {
+    log_info(TAG, "No valid API key provided, skipping api-key.txt write");
+  }
+
+  // --- Build stations JSON and write config.json ---
+  cJSON *root = cJSON_CreateObject();
+  if (!root) {
+    log_error(TAG, "Failed to create JSON object");
+    return -1;
+  }
+
+  cJSON *stations_array = cJSON_AddArrayToObject(root, "stations");
+  if (!stations_array) {
+    log_error(TAG, "Failed to create stations JSON array");
+    cJSON_Delete(root);
+    return -1;
+  }
+
+  // Tokenise station_ids by whitespace and commas
+  char ids_copy[sizeof(request->station_ids)];
+  strncpy(ids_copy, request->station_ids, sizeof(ids_copy) - 1);
+  ids_copy[sizeof(ids_copy) - 1] = '\0';
+
+  char *token = strtok(ids_copy, " ,\t\n\r");
+  while (token != NULL) {
+    if (token[0] != '\0') {
+      cJSON_AddItemToArray(stations_array, cJSON_CreateString(token));
+    }
+    token = strtok(NULL, " ,\t\n\r");
+  }
+
+  char *json_str = cJSON_Print(root);
+  cJSON_Delete(root);
+  if (!json_str) {
+    log_error(TAG, "Failed to serialise config JSON");
+    return -1;
+  }
+
+  FILE *config_file = fopen("/etc/bkk-api/config.json", "w");
+  if (config_file == NULL) {
+    log_error(TAG, "Failed to open /etc/bkk-api/config.json for writing");
+    free(json_str);
+    return -1;
+  }
+  fprintf(config_file, "%s\n", json_str);
+  fclose(config_file);
+  free(json_str);
+  log_info(TAG, "Station IDs written to /etc/bkk-api/config.json");
+
+  // --- Write api-configured flag ---
+  const char *config_dir = "/etc/bkk-display-config";
+  if (mkdir(config_dir, 0755) != 0 && errno != EEXIST) {
+    log_error(TAG, "Failed to create /etc/bkk-display-config directory");
+    return -1;
+  }
 
   FILE *flag_file = fopen("/etc/bkk-display-config/api-configured", "w");
   if (flag_file == NULL) {
@@ -119,9 +191,8 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
   fprintf(flag_file, "1");
   fclose(flag_file);
 
-  // Schedule a reboot in x seconds
   log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
   system("(sleep 2 && reboot) &");
 
-  return station_ids_validation_result;
+  return 0;
 }
