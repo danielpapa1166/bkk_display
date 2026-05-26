@@ -5,7 +5,8 @@
       "binary": "/usr/bin/rbuflogd",
       "args": [
         "-p", "/etc/rbuflogd",
-        "-l", "0"
+        "-l", "0", 
+        "--log-init-success"
       ],
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
       "after_exited": "", 
