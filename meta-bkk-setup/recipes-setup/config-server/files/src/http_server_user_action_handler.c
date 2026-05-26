@@ -79,6 +79,27 @@ static int usr_act_wifi_apply(const api_button_request_t *request) {
     return -1;
   }
 
+  // Persist WiFi credentials so wpa_helper can read them in API_CONFIG mode
+  cJSON *wifi_json = cJSON_CreateObject();
+  cJSON_AddStringToObject(wifi_json, "ssid",     request->wifi_ssid);
+  cJSON_AddStringToObject(wifi_json, "password", request->wifi_password);
+  char *json_str = cJSON_PrintUnformatted(wifi_json);
+  cJSON_Delete(wifi_json);
+  if (json_str == NULL) {
+    log_error(TAG, "Failed to serialise wifi credentials to JSON");
+    return -1;
+  }
+  FILE *cred_file = fopen("/etc/bkk-display-config/wifi_config.json", "w");
+  if (cred_file == NULL) {
+    log_error(TAG, "Failed to open wifi_config.json for writing");
+    free(json_str);
+    return -1;
+  }
+  fputs(json_str, cred_file);
+  fclose(cred_file);
+  free(json_str);
+  log_info(TAG, "WiFi credentials saved to wifi_config.json");
+
   FILE *flag_file = fopen("/etc/bkk-display-config/wifi-configured", "w");
   if (flag_file == NULL) {
     log_error(TAG, "Failed to create wifi-configured file");
