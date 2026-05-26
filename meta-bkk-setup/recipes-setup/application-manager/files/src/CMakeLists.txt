@@ -23,7 +23,7 @@ set(CJSON_SOURCE_DIR
     CACHE PATH "Path to the vendored cJSON source tree")
 
 set(CHTTP_SOURCE_DIR
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../chttp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../chttp"
     CACHE PATH "Path to the local chttp source tree")
 
 # ---------------------------------------------------------------------------
