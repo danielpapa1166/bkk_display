@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include "cJSON.h"
 #include "wpa_config.h"
 #include "rbuflogd/logger.h"
 
@@ -17,6 +19,12 @@ typedef enum {
   BOOT_MODE_UNKNOWN
 } boot_mode_t;
 
+typedef enum {
+  WIFI_CRED_LOAD_SUCCESS,
+  WIFI_CRED_LOAD_FALLBACK, 
+  WIFI_CRED_LOAD_ERROR
+} wifi_cred_load_status_t;
+
 // ----------------------------------------------------------------------------
 // local function prototypes
 // ----------------------------------------------------------------------------
@@ -26,6 +34,14 @@ static int match_key(const char *arg, const char *key, const char **value);
 static int prepare_config_folder(const char *path);
 static int write_wpa_config(
   const char *path, const char *name, const char *content);
+static void apply_fallback(char *ssid_out, size_t ssid_len,
+  char *psk_out, size_t psk_len, const char *reason);
+static wifi_cred_load_status_t load_wifi_credentials(
+  const char *json_path,
+  char *ssid_out, size_t ssid_len,
+  char *psk_out,  size_t psk_len);
+static int build_wpa_wifi_string(char *buf, size_t len,
+  const char *ssid, const char *psk);
 
 
 // ----------------------------------------------------------------------------
@@ -159,6 +175,8 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
     return boot_mode;
   }
 
+  config->fallback_wifi_config_enable = 1; // default to enabled
+
   // Remaining arguments are optional key=value pairs 
   for (int i = 2; i < argc; i++) {
     const char *val = NULL;
@@ -174,6 +192,19 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
     else if (match_key(argv[i], "network_cfg_name",  &val)) { 
       config->network_cfg_name  = val; 
     }
+    else if(match_key(argv[i], "fallback_wifi", &val)) {
+      if(strcmp(val, "disable") == 0) {
+        config->fallback_wifi_config_enable = 0;
+      }
+      else if(strcmp(val, "enable") == 0) {
+        config->fallback_wifi_config_enable = 1;
+      }
+
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Fallback WiFi config %s", 
+        config->fallback_wifi_config_enable ? "enabled" : "disabled");
+      log_debug("main", msg);
+    }
   }
 
   return boot_mode;
@@ -182,11 +213,9 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
 
 static int prepare_config_folder(const char *path) {
   if (path == NULL) {
+    log_error("wr cfg", "prepare_config_folder: NULL path argument");
     return 0;
   }
-
-  // todo: log error 
-
 
   struct stat st;
   if (stat(path, &st) == 0) {
@@ -272,5 +301,126 @@ static int write_wpa_config(const char *path, const char *name, const char *cont
     return -1;
   }
 
+  return 0;
+}
+
+
+/* Copy the fallback credentials into the output buffers and log the reason. */
+static void apply_fallback(
+    char *ssid_out, size_t ssid_len,
+    char *psk_out,  size_t psk_len,
+    const char *reason)
+{
+  log_warning("wpa_cred", reason);
+  strncpy(ssid_out, WPA_WIFI_FALLBACK_SSID, ssid_len - 1);
+  ssid_out[ssid_len - 1] = '\0';
+  strncpy(psk_out,  WPA_WIFI_FALLBACK_PSK,  psk_len  - 1);
+  psk_out[psk_len - 1] = '\0';
+}
+
+
+/* Load SSID and password from WPA_WIFI_CREDENTIALS_JSON.
+ * Copies the values into the caller-supplied buffers.
+ * Returns 0 on success, 1 when the fallback (TeveClub) is used instead.
+ * Never returns a negative value — a missing/corrupt file is not fatal;
+ * the caller always gets a usable credential pair. */
+static wifi_cred_load_status_t load_wifi_credentials(
+    const char *json_path,
+    char *ssid_out, size_t ssid_len,
+    char *psk_out,  size_t psk_len)
+{
+  FILE *f = fopen(json_path, "r");
+  if (f == NULL) {
+    // json file should have been created by config-server in API_CONFIG mode, 
+    // but if it's missing/unreadable for any reason that indicates 
+    // a huger problem, log error and exit 
+    snprintf(msg_buf, sizeof(msg_buf),
+      "load_wifi_credentials: cannot open %s (%s) — using fallback",
+      json_path, strerror(errno));
+    
+    log_error("wpa_cred", msg_buf); 
+      
+    return WIFI_CRED_LOAD_ERROR;
+  }
+
+  /* Read the whole file into a heap buffer */
+  if (fseek(f, 0, SEEK_END) != 0) {
+    fclose(f);
+    apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
+      "load_wifi_credentials: fseek failed — using fallback");
+    return WIFI_CRED_LOAD_FALLBACK;
+  }
+
+  const long file_size = ftell(f);
+  if (file_size <= 0 || file_size > 4096) {
+    fclose(f);
+    apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
+      "load_wifi_credentials: file empty or too large — using fallback");
+    return WIFI_CRED_LOAD_FALLBACK;
+  }
+  rewind(f);
+
+  char *raw = (char *)malloc((size_t)file_size + 1);
+  if (raw == NULL) {
+    fclose(f);
+    log_error("wpa_cred", "load_wifi_credentials: "
+      "failed to allocate memory for file contents");
+    return WIFI_CRED_LOAD_ERROR;
+  }
+
+  const size_t rd = fread(raw, 1, (size_t)file_size, f);
+  fclose(f);
+  raw[rd] = '\0';
+
+  cJSON *root = cJSON_Parse(raw);
+  free(raw);
+  if (root == NULL) {
+    apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
+      "load_wifi_credentials: JSON parse error — using fallback");
+    return WIFI_CRED_LOAD_FALLBACK;
+  }
+
+  const cJSON *j_ssid = cJSON_GetObjectItemCaseSensitive(root, "ssid");
+  const cJSON *j_psk  = cJSON_GetObjectItemCaseSensitive(root, "password");
+
+  if (!cJSON_IsString(j_ssid) || j_ssid->valuestring[0] == '\0' ||
+      !cJSON_IsString(j_psk)  || j_psk->valuestring[0]  == '\0') {
+    cJSON_Delete(root);
+    apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
+      "load_wifi_credentials: missing/empty fields — using fallback");
+    return WIFI_CRED_LOAD_FALLBACK;
+  }
+
+  /* Minimum SSID length guard (also catches test/placeholder values) */
+  if (strlen(j_ssid->valuestring) < 4) {
+    cJSON_Delete(root);
+    apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
+      "load_wifi_credentials: SSID too short (< 4 chars) — using fallback");
+    return WIFI_CRED_LOAD_FALLBACK;
+  }
+
+  strncpy(ssid_out, j_ssid->valuestring, ssid_len - 1);
+  ssid_out[ssid_len - 1] = '\0';
+  strncpy(psk_out,  j_psk->valuestring,  psk_len  - 1);
+  psk_out[psk_len - 1] = '\0';
+  cJSON_Delete(root);
+
+  snprintf(msg_buf, sizeof(msg_buf),
+    "load_wifi_credentials: loaded SSID '%s' from %s", ssid_out, json_path);
+  log_info("wpa_cred", msg_buf);
+  return WIFI_CRED_LOAD_SUCCESS;
+}
+
+
+/* Format WPA_CONFIG_WIFI_TEMPLATE with the given ssid and psk into buf.
+ * Returns 0 on success, -1 if the buffer is too small. */
+static int build_wpa_wifi_string(
+    char *buf, size_t len, const char *ssid, const char *psk)
+{
+  const int n = snprintf(buf, len, WPA_CONFIG_WIFI_TEMPLATE, ssid, psk);
+  if (n < 0 || (size_t)n >= len) {
+    log_error("wpa_bld", "build_wpa_wifi_string: buffer too small");
+    return -1;
+  }
   return 0;
 }

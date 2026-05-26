@@ -1,6 +1,7 @@
 #ifndef WPA_CONFIG_H
 #define WPA_CONFIG_H
 
+#include <stdint.h>
 #include <string.h>
 
 // Default paths and filenames — AP mode (runtime, volatile)
@@ -16,6 +17,7 @@
 #define NETWORK_WIFI_CFG_NAME_DEFAULT    "10-wlan0.network"
 
 typedef struct {
+  uint8_t fallback_wifi_config_enable; 
   const char * wpa_cfg_path;
   const char * network_cfg_path;
   const char * wpa_cfg_name;
@@ -49,16 +51,24 @@ static const char NETWORK_CONFIG_AP[] =
     "PoolOffset=10\n"
     "PoolSize=50";
 
-/* TODO: load from file saved during Phase 1 (wifi-config boot) */
-static const char WPA_CONFIG_WIFI[] =
+// Fallback WiFi credentials used when wifi_config.json is absent or unreadable.
+#define WPA_WIFI_FALLBACK_SSID    "TeveClub"
+#define WPA_WIFI_FALLBACK_PSK     "PirosTeve32"
+
+// Path to the JSON file written by config-server during Phase 1 (WIFI_CONFIG boot).
+#define WPA_WIFI_CREDENTIALS_JSON "/etc/bkk-display-config/wifi_config.json"
+
+// Template used to build the wpa_supplicant client config at runtime.
+// Arguments: ssid (string), psk (string).
+static const char WPA_CONFIG_WIFI_TEMPLATE[] =
     "ctrl_interface=/run/wpa_supplicant\n"
     "update_config=1\n"
     "country=HU\n"
     "\n"
     "network={\n"
-    "    ssid=\"TeveClub\"\n"
+    "    ssid=\"%s\"\n"
     "    key_mgmt=WPA-PSK\n"
-    "    psk=\"PirosTeve32\"\n"
+    "    psk=\"%s\"\n"
     "}";
 
 static const char NETWORK_CONFIG_WIFI[] =
@@ -80,12 +90,16 @@ static wpa_config_t wpa_ap_config = {
   .network_cfg_str      = NETWORK_CONFIG_AP
 };
 
+// wpa_wifi_config no longer carries a static wpa_cfg_str — the string is built
+// at runtime by wpa_helper_main.c::build_wpa_wifi_string() using
+// WPA_CONFIG_WIFI_TEMPLATE + credentials loaded from WPA_WIFI_CREDENTIALS_JSON
+// (with WPA_WIFI_FALLBACK_* applied when the file is absent or unreadable).
 static wpa_config_t wpa_wifi_config = {
   .wpa_cfg_path         = WPA_WIFI_CFG_PATH_DEFAULT,
   .network_cfg_path     = NETWORK_WIFI_CFG_PATH_DEFAULT,
   .wpa_cfg_name         = WPA_WIFI_CFG_NAME_DEFAULT,
   .network_cfg_name     = NETWORK_WIFI_CFG_NAME_DEFAULT,
-  .wpa_cfg_str          = WPA_CONFIG_WIFI,
+  .wpa_cfg_str          = NULL,   /* filled at runtime */
   .network_cfg_str      = NETWORK_CONFIG_WIFI
 };
 
