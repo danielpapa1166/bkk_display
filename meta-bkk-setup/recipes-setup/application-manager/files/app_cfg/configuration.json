@@ -25,21 +25,30 @@
       "binary": "/usr/bin/wpa_helper",
       "phases": ["WIFI_CONFIG"], 
       "after_exited": "logger_check",
-      "args": ["boot_mode=wifi_config"]
+      "args": [
+        "boot_mode=wifi_config", 
+        "fallback_wifi_config_enable=enable"
+      ]
     },
         {
       "name": "wpa_helper_api_config", 
       "binary": "/usr/bin/wpa_helper",
       "phases": ["API_CONFIG"], 
       "after_exited": "logger_check",
-      "args": ["boot_mode=api_config"]
+      "args": [
+        "boot_mode=api_config", 
+        "fallback_wifi_config_enable=enable"
+      ]
     },
     {
       "name": "wpa_helper_normal", 
       "binary": "/usr/bin/wpa_helper",
       "phases": ["NORMAL"], 
       "after_exited": "logger_check",
-      "args": ["boot_mode=normal"]
+      "args": [
+        "boot_mode=normal", 
+        "fallback_wifi_config_enable=enable"
+      ]
     },
     {
       "name": "networkctl_reload",
