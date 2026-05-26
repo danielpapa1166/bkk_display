@@ -199,6 +199,12 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
       else if(strcmp(val, "enable") == 0) {
         config->fallback_wifi_config_enable = 1;
       }
+      else {
+        char msg[100];
+        snprintf(msg, sizeof(msg), 
+          "Invalid value for fallback_wifi: %s. Expected 'enable' or 'disable'.", val);
+        log_error("main", msg);
+      }
 
       char msg[100];
       snprintf(msg, sizeof(msg), "Fallback WiFi config %s", 
