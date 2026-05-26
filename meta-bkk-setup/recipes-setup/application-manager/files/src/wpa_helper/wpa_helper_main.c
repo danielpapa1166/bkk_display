@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     log_info("main", "WIFI_CONFIG mode: writing wpa + network config");
   }
   else if(boot_mode == BOOT_MODE_API_CONFIG) {
-    log_info("main", "API_CONFIG mode: writing network config only");
+    log_info("main", "API_CONFIG mode: writing wpa + network config");
   }
   else if(boot_mode == BOOT_MODE_NORMAL) {
     log_info("main", "NORMAL mode: nothing to configure");
@@ -93,7 +93,9 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  /* Only WIFI_CONFIG writes the wpa_supplicant config (AP credentials) */
+  /* Both WIFI_CONFIG and API_CONFIG write a wpa_supplicant config.
+   * WIFI_CONFIG uses the static AP string; API_CONFIG builds a client
+   * string from credentials loaded from WPA_WIFI_CREDENTIALS_JSON. */
   if (boot_mode == BOOT_MODE_WIFI_CONFIG) {
     res = prepare_config_folder(config.wpa_cfg_path);
     if (res != 0) {
@@ -114,8 +116,65 @@ int main(int argc, char *argv[])
       return -1;
     }
   }
+  else if (boot_mode == BOOT_MODE_API_CONFIG) {
+    char ssid[64]     = {0};
+    char psk[128]     = {0};
+    char wpa_buf[512] = {0};
 
-  log_info("main", "WPA config written successfully. App exiting.");
+    const wifi_cred_load_status_t cred_status = load_wifi_credentials(
+      WPA_WIFI_CREDENTIALS_JSON, 
+      ssid, 
+      sizeof(ssid), 
+      psk, 
+      sizeof(psk));
+
+    if (cred_status == WIFI_CRED_LOAD_ERROR) {
+      log_error("main", "Fatal. "
+        "Failed to load WiFi credentials. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+
+    if (cred_status == WIFI_CRED_LOAD_FALLBACK
+        && !config.fallback_wifi_config_enable) {
+      log_error("main", "Fatal. "
+        "WiFi credentials invalid and fallback is disabled. "
+        "App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+
+    res = build_wpa_wifi_string(wpa_buf, 
+      sizeof(wpa_buf), ssid, psk);
+    if (res != 0) {
+      log_error("main", "Fatal. "
+        "Failed to build WPA config string. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+
+    res = prepare_config_folder(config.wpa_cfg_path);
+    if (res != 0) {
+      log_error("main", "Fatal. "
+        "Failed to prepare WPA config folder. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+
+    res = write_wpa_config(
+      config.wpa_cfg_path,
+      config.wpa_cfg_name,
+      wpa_buf);
+    if (res != 0) {
+      log_error("main", "Fatal. "
+        "Failed to write WPA config. App exiting.");
+      rbuflogd_logger_close();
+      return -1;
+    }
+  }
+
+  log_info("main", "WPA config written successfully. "
+    "App exiting.");
 
   rbuflogd_logger_close();
   return 0;
@@ -202,7 +261,8 @@ static boot_mode_t parse_args(int argc, char *argv[], wpa_config_t *config) {
       else {
         char msg[100];
         snprintf(msg, sizeof(msg), 
-          "Invalid value for fallback_wifi: %s. Expected 'enable' or 'disable'.", val);
+          "Invalid value for fallback_wifi: %s. "
+          "Expected 'enable' or 'disable'.", val);
         log_error("main", msg);
       }
 
@@ -231,7 +291,8 @@ static int prepare_config_folder(const char *path) {
     snprintf(
       msg_buf, 
       sizeof(msg_buf), 
-      "prepare_config_folder: path exists but is not a directory: %s", path);
+      "prepare_config_folder: "
+      "path exists but is not a directory: %s", path);
     log_error("wr cfg", msg_buf);
     return -1;
   }
@@ -260,7 +321,8 @@ static int prepare_config_folder(const char *path) {
 }
 
 
-static int write_wpa_config(const char *path, const char *name, const char *content) {
+static int write_wpa_config(
+    const char *path, const char *name, const char *content) {
   if (path == NULL || name == NULL || content == NULL) {
     fprintf(stderr, "write_file: NULL argument\n");
     return -1;
@@ -386,8 +448,10 @@ static wifi_cred_load_status_t load_wifi_credentials(
     return WIFI_CRED_LOAD_FALLBACK;
   }
 
-  const cJSON *j_ssid = cJSON_GetObjectItemCaseSensitive(root, "ssid");
-  const cJSON *j_psk  = cJSON_GetObjectItemCaseSensitive(root, "password");
+  const cJSON *j_ssid = cJSON_GetObjectItemCaseSensitive(
+    root, "ssid");
+  const cJSON *j_psk  = cJSON_GetObjectItemCaseSensitive(
+    root, "password");
 
   if (!cJSON_IsString(j_ssid) || j_ssid->valuestring[0] == '\0' ||
       !cJSON_IsString(j_psk)  || j_psk->valuestring[0]  == '\0') {
@@ -423,7 +487,8 @@ static wifi_cred_load_status_t load_wifi_credentials(
 static int build_wpa_wifi_string(
     char *buf, size_t len, const char *ssid, const char *psk)
 {
-  const int n = snprintf(buf, len, WPA_CONFIG_WIFI_TEMPLATE, ssid, psk);
+  const int n = snprintf(buf, len, 
+    WPA_CONFIG_WIFI_TEMPLATE, ssid, psk);
   if (n < 0 || (size_t)n >= len) {
     log_error("wpa_bld", "build_wpa_wifi_string: buffer too small");
     return -1;
