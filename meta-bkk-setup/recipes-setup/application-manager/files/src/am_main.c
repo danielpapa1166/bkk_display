@@ -10,6 +10,7 @@
 #include "am_types.h"
 #include "am_supervisor.h"
 #include "am_boot_mode.h"
+#include "am_http_server.h"
 
 // ----------------------------------------------------------------------------
 // internal helper functions
@@ -76,6 +77,12 @@ int main(int argc, char * argv[])
 
   if (thread_stat != 0) {
     fprintf(stderr, "am: failed to create supervisor thread\n");
+    return 1;
+  }
+
+  const int http_stat = am_http_server_start(&app_info_list, 8081, "./www");
+  if (http_stat != 0) {
+    fprintf(stderr, "am: failed to start HTTP status server\n");
     return 1;
   }
 

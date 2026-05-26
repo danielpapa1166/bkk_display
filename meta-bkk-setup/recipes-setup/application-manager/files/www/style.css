@@ -1,0 +1,123 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0f1117;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  padding: 1.4rem 2rem;
+  border-bottom: 1px solid #1e2433;
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+}
+
+#last-updated {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+main {
+  padding: 1.5rem 2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead th {
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  border-bottom: 1px solid #1e2433;
+}
+
+tbody tr {
+  border-bottom: 1px solid #1a2030;
+  transition: background 0.1s;
+}
+
+tbody tr:hover {
+  background: #161b27;
+}
+
+tbody td {
+  padding: 0.65rem 0.9rem;
+  color: #cbd5e1;
+}
+
+td.loading {
+  color: #475569;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+td.name {
+  font-weight: 500;
+  color: #e2e8f0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+td.pid {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+td.exit-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Status badge */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-running        { background: #14532d; color: #4ade80; }
+.badge-exited         { background: #1e293b; color: #94a3b8; }
+.badge-not_started    { background: #1c1917; color: #a8a29e; }
+.badge-not_in_this_phase { background: #1e293b; color: #475569; }
+.badge-failed         { background: #450a0a; color: #f87171; }
+.badge-killed         { background: #431407; color: #fb923c; }
+.badge-other_error    { background: #450a0a; color: #f87171; }
+.badge-unknown        { background: #1e1b4b; color: #a5b4fc; }
+
+/* Refresh indicator pulse */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.refreshing #last-updated {
+  animation: pulse 0.6s ease-in-out;
+}
