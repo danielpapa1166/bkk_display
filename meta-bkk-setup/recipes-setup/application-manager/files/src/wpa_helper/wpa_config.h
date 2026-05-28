@@ -1,0 +1,106 @@
+#ifndef WPA_CONFIG_H
+#define WPA_CONFIG_H
+
+#include <stdint.h>
+#include <string.h>
+
+// Default paths and filenames — AP mode (runtime, volatile)
+#define WPA_CFG_PATH_DEFAULT             "/run"
+#define WPA_CFG_NAME_DEFAULT             "wpa_supplicant-ap.conf"
+#define NETWORK_CFG_PATH_DEFAULT         "/run/systemd/network"
+#define NETWORK_CFG_NAME_DEFAULT         "05-wlan0-ap.network"
+
+// Default paths and filenames — WiFi client mode (persistent, survives reboot)
+#define WPA_WIFI_CFG_PATH_DEFAULT        "/etc/wpa_supplicant"
+#define WPA_WIFI_CFG_NAME_DEFAULT        "wpa_supplicant-wlan0.conf"
+#define NETWORK_WIFI_CFG_PATH_DEFAULT    "/etc/systemd/network"
+#define NETWORK_WIFI_CFG_NAME_DEFAULT    "10-wlan0.network"
+
+typedef struct {
+  uint8_t fallback_wifi_config_enable; 
+  const char * wpa_cfg_path;
+  const char * network_cfg_path;
+  const char * wpa_cfg_name;
+  const char * network_cfg_name;
+  const char * wpa_cfg_str;
+  const char * network_cfg_str;
+} wpa_config_t;
+
+
+static const char WPA_CONFIG_AP[] =
+    "ctrl_interface=/run/wpa_supplicant\n"
+    "update_config=1\n"
+    "country=HU\n"
+    "\n"
+    "network={\n"
+    "    ssid=\"BKK-Display-Setup\"\n"
+    "    mode=2\n"
+    "    key_mgmt=NONE\n"
+    "    frequency=2437\n"
+    "}";
+
+static const char NETWORK_CONFIG_AP[] =
+    "[Match]\n"
+    "Name=wlan0\n"
+    "\n"
+    "[Network]\n"
+    "Address=192.168.4.1/24\n"
+    "DHCPServer=yes\n"
+    "\n"
+    "[DHCPServer]\n"
+    "PoolOffset=10\n"
+    "PoolSize=50";
+
+// Fallback WiFi credentials used when wifi_config.json is absent or unreadable.
+#define WPA_WIFI_FALLBACK_SSID    "TeveClub"
+#define WPA_WIFI_FALLBACK_PSK     "PirosTeve32"
+
+// Path to the JSON file written by config-server during Phase 1 (WIFI_CONFIG boot).
+#define WPA_WIFI_CREDENTIALS_JSON "/etc/bkk-display-config/wifi_config.json"
+
+// Template used to build the wpa_supplicant client config at runtime.
+// Arguments: ssid (string), psk (string).
+static const char WPA_CONFIG_WIFI_TEMPLATE[] =
+    "ctrl_interface=/run/wpa_supplicant\n"
+    "update_config=1\n"
+    "country=HU\n"
+    "\n"
+    "network={\n"
+    "    ssid=\"%s\"\n"
+    "    key_mgmt=WPA-PSK\n"
+    "    psk=\"%s\"\n"
+    "}";
+
+static const char NETWORK_CONFIG_WIFI[] =
+    "[Match]\n"
+    "Name=wlan0\n"
+    "\n"
+    "[Network]\n"
+    "DHCP=yes";
+
+/* NOTE: network_cfg_path default requires /run/systemd to already exist.
+ * This is guaranteed at boot by systemd, but prepare_config_folder only
+ * performs a single-level mkdir. */
+static wpa_config_t wpa_ap_config = {
+  .wpa_cfg_path         = WPA_CFG_PATH_DEFAULT,
+  .network_cfg_path     = NETWORK_CFG_PATH_DEFAULT,
+  .wpa_cfg_name         = WPA_CFG_NAME_DEFAULT,
+  .network_cfg_name     = NETWORK_CFG_NAME_DEFAULT,
+  .wpa_cfg_str          = WPA_CONFIG_AP,
+  .network_cfg_str      = NETWORK_CONFIG_AP
+};
+
+// wpa_wifi_config no longer carries a static wpa_cfg_str — the string is built
+// at runtime by wpa_helper_main.c::build_wpa_wifi_string() using
+// WPA_CONFIG_WIFI_TEMPLATE + credentials loaded from WPA_WIFI_CREDENTIALS_JSON
+// (with WPA_WIFI_FALLBACK_* applied when the file is absent or unreadable).
+static wpa_config_t wpa_wifi_config = {
+  .wpa_cfg_path         = WPA_WIFI_CFG_PATH_DEFAULT,
+  .network_cfg_path     = NETWORK_WIFI_CFG_PATH_DEFAULT,
+  .wpa_cfg_name         = WPA_WIFI_CFG_NAME_DEFAULT,
+  .network_cfg_name     = NETWORK_WIFI_CFG_NAME_DEFAULT,
+  .wpa_cfg_str          = NULL,   /* filled at runtime */
+  .network_cfg_str      = NETWORK_CONFIG_WIFI
+};
+
+#endif /* WPA_CONFIG_H */

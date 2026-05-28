@@ -2,7 +2,7 @@
 Description=BKK Qt Application
 After=local-fs.target bkk-api-keygen.service
 Requires=bkk-api-keygen.service
-ConditionPathExists=/etc/bkk-api/configured
+ConditionPathExists=/etc/bkk-display-config/api-configured
 
 [Service]
 Environment="QT_QPA_PLATFORM=eglfs"

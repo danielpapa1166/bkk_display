@@ -6,21 +6,18 @@ inherit cmake_qt5 pkgconfig systemd
 SRC_URI = "file://src/ \
            file://icon/ \
            file://bkk-qt-app.service \
-           git://github.com/DaveGamble/cJSON.git;protocol=https;nobranch=1;name=cjson;destsuffix=cJSON \
            "
-
-SRCREV_cjson = "fb16e5cf358798aabb049655975cde8427101056"
 
 S = "${WORKDIR}/src"
 
-DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd"
+DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd cjson"
 RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd"
 
 # Generate compile_commands.json for clangd tooling.
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 SYSTEMD_SERVICE:${PN} = "bkk-qt-app.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 do_install:append() {
     install -d ${D}${systemd_system_unitdir}

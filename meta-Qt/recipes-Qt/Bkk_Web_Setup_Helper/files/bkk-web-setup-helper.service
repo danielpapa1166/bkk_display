@@ -2,7 +2,7 @@
 Description=BKK Display Web Setup Helper UI
 After=bkk-boot-mode.service bkk-setup-web.service
 Requires=bkk-boot-mode.service
-ConditionPathExists=!/etc/bkk-api/configured
+ConditionPathExists=!/etc/bkk-display-config/api-configured
 
 [Service]
 Environment="QT_QPA_PLATFORM=eglfs"

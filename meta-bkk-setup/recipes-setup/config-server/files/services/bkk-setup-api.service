@@ -1,0 +1,18 @@
+[Unit]
+Description=BKK Display Setup Web Server - Phase 2 (API key and station config)
+After=bkk-setup-check-wifi.service
+Requires=bkk-setup-check-wifi.service
+# Only active in phase 2: same conditions as bkk-setup-check-wifi.service.
+ConditionPathExists=/etc/bkk-display-config/wifi-configured
+ConditionPathExists=!/etc/bkk-display-config/api-configured
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/config-server --mode=api
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

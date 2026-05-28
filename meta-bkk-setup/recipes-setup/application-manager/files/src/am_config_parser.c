@@ -1,0 +1,241 @@
+#include "am_config_parser.h"
+#include <cJSON.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// ----------------------------------------------------------------------------
+// --- helper functions ---
+// ----------------------------------------------------------------------------
+
+
+// this function reads the entire contents of the config file 
+// and stores it into a newly allocated string
+static parse_status_t load_config_file(const char * config_path, char ** data_out) {
+  FILE * fid = fopen(config_path, "r");
+  if(!fid) {
+    return PARSE_ERR_CFG_FILE_NOT_FOUND; 
+  }
+
+  char * file_contents = NULL;
+  fseek(fid, 0, SEEK_END);
+  long file_size = ftell(fid);
+  
+  file_contents = (char *)malloc(file_size + 1);
+  if (!file_contents) {
+    fclose(fid);
+    return PARSE_ERR_CFG_FILE_INVALID;
+  }
+    
+  fseek(fid, 0, SEEK_SET);
+  size_t fr_size = fread(file_contents, 1, file_size, fid);
+  if (fr_size != file_size) {
+    free(file_contents);
+    fclose(fid);
+    return PARSE_ERR_CFG_FILE_INVALID;
+  }
+
+  file_contents[file_size] = '\0';
+  fclose(fid); 
+  *data_out = file_contents;
+  return PARSE_OK;
+}
+
+
+// this function parses a cJSON array of strings into 
+// a newly allocated array of C strings
+static parse_status_t parse_array_of_strings(cJSON * json_array, 
+    char *** out_strings, int * out_num_strings) {
+  if (!cJSON_IsArray(json_array)) {
+    return PARSE_ERR_JSON_INVALID;
+  }
+  int num_strings = cJSON_GetArraySize(json_array);
+  char ** strings = (char **)malloc(sizeof(char *) * num_strings);
+  for (int i = 0; i < num_strings; i++) {
+    cJSON * item = cJSON_GetArrayItem(json_array, i);
+    if (!cJSON_IsString(item)) {
+      return PARSE_ERR_JSON_INVALID;
+    }
+    strings[i] = strdup(item->valuestring);
+  }
+  *out_strings = strings;
+  *out_num_strings = num_strings;
+  return PARSE_OK;
+}
+
+// this function parses a single cJSON object representing an app config into 
+// an app_config_t struct
+static parse_status_t parse_json_element(
+    cJSON * element, app_config_t * app_out) {
+  
+  cJSON * name = cJSON_GetObjectItem(element, "name");
+  if (!cJSON_IsString(name)) {
+    return PARSE_ERR_JSON_INVALID;
+  }
+  app_out->name = strdup(name->valuestring);
+
+  cJSON * binary = cJSON_GetObjectItem(element, "binary");
+  if (!cJSON_IsString(binary)) {
+    return PARSE_ERR_JSON_INVALID;
+  }
+  app_out->binary = strdup(binary->valuestring);
+
+
+  parse_status_t status = parse_array_of_strings(
+    cJSON_GetObjectItem(element, "args"), 
+    &app_out->args, &app_out->num_args);
+  
+  if(status != PARSE_OK) {
+    // optional field, missing is not an error
+    app_out->num_args = 0;
+    app_out->args = NULL;
+  }
+
+  status = parse_array_of_strings(
+    cJSON_GetObjectItem(element, "phases"), 
+    &app_out->phases, &app_out->num_phases);
+  
+  if(status != PARSE_OK) {
+    // mandatory field, must be present and valid
+    return status;
+  }
+
+  cJSON * after = cJSON_GetObjectItem(element, "after_exited");
+  if (cJSON_IsString(after)) {
+    if(strlen(after->valuestring) == 0) {
+      app_out->after_exited = NULL;
+    }
+    else {
+      app_out->after_exited = strdup(after->valuestring);
+    }
+  } 
+  else {
+    app_out->after_exited = NULL;
+  }
+
+  cJSON * after_started = cJSON_GetObjectItem(element, "after_started");
+  if (cJSON_IsString(after_started)) {
+    if(strlen(after_started->valuestring) == 0) {
+      app_out->after_started = NULL;
+    }
+    else {
+      app_out->after_started = strdup(after_started->valuestring);
+    }
+  } 
+  else {
+    app_out->after_started = NULL;
+  }
+
+  cJSON * folder = cJSON_GetObjectItem(element, "folder");
+  if (cJSON_IsString(folder)) {
+    app_out->folder = strdup(folder->valuestring);
+  } 
+  else {
+    app_out->folder = NULL;
+  }
+
+  status = parse_array_of_strings(
+    cJSON_GetObjectItem(element, "environment"), 
+    &app_out->env, &app_out->num_env); 
+  if(status != PARSE_OK) { 
+    // optional field, missing is not an error: 
+    app_out->num_env = 0;
+    app_out->env = NULL; 
+  }
+  
+
+  return PARSE_OK;
+}
+
+
+// this function parses the entire config JSON string into 
+// an array of app_config_t structs
+static parse_status_t parse_json_config(
+    const char * json_str, app_config_list_t * config_list_out) {
+
+  cJSON * json = cJSON_Parse(json_str);
+  if (!json) {
+    return PARSE_ERR_JSON_INVALID;
+  }
+
+  // Root is an object with an "apps" array: { "apps": [...] }
+  cJSON * apps_array = cJSON_GetObjectItem(json, "apps");
+  if (!cJSON_IsArray(apps_array)) {
+    cJSON_Delete(json);
+    return PARSE_ERR_JSON_INVALID;
+  }
+
+  int num_apps = cJSON_GetArraySize(apps_array);
+  app_config_t * apps = (app_config_t *)malloc(sizeof(app_config_t) * num_apps);
+
+  for (int i = 0; i < num_apps; i++) {
+    cJSON * element = cJSON_GetArrayItem(apps_array, i);
+    parse_status_t status = parse_json_element(element, &apps[i]);
+    if (status != PARSE_OK) {
+      cJSON_Delete(json);
+      return status;
+    }
+  }
+
+  config_list_out->app = apps;
+  config_list_out->num_apps = num_apps;
+
+  cJSON_Delete(json);
+
+  return PARSE_OK;
+}
+
+// ----------------------------------------------------------------------------
+// --- main parsing functions ---
+// ----------------------------------------------------------------------------
+
+// this function parses the command line arguments into an am_cli_args_t struct
+parse_status_t parse_cli(int argc, char ** argv, am_cli_args_t * cli_args_out) {
+
+  cli_args_out->config_path       = NULL;
+  cli_args_out->boot_flags_dir     = NULL;
+
+  for (int i = 1; i < argc; i++) {
+    const char * arg = argv[i];
+    if (strcmp(arg, "--config") == 0) {
+      if (i + 1 >= argc) {
+        return PARSE_ERR_CLI;
+      }
+      i++;
+      cli_args_out->config_path = argv[i];
+    }
+    else if (strcmp(arg, "--boot-flags-dir") == 0) {
+      if (i + 1 >= argc) {
+        return PARSE_ERR_CLI;
+      }
+      i++;
+      cli_args_out->boot_flags_dir = argv[i];
+    }
+  }
+
+  if (cli_args_out->config_path == NULL) {
+    return PARSE_ERR_CLI;
+  }
+  return PARSE_OK;
+}
+
+
+// this function parses the config file at the given path into 
+// an array of app configs
+parse_status_t parse_config(const char * config_path, 
+    app_config_list_t * config_list_out) {
+
+  char * file_contents = NULL;
+  parse_status_t status = load_config_file(
+    config_path, &file_contents);
+  
+  if (status != PARSE_OK) {
+    return status;
+  }
+
+  status = parse_json_config(
+    file_contents, config_list_out);
+    
+  free(file_contents);
+  return status;
+}

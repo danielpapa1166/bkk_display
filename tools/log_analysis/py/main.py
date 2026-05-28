@@ -15,11 +15,11 @@ def main() -> int:
     fetcher = LogFetcher(
         host="192.168.0.50",
         user="root",
-        remote_path="/.local/share/bkk-qt-app/bkk-qt-app.log",
+        remote_path="/etc/rbuflogd/rbuflogd_000.log",
         output_dir=DATA_DIR,
     )
 
-    ls_res = fetcher.do_ls("/.local/share/bkk-qt-app/")
+    ls_res = fetcher.do_ls("/etc/rbuflogd/")
     print(f"Remote file check successful:\n{ls_res}\nProceeding to fetch the log...")
 
     log_path = fetcher.fetch()

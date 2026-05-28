@@ -1,0 +1,163 @@
+{
+  "apps": [
+    {
+      "name": "rbuflogd",
+      "binary": "/usr/bin/rbuflogd",
+      "args": [
+        "-p", "/etc/rbuflogd",
+        "-l", "0", 
+        "--log-init-success"
+      ],
+      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"], 
+      "after_exited": "", 
+      "folder": "/etc/rbuflogd", 
+      "environment": []
+    }, 
+    {
+      "name": "logger_check",
+      "binary": "/usr/bin/logger_check",
+      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
+      "args": ["--timeout", "30"],
+      "after_started": "rbuflogd"
+    },
+    {
+      "name": "wpa_helper_wifi_config", 
+      "binary": "/usr/bin/wpa_helper",
+      "phases": ["WIFI_CONFIG"], 
+      "after_exited": "logger_check",
+      "args": [
+        "boot_mode=wifi_config", 
+        "fallback_wifi_config_enable=enable"
+      ]
+    },
+        {
+      "name": "wpa_helper_api_config", 
+      "binary": "/usr/bin/wpa_helper",
+      "phases": ["API_CONFIG"], 
+      "after_exited": "logger_check",
+      "args": [
+        "boot_mode=api_config", 
+        "fallback_wifi_config_enable=enable"
+      ]
+    },
+    {
+      "name": "wpa_helper_normal", 
+      "binary": "/usr/bin/wpa_helper",
+      "phases": ["NORMAL"], 
+      "after_exited": "logger_check",
+      "args": [
+        "boot_mode=normal", 
+        "fallback_wifi_config_enable=enable"
+      ]
+    },
+    {
+      "name": "networkctl_reload",
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
+      "phases": ["WIFI_CONFIG"],
+      "after_exited": "wpa_helper_wifi_config"
+    },
+    {
+      "name": "networkctl_reload:api_config",
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
+      "phases": ["API_CONFIG"],
+      "after_exited": "wpa_helper_api_config"
+    },
+    {
+      "name": "wpa_supplicant",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0", 
+        "-c", "/run/wpa_supplicant-ap.conf", 
+        "-B"
+      ], 
+      "phases": ["WIFI_CONFIG"], 
+      "after_exited": "networkctl_reload"
+    },
+    {
+      "name": "wpa_supplicant:api_config",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0",
+        "-c", "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf",
+        "-B"
+      ],
+      "phases": ["API_CONFIG"],
+      "after_exited": "networkctl_reload:api_config"
+    },  
+    {
+      "name": "web-setup-helper", 
+      "binary": "/usr/bin/bkk-web-setup-helper",
+      "phases": ["WIFI_CONFIG"], 
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs", 
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ], 
+      "after_exited": "wpa_supplicant"
+    }, 
+    {
+      "name": "web-setup-helper:api_config", 
+      "binary": "/usr/bin/bkk-web-setup-helper",
+      "phases": ["API_CONFIG"], 
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs", 
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ], 
+      "after_exited": "wpa_supplicant:api_config"
+    }, 
+    { 
+      "name": "web-setup-server:wifi_config",
+      "binary": "/usr/bin/config-server",
+      "args": [
+        "--mode=wifi"
+      ], 
+      "phases": ["WIFI_CONFIG"], 
+      "after_exited": "wpa_supplicant"
+    },
+    {
+      "name": "web-setup-server:api_config",
+      "binary": "/usr/bin/config-server",
+      "args": [
+        "--mode=api"
+      ],
+      "phases": ["API_CONFIG"],
+      "after_exited": "wpa_supplicant:api_config"
+    },
+    {
+      "name": "networkctl_reload:normal",
+      "binary": "/usr/bin/networkd_check",
+      "args": ["--timeout", "30"],
+      "phases": ["NORMAL"],
+      "after_exited": "wpa_helper_normal"
+    },
+    {
+      "name": "wpa_supplicant:normal",
+      "binary": "/usr/sbin/wpa_supplicant",
+      "args": [
+        "-i", "wlan0",
+        "-c", "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf",
+        "-B"
+      ],
+      "phases": ["NORMAL"],
+      "after_exited": "networkctl_reload:normal"
+    },
+    {
+      "name": "bkk_uds_server",
+      "binary": "/usr/bin/bkk_uds_server",
+      "args": ["-k", "/etc/bkk-api/api-key.txt"],
+      "phases": ["NORMAL"],
+      "after_exited": "wpa_supplicant:normal"
+    },
+    {
+      "name": "bkk-qt-app",
+      "binary": "/usr/bin/bkk-qt-app",
+      "phases": ["NORMAL"],
+      "environment": [
+        "QT_QPA_PLATFORM=eglfs",
+        "QT_QPA_EGLFS_HIDECURSOR=1"
+      ],
+      "after_started": "bkk_uds_server"
+    }
+  ]
+}

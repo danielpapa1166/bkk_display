@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Application Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Application Manager</h1>
+    <span id="last-updated">—</span>
+  </header>
+
+  <main>
+    <table id="app-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>PID</th>
+          <th>Status</th>
+          <th>Exit Code</th>
+        </tr>
+      </thead>
+      <tbody id="app-tbody">
+        <tr><td colspan="4" class="loading">Loading…</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
