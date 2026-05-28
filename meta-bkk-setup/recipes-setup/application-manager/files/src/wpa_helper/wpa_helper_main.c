@@ -462,10 +462,12 @@ static wifi_cred_load_status_t load_wifi_credentials(
   }
 
   /* Minimum SSID length guard (also catches test/placeholder values) */
-  if (strlen(j_ssid->valuestring) < 4) {
+  if (strlen(j_ssid->valuestring) < 4
+      || j_ssid->valuestring[0] == '!'){
     cJSON_Delete(root);
     apply_fallback(ssid_out, ssid_len, psk_out, psk_len,
-      "load_wifi_credentials: SSID too short (< 4 chars) — using fallback");
+      "load_wifi_credentials: SSID too short (< 4 chars) "
+      " or invalid character - using fallback");
     return WIFI_CRED_LOAD_FALLBACK;
   }
 

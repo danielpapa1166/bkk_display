@@ -137,7 +137,7 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
   }
 
   // --- Write api-key.txt ---
-  if (request->api_key[0] != '\0' && strlen(request->api_key) > 10) {
+  if (request->api_key[0] != '!') {
     FILE *key_file = fopen("/etc/bkk-api/api-key.txt", "w");
     if (key_file == NULL) {
       log_error(TAG, "Failed to open /etc/bkk-api/api-key.txt for writing");
@@ -149,7 +149,7 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
     log_info(TAG, "API key written to /etc/bkk-api/api-key.txt");
   }
   else {
-    log_info(TAG, "No valid API key provided, skipping api-key.txt write");
+    log_info(TAG, "API key starts with '!', skipping api-key.txt write");
   }
 
   // --- Build stations JSON and write config.json ---
