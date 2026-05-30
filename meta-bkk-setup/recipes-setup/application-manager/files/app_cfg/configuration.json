@@ -145,7 +145,6 @@
     {
       "name": "bkk_uds_server",
       "binary": "/usr/bin/bkk_uds_server",
-      "args": ["-k", "/etc/bkk-api/api-key.txt"],
       "phases": ["NORMAL"],
       "after_exited": "wpa_supplicant:normal"
     },
@@ -157,6 +156,7 @@
         "QT_QPA_PLATFORM=eglfs",
         "QT_QPA_EGLFS_HIDECURSOR=1"
       ],
+      "args": ["-k", "/etc/bkk-api/api-key.txt"],
       "after_started": "bkk_uds_server"
     }
   ]
