@@ -96,14 +96,20 @@ void BkkApiWorker::fetchData() {
   bool fetchedAny = false;
   bkk_uds_response_t response;
   for (const auto &stationId : stationIdList) {
-    const bkk_uds_request_t request = {
+    /*const bkk_uds_request_t request = {
       .api_key = apiKey.c_str(),
       .station_id = stationId.c_str()
-    };
+    };*/
+    bkk_uds_request_t request = { 0 };
+    strncpy(request.api_key, apiKey.c_str(), BKK_UDS_MAX_KEY_LEN - 1);
+    strncpy(request.stop_id, stationId.c_str(), BKK_UDS_MAX_STOP_ID_LEN - 1);
+
+    
+
     const int res = send_bkk_uds_query(&request, &response);
     if(res == 0) {
       fetchedAny = true;
-      const char *stationName = getStationName(stationIdCStr);
+      const char *stationName = getStationName(stationId.c_str());
       for(int i = 0; i < response.number_of_arrivals; i++) {
         mergedArrivals.push_back(StationArrival{
           .arrival = response.arrivals[i],
@@ -117,7 +123,7 @@ void BkkApiWorker::fetchData() {
         "fetch data", 
         QString("Fetched %1 arrivals for station_id %2")
         .arg(response.number_of_arrivals)
-        .arg(stationIdCStr).toStdString().c_str());
+        .arg(stationId.c_str()).toStdString().c_str());
     } 
     else {
       rbuflogd_producer_log(
@@ -125,7 +131,7 @@ void BkkApiWorker::fetchData() {
         RBUF_LOG_LEVEL_ERROR, 
         "fetch data", 
         QString("Failed to fetch data for station_id %1")
-        .arg(stationIdCStr).toStdString().c_str());
+        .arg(stationId.c_str()).toStdString().c_str());
     }
   }
 

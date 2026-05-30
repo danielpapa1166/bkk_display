@@ -19,7 +19,7 @@ class MainWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr, const char *apiKeyPath);
+    explicit MainWindow(QWidget *parent = nullptr, const char *apiKeyPath = nullptr);
     ~MainWindow();
 
 private:
