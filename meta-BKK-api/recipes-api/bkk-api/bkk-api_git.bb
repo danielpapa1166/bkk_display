@@ -12,9 +12,9 @@ SRC_URI = "git://${TOPDIR}/../bkk_api;protocol=file;nobranch=1;name=bkk_api \
            file://bkk-uds-server.service \
            "
 
-SRCREV_bkk_api  = "eaf8e1bf359c2be3b533a9ea58bf393e28df37e7"
+SRCREV_bkk_api  = "b61cc9d3426632c445b4f7c5b08dc84754784c9d"
 SRCREV_cjson    = "fb16e5cf358798aabb049655975cde8427101056"
-SRCREV_rbuflogd = "83748e55788b6d8615df4ae5388d360db0673e44"
+SRCREV_rbuflogd = "bda94b03af8f51bf0ad12b5e84d029444c2ca8d5"
 SRCREV_FORMAT   = "bkk_api_cjson_rbuflogd"
 
 PV = "1.0+git${SRCPV}"
@@ -45,6 +45,7 @@ do_install() {
     install -m 0644 ${S}/bkk_uds/bkk_api_arrival.h  ${D}${includedir}/bkk_uds/bkk_api_arrival.h
     install -m 0644 ${S}/bkk_uds/bkk_stop_list.h    ${D}${includedir}/bkk_uds/bkk_stop_list.h
     install -m 0644 ${S}/bkk_uds/bkk_stop_utils.h   ${D}${includedir}/bkk_uds/bkk_stop_utils.h
+    install -m 0644 ${S}/bkk_uds/bkk_api_types.h    ${D}${includedir}/bkk_uds/bkk_api_types.h
 
     install -m 0644 ${WORKDIR}/bkk-uds-server.service \
         ${D}${systemd_system_unitdir}/bkk-uds-server.service
@@ -65,7 +66,7 @@ FILES:${PN}-client = "${libdir}/libbkk_uds_client.so"
 
 FILES:${PN}-test = "${bindir}/bkk_uds_test"
 
-RDEPENDS:${PN}-test = "${PN}"
+RDEPENDS:${PN}-test = "${PN} rbuflogd"
 
 INSANE_SKIP:${PN} += "dev-so"
 
