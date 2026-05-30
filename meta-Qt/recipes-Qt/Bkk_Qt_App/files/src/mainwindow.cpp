@@ -30,12 +30,12 @@ static void sigHandler(int signum) {
 }
 
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget *parent, const char *apiKeyPath)
     : QWidget(parent)
 {
     rbuflogd_producer_open(&loggerProducer, "MainWindow");
 
-    setupUi();
+    setupUi(apiKeyPath);
 
     // Initialize touchscreen callback
     setupTouchScreenWorker(); 
@@ -66,7 +66,7 @@ MainWindow::~MainWindow()
     rbuflogd_producer_close(&loggerProducer);
 }
 
-void MainWindow::setupUi()
+void MainWindow::setupUi(const char *apiKeyPath)
 {
     setMinimumSize(480, 320);
     setWindowTitle("BKK Display");
@@ -91,7 +91,7 @@ void MainWindow::setupUi()
     layout->addWidget(statusRow);
 
     auto *arrivalsTable = new QTableWidget(this);
-    arrivalTableHandler = new ArrivalTableHandler(arrivalsTable);
+    arrivalTableHandler = new ArrivalTableHandler(arrivalsTable, apiKeyPath);
     layout->addWidget(arrivalsTable, 1);
 }
 

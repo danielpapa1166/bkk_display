@@ -19,11 +19,11 @@ class MainWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr, const char *apiKeyPath);
     ~MainWindow();
 
 private:
-    void setupUi();
+    void setupUi(const char *apiKeyPath);
 
     BkkTouchScreenWorker *touchscreenWorker = nullptr;
     void setupTouchScreenWorker();

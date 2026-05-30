@@ -37,6 +37,8 @@ public:
   explicit BkkApiWorker(QObject *parent = nullptr);
   ~BkkApiWorker();
 
+  int loadApiKey(const char *apiKeyPath);
+
   // request the worker to perform a fetch as soon as possible:
   void requestFetch(); 
   
@@ -74,6 +76,8 @@ private:
   std::atomic<bool> fetchRequested = false; 
 
   rbuflogd_producer_t loggerProducer {};
+
+  std::string apiKey;
 }; 
 
 

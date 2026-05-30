@@ -5,7 +5,7 @@
 #include <QTableWidgetItem>
 #include <algorithm>
 
-ArrivalTableHandler::ArrivalTableHandler(QTableWidget *table) 
+ArrivalTableHandler::ArrivalTableHandler(QTableWidget *table, const char *apiKeyPath) 
     : QObject(table), arrivalsTable(table), 
     apiError(BkkApiError::None), blinkOn(false) {
   
@@ -32,6 +32,11 @@ ArrivalTableHandler::ArrivalTableHandler(QTableWidget *table)
   arrivalsTable->setAlternatingRowColors(false);
   arrivalsTable->setSortingEnabled(false);
   
+  int res = bkkApiWorker.loadApiKey(apiKeyPath);
+  if(res != 0) {
+    showTableMessage("Error loading API key");
+    return;
+  }
   startApiWorker();
   // start a timer to periodically update the table: 
   QObject::connect(&bkkWorkerUpdateTimer, &QTimer::timeout, this, 

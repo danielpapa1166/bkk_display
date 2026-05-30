@@ -51,6 +51,23 @@ BkkApiWorker::~BkkApiWorker() {
   rbuflogd_producer_close(&loggerProducer);
 }
 
+int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
+  char * key = nullptr; 
+  const api_key_read_stat_t res = read_api_key_from_file(apiKeyPath, &key);
+
+  if(res != API_KEY_READ_OK || key == nullptr) {
+    rbuflogd_producer_log(
+      &loggerProducer, 
+      RBUF_LOG_LEVEL_ERROR, 
+      "API Key", 
+      QString("Failed to read API key from file: %1").arg(apiKeyPath).toStdString().c_str());
+    return -1;
+  }
+  apiKey = key;
+  free(key);
+  return 0;
+}
+
 
 void BkkApiWorker::requestFetch() {
   fetchRequested.store(true);
@@ -79,9 +96,11 @@ void BkkApiWorker::fetchData() {
   bool fetchedAny = false;
   bkk_uds_response_t response;
   for (const auto &stationId : stationIdList) {
-    const char *stationIdCStr = stationId.c_str();
-
-    const int res = send_bkk_uds_query(stationIdCStr, &response);
+    const bkk_uds_request_t request = {
+      .api_key = apiKey.c_str(),
+      .station_id = stationId.c_str()
+    };
+    const int res = send_bkk_uds_query(&request, &response);
     if(res == 0) {
       fetchedAny = true;
       const char *stationName = getStationName(stationIdCStr);

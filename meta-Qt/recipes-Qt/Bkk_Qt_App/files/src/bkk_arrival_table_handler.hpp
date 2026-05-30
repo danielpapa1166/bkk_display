@@ -13,7 +13,7 @@
 class ArrivalTableHandler : public QObject {
   Q_OBJECT
 public:
-  explicit ArrivalTableHandler(QTableWidget *table);
+  explicit ArrivalTableHandler(QTableWidget *table, const char *apiKeyPath);
   ~ArrivalTableHandler();
 
 private:
