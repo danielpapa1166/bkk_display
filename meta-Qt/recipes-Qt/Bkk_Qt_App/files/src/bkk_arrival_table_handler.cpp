@@ -145,9 +145,9 @@ void ArrivalTableHandler::populateTable() {
     const auto &stationArrival = currentArrivals[static_cast<size_t>(row)];
     const QColor backgroundColor = getRowColor(row);
 
-    // stop name: 
+    // stop name (truncated to x characters):
     auto *stopItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.station_name));
+        QString::fromStdString(stationArrival.station_name).left(16));
     stopItem->setTextAlignment(Qt::AlignCenter);
     stopItem->setBackground(backgroundColor);
     stopItem->setForeground(Qt::white);
@@ -163,7 +163,7 @@ void ArrivalTableHandler::populateTable() {
 
     // destination:
     auto *destinationItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.arrival.destination));
+        QString::fromStdString(stationArrival.arrival.destination).left(16));
     destinationItem->setBackground(backgroundColor);
     destinationItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 2, destinationItem);

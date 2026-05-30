@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 
@@ -65,6 +66,7 @@ private:
   void loadStationList(); 
 
   std::vector<std::string> stationIdList;
+  std::vector<std::string> stationNameList;
 
   // fetch results and sync: 
   mutable std::mutex arrivalsMutex;
