@@ -1,17 +1,14 @@
 SUMMARY = "BKK Dislpay Main Application"
 LICENSE = "CLOSED"
 
-inherit cmake_qt5 pkgconfig systemd externalsrc
+inherit cmake_qt5 pkgconfig systemd
 
-# Source lives in submodules/bkk_qt_app at the project root.
-# EXTERNALSRC skips Yocto fetch/unpack; edits to the source dir are picked up
-# on the next bitbake run.
-EXTERNALSRC = "${TOPDIR}/../submodules/bkk_qt_app"
-EXTERNALSRC_BUILD = "${WORKDIR}/build"
-
-SRC_URI = "file://icon/ \
+SRC_URI = "file://src/ \
+           file://icon/ \
            file://bkk-qt-app.service \
            "
+
+S = "${WORKDIR}/src"
 
 DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd cjson"
 RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd"
