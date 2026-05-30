@@ -1,6 +1,7 @@
 #include "bkk_api_worker.hpp"
 #include "bkk_elapsed_timer.hpp"
 #include "bkk_uds/bkk_uds_protocol.h"
+#include "bkk_uds/bkk_stop_utils.h"
 #include "cJSON.h"
 #include "rbuflogd/producer.h"
 #include "rbuflogd/pub_common_types.h"
@@ -12,20 +13,7 @@
 #include <fstream>
 #include <string>
 
-namespace {
 
-const char *getStationName(const char *stationId) {
-  if (std::strcmp(stationId, "F02261") == 0) {
-    return "Hollókő utca";
-  }
-
-  if (std::strcmp(stationId, "F02122") == 0) {
-    return "Diószegi út";
-  }
-
-  return stationId;
-}
-} // namespace
 
 BkkApiWorker::BkkApiWorker(QObject *parent) 
     : QThread(parent), 
@@ -95,24 +83,19 @@ void BkkApiWorker::fetchData() {
   std::vector<StationArrival> mergedArrivals;
   bool fetchedAny = false;
   bkk_uds_response_t response;
-  for (const auto &stationId : stationIdList) {
-    /*const bkk_uds_request_t request = {
-      .api_key = apiKey.c_str(),
-      .station_id = stationId.c_str()
-    };*/
+  for (size_t i = 0; i < stationIdList.size(); i++) {
+    const auto &stationId = stationIdList[i];
+    const char *stationName = stationNameList[i].c_str();
     bkk_uds_request_t request = { 0 };
     strncpy(request.api_key, apiKey.c_str(), BKK_UDS_MAX_KEY_LEN - 1);
     strncpy(request.stop_id, stationId.c_str(), BKK_UDS_MAX_STOP_ID_LEN - 1);
 
-    
-
     const int res = send_bkk_uds_query(&request, &response);
     if(res == 0) {
       fetchedAny = true;
-      const char *stationName = getStationName(stationId.c_str());
-      for(int i = 0; i < response.number_of_arrivals; i++) {
+      for(int arrivalIdx = 0; arrivalIdx < response.number_of_arrivals; arrivalIdx++) {
         mergedArrivals.push_back(StationArrival{
-          .arrival = response.arrivals[i],
+          .arrival = response.arrivals[arrivalIdx],
           .station_id = stationId,
           .station_name = stationName
         });
@@ -202,6 +185,21 @@ void BkkApiWorker::loadStationList() {
   cJSON_ArrayForEach(station, stations) {
     if (cJSON_IsString(station) && station->valuestring) {
       stationIdList.push_back(station->valuestring);
+    }
+  }
+
+  for (const auto &id : stationIdList) {
+    bkk_stop_t stop;
+    if (find_stop_by_id(id.c_str(), &stop) == BKK_STOP_FOUND) {
+      stationNameList.push_back(stop.stop_name);
+    } 
+    else {
+      rbuflogd_producer_log(
+        &loggerProducer,
+        RBUF_LOG_LEVEL_WARNING,
+        "config",
+        ("Failed to find station name for id: " + id).c_str());
+      stationNameList.push_back(id);
     }
   }
 
