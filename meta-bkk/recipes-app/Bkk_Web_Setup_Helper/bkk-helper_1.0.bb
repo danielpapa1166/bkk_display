@@ -1,13 +1,15 @@
 SUMMARY = "BKK Display Web Setup Helper Application"
 LICENSE = "CLOSED"
 
-inherit cmake_qt5 pkgconfig systemd
+inherit cmake_qt5 pkgconfig systemd externalsrc
 
-SRC_URI = "file://src/ \
-           file://icon/ \
+# Source lives in submodules/bkk_web_setup at the project root.
+EXTERNALSRC = "${TOPDIR}/../submodules/bkk_web_setup"
+EXTERNALSRC_BUILD = "${WORKDIR}/build"
+
+SRC_URI = "file://icon/ \
            file://bkk-web-setup-helper.service \
            "
-S = "${WORKDIR}/src"
 
 DEPENDS = "qtbase rbuflogd"
 RDEPENDS:${PN} += "rbuflogd"
