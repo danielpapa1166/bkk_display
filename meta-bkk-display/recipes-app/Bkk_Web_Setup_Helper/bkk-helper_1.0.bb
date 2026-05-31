@@ -7,6 +7,7 @@ SRC_URI = "file://src/ \
            file://icon/ \
            file://bkk-web-setup-helper.service \
            "
+
 S = "${WORKDIR}/src"
 
 DEPENDS = "qtbase rbuflogd"

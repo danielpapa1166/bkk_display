@@ -6,13 +6,13 @@ LICENSE = "CLOSED"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI = "git://${TOPDIR}/../bkk_api;protocol=file;nobranch=1;name=bkk_api \
+SRC_URI = "git://${TOPDIR}/../submodules/bkk_api;protocol=file;nobranch=1;name=bkk_api \
            git://github.com/DaveGamble/cJSON.git;protocol=https;nobranch=1;name=cjson;destsuffix=git/submodules/cJSON \
            git://github.com/danielpapa1166/rbuflogd.git;protocol=https;nobranch=1;name=rbuflogd;destsuffix=git/submodules/rbuflogd \
            file://bkk-uds-server.service \
            "
 
-SRCREV_bkk_api  = "b61cc9d3426632c445b4f7c5b08dc84754784c9d"
+SRCREV_bkk_api  = "a26651cda87255933fc107e7c140dd13adc5195a"
 SRCREV_cjson    = "fb16e5cf358798aabb049655975cde8427101056"
 SRCREV_rbuflogd = "bda94b03af8f51bf0ad12b5e84d029444c2ca8d5"
 SRCREV_FORMAT   = "bkk_api_cjson_rbuflogd"
