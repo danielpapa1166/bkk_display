@@ -1,0 +1,19 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2711";
+
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            firmware {
+                optee {
+                    compatible = "linaro,optee-tz";
+                    method = "smc";
+                    status = "okay";
+                };
+            };
+        };
+    };
+};
