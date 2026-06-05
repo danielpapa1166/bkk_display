@@ -11,14 +11,13 @@ TFA_PLATFORM:raspberrypi4-64 = "rpi4"
 TFA_SPD:raspberrypi4-64 = "opteed"
 TFA_BUILD_TARGET:raspberrypi4-64 = "all"
 TFA_INSTALL_TARGET:raspberrypi4-64 = "bl31.bin"
+TFA_DEBUG:raspberrypi4-64 = "1"
 
-# Pass OP-TEE OS binaries as BL32 so TF-A embeds them into the secure world.
-# tee-header_v2.bin is the main paged binary; EXTRA1/EXTRA2 are the pager
-# and pageable sections respectively.
+# Pass OP-TEE OS as a monolithic BL32 payload.
+# On TF-A 2.6 + rpi4, this is more reliable than split v2 payload arguments.
 EXTRA_OEMAKE:append:raspberrypi4-64 = " \
-    BL32=${DEPLOY_DIR_IMAGE}/optee/tee-header_v2.bin \
-    BL32_EXTRA1=${DEPLOY_DIR_IMAGE}/optee/tee-pager_v2.bin \
-    BL32_EXTRA2=${DEPLOY_DIR_IMAGE}/optee/tee-pageable_v2.bin \
+    BL32=${DEPLOY_DIR_IMAGE}/optee/tee.bin \
+    LOG_LEVEL=40 \
 "
 
 # Ensure OP-TEE is deployed before TF-A compiles
