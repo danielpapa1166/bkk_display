@@ -5,4 +5,6 @@ IMAGE_INSTALL:append = " \
     config-server       \
     ads7846-demo        \
     application-manager \
+    optee-client            \
+    optee-test              \
 "
