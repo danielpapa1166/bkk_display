@@ -7,4 +7,5 @@ IMAGE_INSTALL:append = " \
     application-manager \
     optee-client            \
     optee-test              \
+    bkk-key-ta          \
 "
