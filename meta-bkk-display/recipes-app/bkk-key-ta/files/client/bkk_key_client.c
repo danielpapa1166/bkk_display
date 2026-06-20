@@ -1,5 +1,6 @@
 #include "bkk_key_client.h"
-
+#include <rbuflogd/logger.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -13,8 +14,22 @@ static const TEEC_UUID bkk_key_ta_uuid = {
   { 0x9b, 0x8d, 0x7c, 0x0b, 0x96, 0x64, 0x8c, 0x19 }
 };
 
+static uint8_t logger_inited = 0; 
+static const char * logger_name = "TEE_Clnt"; 
+static const char * log_cat_set = "key_Set"; 
+static const char * log_cat_get = "key_Get"; 
+
+static void init_log(void) {
+  if(logger_inited == 0) {
+    const int ret = rbuflogd_logger_init(logger_name); 
+    logger_inited = 1; 
+  }
+}
+
 int bkk_key_store(const void *key, size_t key_len)
 {
+  init_log(); 
+
   TEEC_Context ctx;
   TEEC_Session sess;
   TEEC_Operation op;
@@ -22,17 +37,31 @@ int bkk_key_store(const void *key, size_t key_len)
   uint32_t err_origin = 0U;
 
   if (!key || key_len == 0U) {
+    log_error(log_cat_set, "Invalid argument"); 
     return -1;
   }
 
   res = TEEC_InitializeContext(NULL, &ctx);
   if (res != TEEC_SUCCESS) {
+    char msg[100]; 
+    snprintf(msg, sizeof(msg), "Failed to initialize context: %08X", res);
+    log_error(log_cat_set, msg); 
     return -2;
   }
 
-  res = TEEC_OpenSession(&ctx, &sess, &bkk_key_ta_uuid, TEEC_LOGIN_PUBLIC,
-               NULL, NULL, &err_origin);
+  res = TEEC_OpenSession(
+    &ctx,                 // TEEC_Context* context 
+    &sess,                // TEEC_Session* session 
+    &bkk_key_ta_uuid,     // const TEEC_UUID* destination 
+    TEEC_LOGIN_PUBLIC,    // uint32_t connectionMethod       
+    NULL,                 // const void* connectionData 
+    NULL,                 // TEEC_Operation* operation 
+    &err_origin           // uint32_t* returnOrigin 
+  );
   if (res != TEEC_SUCCESS) {
+    char msg[100]; 
+    snprintf(msg, sizeof(msg), "Failed to open session: %08X, err origin: %08X", res, err_origin); 
+    log_error(log_cat_set, msg); 
     TEEC_FinalizeContext(&ctx);
     return -3;
   }
@@ -48,11 +77,22 @@ int bkk_key_store(const void *key, size_t key_len)
   TEEC_CloseSession(&sess);
   TEEC_FinalizeContext(&ctx);
 
-  return (res == TEEC_SUCCESS) ? 0 : -4;
+  if(res != TEEC_SUCCESS) {
+    char msg[100]; 
+    snprintf(msg, sizeof(msg), "Failed to invoke command: %08X", res);
+    log_error(log_cat_set, msg);  
+    return -4; 
+  }
+
+
+  log_info(log_cat_set, "Successfully stored api key in the TEE"); 
+
+  return 0;
 }
 
 int bkk_key_get(void *buf, size_t *buf_len)
 {
+  init_log(); 
   TEEC_Context ctx;
   TEEC_Session sess;
   TEEC_Operation op;

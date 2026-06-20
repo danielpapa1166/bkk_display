@@ -30,7 +30,30 @@ target_include_directories(bkk-key-client
 		${TEEC_INCLUDE_DIR}
 )
 
-target_link_libraries(bkk-key-client PRIVATE ${TEEC_LIBRARY})
+
+# add rbuflogd lib: 
+
+file(REAL_PATH
+	"${CMAKE_CURRENT_LIST_DIR}/../../../../../../../submodules/rbuflogd"
+	RBUFLOGD_SOURCE_DIR)
+
+message(STATUS "Using RBUFLOGD_SOURCE_DIR=${RBUFLOGD_SOURCE_DIR}")
+
+
+if(EXISTS "${RBUFLOGD_SOURCE_DIR}/CMakeLists.txt")
+    add_subdirectory("${RBUFLOGD_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/rbuflogd")
+else()
+    find_library(RBUFLOGD_PRODUCER_LIB REQUIRED NAMES rbuflogd_producer)
+    find_path(RBUFLOGD_INCLUDE_DIR REQUIRED NAMES rbuflogd/producer.h)
+    add_library(rbuflogd_producer SHARED IMPORTED)
+    set_target_properties(rbuflogd_producer PROPERTIES
+        IMPORTED_LOCATION "${RBUFLOGD_PRODUCER_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${RBUFLOGD_INCLUDE_DIR}")
+endif()
+
+target_link_libraries(bkk-key-client PRIVATE 
+	${TEEC_LIBRARY}
+	rbuflogd_producer)
 
 install(TARGETS bkk-key-client
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
