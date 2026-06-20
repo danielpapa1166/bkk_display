@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 
+int bkk_key_test(void);
 int bkk_key_store(const void *key, size_t key_len);
 int bkk_key_get(void *buf, size_t *buf_len);
 

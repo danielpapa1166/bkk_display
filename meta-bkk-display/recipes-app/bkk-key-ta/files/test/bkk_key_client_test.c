@@ -4,6 +4,14 @@
 
 int main() {
   
+
+  printf("Starting BKK Key Client Test\n");
+  const int test_res = bkk_key_test();
+  if (test_res != 0) {
+    printf("BKK Key Test failed, error code: %d\n", test_res);
+    return test_res;
+  }
+
   const char * test_key = "test_key";
   size_t test_key_len = strlen(test_key);
 

@@ -8,6 +8,7 @@
 
 #define BKK_KEY_CMD_STORE 0U
 #define BKK_KEY_CMD_GET   1U
+#define BKK_KEY_TEST_CMD  2U
 
 static TEE_Result store_key(const void * data, size_t data_len) {
   TEE_ObjectHandle obj = TEE_HANDLE_NULL;
@@ -112,6 +113,9 @@ TEE_Result TA_InvokeCommandEntryPoint(void *session_context,
     return get_key(params[0].memref.buffer,
                    params[0].memref.size,
                    &params[0].memref.size);
+  }
+  case BKK_KEY_TEST_CMD: {
+    return TEE_SUCCESS;
   }
   default:
     return TEE_ERROR_NOT_SUPPORTED;
