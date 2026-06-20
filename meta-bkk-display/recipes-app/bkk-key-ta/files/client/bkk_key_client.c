@@ -84,6 +84,8 @@ int bkk_key_test(void) {
 
 
   log_info(log_cat_test, "Test command executed successfully in the TEE"); 
+
+  return 0; 
 }
 
 int bkk_key_store(const void *key, size_t key_len)
@@ -131,8 +133,10 @@ int bkk_key_store(const void *key, size_t key_len)
   }
 
   memset(&op, 0, sizeof(op));
-  op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT, TEEC_NONE,
-                   TEEC_NONE, TEEC_NONE);
+  op.paramTypes = TEEC_PARAM_TYPES(
+    TEEC_MEMREF_TEMP_INPUT, TEEC_NONE,
+    TEEC_NONE, TEEC_NONE);
+    
   op.params[0].tmpref.buffer = (void *)key;
   op.params[0].tmpref.size = key_len;
 
@@ -159,6 +163,7 @@ int bkk_key_store(const void *key, size_t key_len)
 
 int bkk_key_get(void *buf, size_t *buf_len)
 {
+  char msg[100];
   init_log(); 
   TEEC_Context ctx;
   TEEC_Session sess;
@@ -167,24 +172,31 @@ int bkk_key_get(void *buf, size_t *buf_len)
   uint32_t err_origin = 0U;
 
   if (!buf || !buf_len || *buf_len == 0U) {
+    log_error(log_cat_get, "Invalid argument");
     return -1;
   }
 
   res = TEEC_InitializeContext(NULL, &ctx);
   if (res != TEEC_SUCCESS) {
+    snprintf(msg, sizeof(msg), "Failed to initialize context: %08X", res);
+    log_error(log_cat_get, msg);
     return -2;
   }
 
   res = TEEC_OpenSession(&ctx, &sess, &bkk_key_ta_uuid, TEEC_LOGIN_PUBLIC,
                NULL, NULL, &err_origin);
   if (res != TEEC_SUCCESS) {
+    snprintf(msg, sizeof(msg), "Failed to open session: %08X, err origin: %08X", res, err_origin);
+    log_error(log_cat_get, msg);
     TEEC_FinalizeContext(&ctx);
     return -3;
   }
 
   memset(&op, 0, sizeof(op));
-  op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_OUTPUT, TEEC_NONE,
-                   TEEC_NONE, TEEC_NONE);
+  op.paramTypes = TEEC_PARAM_TYPES(
+    TEEC_MEMREF_TEMP_OUTPUT, TEEC_NONE,
+    TEEC_NONE, TEEC_NONE);
+
   op.params[0].tmpref.buffer = buf;
   op.params[0].tmpref.size = *buf_len;
 
@@ -194,5 +206,11 @@ int bkk_key_get(void *buf, size_t *buf_len)
   TEEC_CloseSession(&sess);
   TEEC_FinalizeContext(&ctx);
 
-  return (res == TEEC_SUCCESS) ? 0 : -4;
+  if(res != TEEC_SUCCESS) {
+    snprintf(msg, sizeof(msg), "Failed to invoke command: %08X, error origin: %08X", res, err_origin);
+    log_error(log_cat_get, msg);
+    return -4;
+  }
+
+  return 0;
 }
