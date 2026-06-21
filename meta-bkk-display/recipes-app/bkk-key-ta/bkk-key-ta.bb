@@ -21,6 +21,13 @@ DEPENDS = "optee-client optee-os-tadevkit"
 
 inherit cmake pkgconfig
 
+INSANE_SKIP_${PN} += " ldflags"
+INHIBIT_PACKAGE_STRIP = "1"
+INHIBIT_SYSROOT_STRIP = "1"
+SOLIBS = ".so"
+FILES_SOLIBSDEV = ""
+
+
 EXTRA_OECMAKE += " \
 	-DOPTEE_TA_DEV_KIT_DIR=${STAGING_INCDIR}/optee/export-user_ta \
 	-DTA_CROSS_COMPILE=${HOST_PREFIX} \
