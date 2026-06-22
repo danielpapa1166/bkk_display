@@ -34,8 +34,14 @@ EXTRA_OECMAKE += " \
 
 FILES:${PN} += " \
 	${libdir}/libbkk-key-client.so.* \
-	${libdir}/optee_armtz/*.ta \
+	${base_libdir}/optee_armtz/*.ta \
 "
+
+do_install:append() {
+	install -d ${D}${base_libdir}/optee_armtz
+	mv ${D}${libdir}/optee_armtz/*.ta ${D}${base_libdir}/optee_armtz/
+	rmdir --ignore-fail-on-non-empty ${D}${libdir}/optee_armtz
+}
 
 FILES:${PN}-dev += " \
 	${includedir}/bkk-key-client/bkk_key_client.h \
