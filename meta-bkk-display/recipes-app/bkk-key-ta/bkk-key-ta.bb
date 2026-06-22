@@ -2,6 +2,8 @@ SUMMARY = "BKK OP-TEE trusted app and client shared library"
 DESCRIPTION = "Builds BKK key trusted app (.ta) and libbkk-key-client.so"
 LICENSE = "CLOSED"
 
+inherit cmake pkgconfig
+
 SRC_URI = "file://CMakeLists.txt \
 		   file://client/CMakeLists.txt \
 		   file://client/bkk_key_client.c \
@@ -17,15 +19,9 @@ SRC_URI = "file://CMakeLists.txt \
 
 S = "${WORKDIR}"
 
-DEPENDS = "optee-client optee-os-tadevkit"
+DEPENDS = "optee-client optee-os-tadevkit rbuflogd"
+RDEPENDS:${PN} += " rbuflogd"
 
-inherit cmake pkgconfig
-
-INSANE_SKIP_${PN} += " ldflags"
-INHIBIT_PACKAGE_STRIP = "1"
-INHIBIT_SYSROOT_STRIP = "1"
-SOLIBS = ".so"
-FILES_SOLIBSDEV = ""
 
 
 EXTRA_OECMAKE += " \
@@ -33,6 +29,7 @@ EXTRA_OECMAKE += " \
 	-DTA_CROSS_COMPILE=${HOST_PREFIX} \
 	-DTA_SYSROOT=${STAGING_DIR_HOST} \
 	-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+	-DRBUFLOGD_USE_SYSROOT=ON \
 "
 
 FILES:${PN} += " \

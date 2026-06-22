@@ -33,14 +33,16 @@ target_include_directories(bkk-key-client
 
 # add rbuflogd lib: 
 
-file(REAL_PATH
-	"${CMAKE_CURRENT_LIST_DIR}/../../../../../../../submodules/rbuflogd"
-	RBUFLOGD_SOURCE_DIR)
+option(RBUFLOGD_USE_SYSROOT "Use rbuflogd from sysroot (find_library) instead of submodule" OFF)
 
-message(STATUS "Using RBUFLOGD_SOURCE_DIR=${RBUFLOGD_SOURCE_DIR}")
+if(NOT RBUFLOGD_USE_SYSROOT)
+    file(REAL_PATH
+        "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../submodules/rbuflogd"
+        RBUFLOGD_SOURCE_DIR)
+    message(STATUS "Using RBUFLOGD_SOURCE_DIR=${RBUFLOGD_SOURCE_DIR}")
+endif()
 
-
-if(EXISTS "${RBUFLOGD_SOURCE_DIR}/CMakeLists.txt")
+if(NOT RBUFLOGD_USE_SYSROOT AND EXISTS "${RBUFLOGD_SOURCE_DIR}/CMakeLists.txt")
     add_subdirectory("${RBUFLOGD_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/rbuflogd")
 else()
     find_library(RBUFLOGD_PRODUCER_LIB REQUIRED NAMES rbuflogd_producer)
