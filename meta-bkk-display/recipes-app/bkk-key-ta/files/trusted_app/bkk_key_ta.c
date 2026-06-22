@@ -9,6 +9,7 @@
 #define BKK_KEY_CMD_STORE 0U
 #define BKK_KEY_CMD_GET   1U
 #define BKK_KEY_TEST_CMD  2U
+#define BKK_KEY_ECHO_CMD  3U
 
 
 static TEE_Result store_key(const void * data, size_t data_len) {
@@ -34,7 +35,20 @@ static TEE_Result store_key(const void * data, size_t data_len) {
     return res;
   }
 
-  res = TEE_WriteObjectData(obj, data, data_len);
+  if(obj == TEE_HANDLE_NULL) {
+    return TEE_ERROR_GENERIC;
+  }
+
+  res = TEE_OpenPersistentObject(
+    TEE_STORAGE_PRIVATE,
+    BKK_KEY_OBJ_ID,
+    BKK_KEY_OBJ_ID_LEN,
+    flags,
+    &obj);
+
+  
+
+  //res = TEE_WriteObjectData(obj, data, data_len);
   TEE_CloseObject(obj);
   return res;
 }
@@ -131,6 +145,22 @@ TEE_Result TA_InvokeCommandEntryPoint(
       &params[0].memref.size);
   }
   case BKK_KEY_TEST_CMD: {
+    return TEE_SUCCESS;
+  }
+  case BKK_KEY_ECHO_CMD: {
+    uint32_t expected = TEE_PARAM_TYPES(
+      TEE_PARAM_TYPE_MEMREF_INPUT,
+      TEE_PARAM_TYPE_MEMREF_OUTPUT,
+      TEE_PARAM_TYPE_NONE,
+      TEE_PARAM_TYPE_NONE);
+    if (param_types != expected) {
+      return TEE_ERROR_BAD_PARAMETERS;
+    }
+    if (params[0].memref.size > params[1].memref.size) {
+      return TEE_ERROR_SHORT_BUFFER;
+    }
+    TEE_MemMove(params[1].memref.buffer, params[0].memref.buffer, params[0].memref.size);
+    params[1].memref.size = params[0].memref.size;
     return TEE_SUCCESS;
   }
   default:
