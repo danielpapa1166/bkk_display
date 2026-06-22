@@ -20,7 +20,8 @@ static uint8_t logger_inited = 0;
 static const char * logger_name = "TEE_Clnt"; 
 static const char * log_cat_set = "key_Set"; 
 static const char * log_cat_get = "key_Get"; 
-static const char * log_cat_test = "key_Tst";
+static const char * log_cat_test = "key_Test";
+static const char * log_cat_echo = "key_Echo";
 
 static void init_log(void) {
   if(logger_inited == 0) {
@@ -95,7 +96,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
 
   char msg[100];
   snprintf(msg, sizeof(msg), "Echoing data of length %zu in the TEE", in_len);
-  log_info(log_cat_test, msg);
+  log_info(log_cat_echo, msg);
 
   TEEC_Context ctx;
   TEEC_Session sess;
@@ -104,7 +105,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   uint32_t err_origin = 0U;
 
   if (!in || in_len == 0U || !out || !out_len || *out_len == 0U) {
-    log_error(log_cat_test, "Invalid argument"); 
+    log_error(log_cat_echo, "Invalid argument"); 
     return -1;
   }
 
@@ -112,7 +113,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   if (res != TEEC_SUCCESS) {
     char msg[100]; 
     snprintf(msg, sizeof(msg), "Failed to initialize context: %08X", res);
-    log_error(log_cat_test, msg); 
+    log_error(log_cat_echo, msg); 
     return -2;
   }
 
@@ -128,7 +129,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   if (res != TEEC_SUCCESS) {
     char msg[100];
     snprintf(msg, sizeof(msg), "Failed to open session: %08X, err origin: %08X", res, err_origin);
-    log_error(log_cat_test, msg);
+    log_error(log_cat_echo, msg);
     TEEC_FinalizeContext(&ctx);
     return -3;
   }
@@ -145,7 +146,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   op.params[1].tmpref.size = *out_len;
 
   snprintf(msg, sizeof(msg), "Invoking command to echo data in the TEE, paramTypes: %08X", op.paramTypes);
-  log_info(log_cat_test, msg);
+  log_info(log_cat_echo, msg);
 
   res = TEEC_InvokeCommand(&sess, BKK_KEY_ECHO_CMD, &op, &err_origin);
 
@@ -155,12 +156,12 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   if(res != TEEC_SUCCESS) {
     char msg[100];
     snprintf(msg, sizeof(msg), "Failed to invoke command: %08X, error origin: %08X", res, err_origin);
-    log_error(log_cat_test, msg);
+    log_error(log_cat_echo, msg);
     return -4;
   }
 
   *out_len = op.params[1].tmpref.size;
-  log_info(log_cat_test, "Echo command executed successfully in the TEE"); 
+  log_info(log_cat_echo, "Echo command executed successfully in the TEE"); 
 
   return 0;
 }

@@ -4,6 +4,9 @@
 
 int main() {
   
+  // --------------------------------------------------------------------------
+  // test simple command
+  // --------------------------------------------------------------------------
 
   printf("Starting BKK Key Client Test\n");
   const int test_res = bkk_key_test();
@@ -11,6 +14,29 @@ int main() {
     printf("BKK Key Test failed, error code: %d\n", test_res);
     return test_res;
   }
+
+  // --------------------------------------------------------------------------
+  // test echo command
+  // --------------------------------------------------------------------------
+
+  char * echo_msg = "Hello, TEE!";
+  char echo_response[256];
+  size_t echo_response_len = sizeof(echo_response);
+
+  const int echo_res = bkk_key_echo(
+    echo_msg, strlen(echo_msg), 
+    echo_response, &echo_response_len);
+
+  if (echo_res != 0) {
+    printf("Failed to echo message, error code: %d\n", echo_res);
+    return echo_res;
+  }
+
+  printf("Echoed message: %s\n", echo_response);
+
+  // --------------------------------------------------------------------------
+  // test key write 
+  // --------------------------------------------------------------------------
 
   const char * test_key = "test_key";
   size_t test_key_len = strlen(test_key);
@@ -21,6 +47,10 @@ int main() {
     printf("Failed to store key, error code: %d\n", store_res);
     return store_res;
   }
+
+  // --------------------------------------------------------------------------
+  // test key read
+  // --------------------------------------------------------------------------
 
   char retrieved_key[256];
   size_t retrieved_key_len = sizeof(retrieved_key);
