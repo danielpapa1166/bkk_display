@@ -12,7 +12,7 @@ SRC_URI = "file://CMakeLists.txt \
 		   file://trusted_app/Makefile \
 		   file://trusted_app/sub.mk \
 		   file://trusted_app/user_ta_header_defines.h \
-		   file://trusted_app/bkk_key_ta.c \
+		   file://trusted_app/bkk_tee_ta.c \
 		   file://test/bkk_key_client_test.c \
 		   file://test/CMakeLists.txt \
 "

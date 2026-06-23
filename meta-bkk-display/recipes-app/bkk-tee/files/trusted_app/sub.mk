@@ -1,1 +1,1 @@
-srcs-y += bkk_key_ta.c
+srcs-y += bkk_tee_ta.c

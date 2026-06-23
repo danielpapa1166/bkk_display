@@ -1,4 +1,4 @@
-// /data/projects/bkk_display/build-rpi/tmp/work/cortexa72-poky-linux/bkk-key-ta/1.0-r0/
+// /data/projects/bkk_display/build-rpi/tmp/work/cortexa72-poky-linux/bkk-tee-ta/1.0-r0/
 
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
