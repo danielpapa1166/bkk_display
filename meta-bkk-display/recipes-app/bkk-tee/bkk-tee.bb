@@ -13,8 +13,9 @@ SRC_URI = "file://CMakeLists.txt \
 		   file://trusted_app/sub.mk \
 		   file://trusted_app/user_ta_header_defines.h \
 		   file://trusted_app/bkk_tee_ta.c \
-		   file://test/bkk_key_client_test.c \
+		   file://test/bkk_tee_client_test.c \
 		   file://test/CMakeLists.txt \
+		   file://common/bkk_tee_common_defs.h 	\
 "
 
 S = "${WORKDIR}"

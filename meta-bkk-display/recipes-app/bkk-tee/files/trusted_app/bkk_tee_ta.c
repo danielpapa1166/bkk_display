@@ -2,16 +2,18 @@
 
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
-
+#include "bkk_tee_common_defs.h"
 #include <stddef.h>
 
-#define BKK_KEY_OBJ_ID "bkk_api_key"
-#define BKK_KEY_OBJ_ID_LEN (sizeof(BKK_KEY_OBJ_ID))
 
-#define BKK_KEY_CMD_STORE               0U
-#define BKK_KEY_CMD_GET                 1U
-#define BKK_KEY_TEST_CMD                2U
-#define BKK_KEY_ECHO_CMD                3U
+// ----------------------------------------------------------------------------
+// persistent object IDs for storing data in the TEE
+// ----------------------------------------------------------------------------
+#define BKK_TEE_KEY_OBJ_ID "bkk_api_key"
+#define BKK_TEE_KEY_OBJ_ID_LEN (sizeof(BKK_TEE_KEY_OBJ_ID))
+
+#define BKK_TEE_WIFI_PW_OBJ_ID "bkk_wifi_pw"
+#define BKK_TEE_WIFI_PW_OBJ_ID_LEN (sizeof(BKK_TEE_WIFI_PW_OBJ_ID))
 
 
 static TEE_Result bkk_key_create_persistent_object(

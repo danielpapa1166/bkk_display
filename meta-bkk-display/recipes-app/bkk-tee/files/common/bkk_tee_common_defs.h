@@ -1,0 +1,27 @@
+#ifndef BKK_TEE_COMMON_DEFS_H
+#define BKK_TEE_COMMON_DEFS_H
+
+// ----------------------------------------------------------------------------
+// command ID definition: 
+// ----------------------------------------------------------------------------
+
+#define BKK_TEE_CMD_STORE               0U
+#define BKK_TEE_CMD_GET                 1U
+
+typedef enum {
+  OBJ_ID_KEY = 0,
+  OBJ_ID_WIFI_PW = 1
+} bkk_tee_obj_id_t;
+
+#define BKK_TEE_OBJ_CMD(obj_id, cmd_id)     \
+  ((uint32_t)(((uint32_t)(obj_id) << 1) | (uint32_t)(cmd_id)))
+
+
+#define BKK_KEY_CMD_STORE               BKK_TEE_OBJ_CMD(OBJ_ID_KEY, BKK_TEE_CMD_STORE)
+#define BKK_KEY_CMD_GET                 BKK_TEE_OBJ_CMD(OBJ_ID_KEY, BKK_TEE_CMD_GET)
+#define BKK_KEY_TEST_CMD                2U
+#define BKK_KEY_ECHO_CMD                3U
+
+#define BKK_TEE_MAX_OBJ_ID_LEN          125
+
+#endif
