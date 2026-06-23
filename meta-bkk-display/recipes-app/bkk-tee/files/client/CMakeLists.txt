@@ -27,6 +27,7 @@ set_target_properties(bkk-tee-client PROPERTIES
 target_include_directories(bkk-tee-client
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common
 		${TEEC_INCLUDE_DIR}
 )
 
