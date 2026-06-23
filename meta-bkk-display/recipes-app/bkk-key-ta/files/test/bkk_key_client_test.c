@@ -2,18 +2,32 @@
 #include <string.h>
 #include <stdio.h>
 
+static void fetch_and_print_error(void) {
+  uint32_t error_status = 0U;
+  uint32_t last_tee_error = 0U;
+
+  const int fetch_res = bkk_key_fetch_error_status(&error_status, &last_tee_error);
+  if (fetch_res != 0) {
+    printf("Failed to fetch error status, error code: %d\n", fetch_res);
+    return;
+  }
+
+  printf("Error status: %08X, Last TEE error: %08X\n", error_status, last_tee_error);
+}
+
+
 int main() {
   
   // --------------------------------------------------------------------------
   // test simple command
   // --------------------------------------------------------------------------
 
-  printf("Starting BKK Key Client Test\n");
+  /*printf("Starting BKK Key Client Test\n");
   const int test_res = bkk_key_test();
   if (test_res != 0) {
     printf("BKK Key Test failed, error code: %d\n", test_res);
     return test_res;
-  }
+  }*/
 
   // --------------------------------------------------------------------------
   // test echo command
@@ -45,6 +59,7 @@ int main() {
   const int store_res = bkk_key_store(test_key, test_key_len);
   if (store_res != 0) {
     printf("Failed to store key, error code: %d\n", store_res);
+    fetch_and_print_error();
     return store_res;
   }
 
