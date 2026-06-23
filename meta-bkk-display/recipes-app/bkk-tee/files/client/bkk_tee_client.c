@@ -1,4 +1,4 @@
-#include "bkk_key_client.h"
+#include "bkk_tee_client.h"
 #include <rbuflogd/logger.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -66,6 +66,8 @@ static int prepare_tee_session(tee_client_ctx *ctx)
     log_error(log_cat, msg);
     return -2;
   }
+
+  return 0; 
 }
 
 
@@ -311,8 +313,7 @@ int bkk_key_get(void *buf, size_t *buf_len)
     TEEC_NONE,
     TEEC_NONE);
 
-  //char obj_id[] = BKK_KEY_OBJ_ID;
-  op.params[0].tmpref.buffer = BKK_KEY_OBJ_ID; //(void *)obj_id;
+  op.params[0].tmpref.buffer = BKK_KEY_OBJ_ID; 
   op.params[0].tmpref.size = BKK_KEY_OBJ_ID_LEN;
   op.params[1].tmpref.buffer = buf;
   op.params[1].tmpref.size = *buf_len;

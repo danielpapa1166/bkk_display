@@ -8,7 +8,7 @@ target_include_directories(bkk_key_client_test
 
 target_link_libraries(bkk_key_client_test
     PRIVATE
-        bkk-key-client
+        bkk-tee-client
 )
 
 

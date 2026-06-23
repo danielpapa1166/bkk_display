@@ -1,5 +1,5 @@
-#ifndef BKK_KEY_CLIENT_H
-#define BKK_KEY_CLIENT_H
+#ifndef BKK_TEE_CLIENT_H
+#define BKK_TEE_CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {

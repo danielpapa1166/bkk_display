@@ -6,8 +6,8 @@ inherit cmake pkgconfig
 
 SRC_URI = "file://CMakeLists.txt \
 		   file://client/CMakeLists.txt \
-		   file://client/bkk_key_client.c \
-		   file://client/bkk_key_client.h \
+		   file://client/bkk_tee_client.c \
+		   file://client/bkk_tee_client.h \
 		   file://trusted_app/CMakeLists.txt \
 		   file://trusted_app/Makefile \
 		   file://trusted_app/sub.mk \

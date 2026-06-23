@@ -102,7 +102,8 @@ static TEE_Result bkk_key_create_persistent_object(
 } 
 
 
-static TEE_Result bkk_key_read_persistent_object(uint32_t param_types, TEE_Param params[4]) {
+static TEE_Result bkk_key_read_persistent_object(
+    uint32_t param_types, TEE_Param params[4]) {
 
   const uint32_t exp_param_types = TEE_PARAM_TYPES(
     TEE_PARAM_TYPE_MEMREF_INPUT,

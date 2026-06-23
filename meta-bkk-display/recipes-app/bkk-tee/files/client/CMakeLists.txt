@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(bkk_key_client LANGUAGES C)
+project(bkk_tee_client LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -17,20 +17,20 @@ if(NOT TEEC_LIBRARY)
 	message(FATAL_ERROR "libteec not found")
 endif()
 
-add_library(bkk-key-client SHARED bkk_key_client.c)
+add_library(bkk-tee-client SHARED bkk_tee_client.c)
 
-set_target_properties(bkk-key-client PROPERTIES
+set_target_properties(bkk-tee-client PROPERTIES
 	VERSION 1.0.0
 	SOVERSION 1
 )
 
-target_include_directories(bkk-key-client
+target_include_directories(bkk-tee-client
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${TEEC_INCLUDE_DIR}
 )
 
-target_compile_options(bkk-key-client PRIVATE -Wall -Wextra -pedantic -g -O0)
+target_compile_options(bkk-tee-client PRIVATE -Wall -Wextra -pedantic -g -O0)
 
 
 # add rbuflogd lib: 
@@ -55,14 +55,14 @@ else()
         INTERFACE_INCLUDE_DIRECTORIES "${RBUFLOGD_INCLUDE_DIR}")
 endif()
 
-target_link_libraries(bkk-key-client PRIVATE 
+target_link_libraries(bkk-tee-client PRIVATE 
 	${TEEC_LIBRARY}
 	rbuflogd_producer)
 
-install(TARGETS bkk-key-client
+install(TARGETS bkk-tee-client
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES bkk_key_client.h
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bkk-key-client
+install(FILES bkk_tee_client.h
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bkk-tee-client
 )
