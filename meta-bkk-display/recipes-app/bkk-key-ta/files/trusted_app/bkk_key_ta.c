@@ -12,7 +12,6 @@
 #define BKK_KEY_CMD_GET                 1U
 #define BKK_KEY_TEST_CMD                2U
 #define BKK_KEY_ECHO_CMD                3U
-#define BKK_KEY_FETCH_ERROR_STATUS_CMD  4U
 
 
 static TEE_Result bkk_key_create_persistent_object(
@@ -87,6 +86,7 @@ static TEE_Result bkk_key_create_persistent_object(
   // --------------------------------------------------------------------------
   // write the data to the persistent object
   // --------------------------------------------------------------------------
+  
   res = TEE_WriteObjectData(object, data, data_sz);
   if (res != TEE_SUCCESS) {
     TEE_CloseAndDeletePersistentObject1(object);
@@ -102,10 +102,7 @@ static TEE_Result bkk_key_create_persistent_object(
 } 
 
 
-
-
-
-static TEE_Result get_key(uint32_t param_types, TEE_Param params[4]) {
+static TEE_Result bkk_key_read_persistent_object(uint32_t param_types, TEE_Param params[4]) {
 
   const uint32_t exp_param_types = TEE_PARAM_TYPES(
     TEE_PARAM_TYPE_MEMREF_INPUT,
@@ -152,6 +149,9 @@ static TEE_Result get_key(uint32_t param_types, TEE_Param params[4]) {
 		return TEE_ERROR_OUT_OF_MEMORY;
 	}
 
+  // --------------------------------------------------------------------------
+  // open the persistent object for reading
+  // --------------------------------------------------------------------------
 
   res = TEE_OpenPersistentObject(
     TEE_STORAGE_PRIVATE,
@@ -167,6 +167,10 @@ static TEE_Result get_key(uint32_t param_types, TEE_Param params[4]) {
 
     return res;
   }
+
+  // --------------------------------------------------------------------------
+  // get the object info to determine the size of the data
+  // --------------------------------------------------------------------------
 
   res = TEE_GetObjectInfo1(obj, &info);
   if (res != TEE_SUCCESS) {
@@ -185,6 +189,11 @@ static TEE_Result get_key(uint32_t param_types, TEE_Param params[4]) {
 
     return TEE_ERROR_SHORT_BUFFER;
   }
+
+  // --------------------------------------------------------------------------
+  // read the data from the persistent object
+  // --------------------------------------------------------------------------
+
   uint32_t read_len = 0; 
   res = TEE_ReadObjectData(obj, data, info.dataSize, &read_len);
   actual_len = (size_t)read_len;
@@ -195,6 +204,11 @@ static TEE_Result get_key(uint32_t param_types, TEE_Param params[4]) {
     TEE_Free(data);
     return res;
   }
+
+
+  // --------------------------------------------------------------------------
+  // copy the data to the output parameter
+  // --------------------------------------------------------------------------
 
   TEE_MemMove(params[1].memref.buffer, data, actual_len);
   params[1].memref.size = actual_len;
@@ -240,7 +254,7 @@ TEE_Result TA_InvokeCommandEntryPoint(
     return bkk_key_create_persistent_object(param_types, params);
   }
   case BKK_KEY_CMD_GET: {
-    return get_key(param_types, params);
+    return bkk_key_read_persistent_object(param_types, params);
   }
   case BKK_KEY_TEST_CMD: {
     return TEE_SUCCESS;
@@ -259,19 +273,6 @@ TEE_Result TA_InvokeCommandEntryPoint(
     }
     TEE_MemMove(params[1].memref.buffer, params[0].memref.buffer, params[0].memref.size);
     params[1].memref.size = params[0].memref.size;
-    return TEE_SUCCESS;
-  }
-  case BKK_KEY_FETCH_ERROR_STATUS_CMD: {
-    uint32_t expected = TEE_PARAM_TYPES(
-      TEE_PARAM_TYPE_VALUE_OUTPUT,
-      TEE_PARAM_TYPE_VALUE_OUTPUT,
-      TEE_PARAM_TYPE_NONE,
-      TEE_PARAM_TYPE_NONE);
-    if (param_types != expected) {
-      return TEE_ERROR_BAD_PARAMETERS;
-    }
-    params[0].value.a = 0xDEAD;
-    params[0].value.b = 0xC0DE;
     return TEE_SUCCESS;
   }
   default:

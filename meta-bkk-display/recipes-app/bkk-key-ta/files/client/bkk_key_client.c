@@ -7,13 +7,12 @@
 #include <tee_client_api.h>
 
 #define BKK_KEY_OBJ_ID "bkk_api_key"
-#define BKK_KEY_OBJ_ID_LEN (sizeof(BKK_KEY_OBJ_ID))
+#define BKK_KEY_OBJ_ID_LEN (sizeof(BKK_KEY_OBJ_ID)) 
 
 #define BKK_KEY_CMD_STORE 0U
 #define BKK_KEY_CMD_GET   1U
 #define BKK_KEY_TEST_CMD  2U
 #define BKK_KEY_ECHO_CMD  3U
-#define BKK_KEY_FETCH_ERROR_STATUS_CMD 4U
 
 typedef struct {
   TEEC_Context ctx;
@@ -312,8 +311,8 @@ int bkk_key_get(void *buf, size_t *buf_len)
     TEEC_NONE,
     TEEC_NONE);
 
-  char obj_id[] = BKK_KEY_OBJ_ID;
-  op.params[0].tmpref.buffer = (void *)obj_id;
+  //char obj_id[] = BKK_KEY_OBJ_ID;
+  op.params[0].tmpref.buffer = BKK_KEY_OBJ_ID; //(void *)obj_id;
   op.params[0].tmpref.size = BKK_KEY_OBJ_ID_LEN;
   op.params[1].tmpref.buffer = buf;
   op.params[1].tmpref.size = *buf_len;
@@ -335,59 +334,6 @@ int bkk_key_get(void *buf, size_t *buf_len)
   }
 
   log_info(log_cat_get, "Successfully fetched api key from the TEE");
-
-  return 0;
-}
-
-
-int bkk_key_fetch_error_status(uint32_t *error_status, uint32_t *last_tee_error) {
-  char msg[100];
-  init_log(); 
-  TEEC_Context ctx;
-  TEEC_Session sess;
-  TEEC_Operation op;
-  TEEC_Result res;
-  uint32_t err_origin = 0U;
-
-  if (!error_status || !last_tee_error) {
-    log_error(log_cat_get, "Invalid argument");
-    return -1;
-  }
-
-  res = TEEC_InitializeContext(NULL, &ctx);
-  if (res != TEEC_SUCCESS) {
-    snprintf(msg, sizeof(msg), "Failed to initialize context: %08X", res);
-    log_error(log_cat_get, msg);
-    return -2;
-  }
-
-  res = TEEC_OpenSession(&ctx, &sess, &bkk_key_ta_uuid, TEEC_LOGIN_PUBLIC,
-               NULL, NULL, &err_origin);
-  if (res != TEEC_SUCCESS) {
-    snprintf(msg, sizeof(msg), "Failed to open session: %08X, err origin: %08X", res, err_origin);
-    log_error(log_cat_get, msg);
-    TEEC_FinalizeContext(&ctx);
-    return -3;
-  }
-
-  memset(&op, 0, sizeof(op));
-  op.paramTypes = TEEC_PARAM_TYPES(
-    TEEC_VALUE_OUTPUT, TEEC_VALUE_OUTPUT,
-    TEEC_NONE, TEEC_NONE);
-
-  res = TEEC_InvokeCommand(&sess, BKK_KEY_FETCH_ERROR_STATUS_CMD, &op, &err_origin);
-  
-  *error_status = op.params[0].value.a; 
-  *last_tee_error = op.params[0].value.b; 
-
-  TEEC_CloseSession(&sess);
-  TEEC_FinalizeContext(&ctx);
-
-  if(res != TEEC_SUCCESS) {
-    snprintf(msg, sizeof(msg), "Failed to invoke command: %08X, error origin: %08X", res, err_origin);
-    log_error(log_cat_get, msg);
-    return -4;
-  }
 
   return 0;
 }
