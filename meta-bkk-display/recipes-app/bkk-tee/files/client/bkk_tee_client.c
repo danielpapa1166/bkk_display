@@ -101,7 +101,7 @@ int bkk_key_test(void) {
   snprintf(msg, sizeof(msg), "Invoking command to test");
   log_info(log_cat_test, msg);
 
-  res = TEEC_InvokeCommand(&client_ctx.sess, BKK_KEY_TEST_CMD, NULL, &err_origin);
+  res = TEEC_InvokeCommand(&client_ctx.sess, BKK_TEE_TEST_CMD, NULL, &err_origin);
 
   close_tee_session(&client_ctx);
 
@@ -175,7 +175,7 @@ int bkk_key_echo(const void *in, size_t in_len, void *out, size_t *out_len)
   snprintf(msg, sizeof(msg), "Invoking command to echo data in the TEE, paramTypes: %08X", op.paramTypes);
   log_info(log_cat_echo, msg);
 
-  res = TEEC_InvokeCommand(&sess, BKK_KEY_ECHO_CMD, &op, &err_origin);
+  res = TEEC_InvokeCommand(&sess, BKK_TEE_ECHO_CMD, &op, &err_origin);
 
   TEEC_CloseSession(&sess);
   TEEC_FinalizeContext(&ctx);

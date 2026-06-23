@@ -16,6 +16,11 @@
 #define BKK_TEE_WIFI_PW_OBJ_ID_LEN (sizeof(BKK_TEE_WIFI_PW_OBJ_ID))
 
 
+// ----------------------------------------------------------------------------
+// persistent object management functions
+// ----------------------------------------------------------------------------
+
+// create a persistent object in the TEE storage and write the data to it
 static TEE_Result bkk_key_create_persistent_object(
     uint32_t param_types, TEE_Param params[4]) {
 
@@ -103,7 +108,7 @@ static TEE_Result bkk_key_create_persistent_object(
   return TEE_SUCCESS;
 } 
 
-
+// read a persistent object from the TEE storage and return the data
 static TEE_Result bkk_key_read_persistent_object(
     uint32_t param_types, TEE_Param params[4]) {
 
@@ -223,6 +228,11 @@ static TEE_Result bkk_key_read_persistent_object(
   return res;
 }
 
+
+// ----------------------------------------------------------------------------
+// Trusted Application entry points
+// ----------------------------------------------------------------------------
+
 TEE_Result TA_CreateEntryPoint(void) {
   return TEE_SUCCESS;
 }
@@ -246,6 +256,9 @@ void TA_CloseSessionEntryPoint(void *session_context) {
 }
 
 
+// ----------------------------------------------------------------------------
+// Trusted Application command entry point
+// ----------------------------------------------------------------------------
 TEE_Result TA_InvokeCommandEntryPoint(
     void *session_context, uint32_t cmd_id,
     uint32_t param_types, TEE_Param params[4]) {
@@ -259,10 +272,10 @@ TEE_Result TA_InvokeCommandEntryPoint(
   case BKK_KEY_CMD_GET: {
     return bkk_key_read_persistent_object(param_types, params);
   }
-  case BKK_KEY_TEST_CMD: {
+  case BKK_TEE_TEST_CMD: {
     return TEE_SUCCESS;
   }
-  case BKK_KEY_ECHO_CMD: {
+  case BKK_TEE_ECHO_CMD: {
     uint32_t expected = TEE_PARAM_TYPES(
       TEE_PARAM_TYPE_MEMREF_INPUT,
       TEE_PARAM_TYPE_MEMREF_OUTPUT,
