@@ -307,10 +307,13 @@ int bkk_key_get(void *buf, size_t *buf_len)
 
   memset(&op, 0, sizeof(op));
   op.paramTypes = TEEC_PARAM_TYPES(
-    TEEC_MEMREF_TEMP_OUTPUT, TEEC_NONE,
-    TEEC_NONE, TEEC_NONE);
+    TEEC_MEMREF_TEMP_INPUT,
+    TEEC_MEMREF_TEMP_OUTPUT,
+    TEEC_NONE,
+    TEEC_NONE);
 
-  op.params[0].tmpref.buffer = (void *)BKK_KEY_OBJ_ID;
+  char obj_id[] = BKK_KEY_OBJ_ID;
+  op.params[0].tmpref.buffer = (void *)obj_id;
   op.params[0].tmpref.size = BKK_KEY_OBJ_ID_LEN;
   op.params[1].tmpref.buffer = buf;
   op.params[1].tmpref.size = *buf_len;

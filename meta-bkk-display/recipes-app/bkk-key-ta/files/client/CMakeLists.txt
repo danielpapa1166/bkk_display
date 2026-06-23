@@ -30,6 +30,8 @@ target_include_directories(bkk-key-client
 		${TEEC_INCLUDE_DIR}
 )
 
+target_compile_options(bkk-key-client PRIVATE -Wall -Wextra -pedantic -g -O0)
+
 
 # add rbuflogd lib: 
 

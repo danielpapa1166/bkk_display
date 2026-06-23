@@ -12,7 +12,7 @@ target_link_libraries(bkk_key_client_test
 )
 
 
-target_compile_options(bkk_key_client_test PRIVATE -Wall -Wextra -pedantic)
+target_compile_options(bkk_key_client_test PRIVATE -Wall -Wextra -pedantic -g -O0)
 
 install(TARGETS bkk_key_client_test
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
