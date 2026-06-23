@@ -45,13 +45,15 @@ static TEE_Result bkk_key_create_persistent_object(
   // --------------------------------------------------------------------------
   // store the object ID from the parameters
   // --------------------------------------------------------------------------
-  obj_id_sz = params[0].memref.size;
+  //obj_id_sz = params[0].memref.size;
+  obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
   obj_id = TEE_Malloc(obj_id_sz, 0);
   if (!obj_id) {
     return TEE_ERROR_OUT_OF_MEMORY;
   }
 
-  TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
+  //TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
+  TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
 
   // --------------------------------------------------------------------------
   // store the data from the parameters
@@ -137,14 +139,15 @@ static TEE_Result bkk_key_read_persistent_object(
   // --------------------------------------------------------------------------
   // store the object ID from the parameters
   // --------------------------------------------------------------------------
-  obj_id_sz = params[0].memref.size;
+  //obj_id_sz = params[0].memref.size;
+  obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
   obj_id = TEE_Malloc(obj_id_sz, 0);
   if (!obj_id) {
     return TEE_ERROR_OUT_OF_MEMORY;
   }
 
-  TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
-
+  //TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
+  TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
 
   // --------------------------------------------------------------------------
   // prepare data container for output
