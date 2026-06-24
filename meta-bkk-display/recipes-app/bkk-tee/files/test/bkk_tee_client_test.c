@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------------------------------
     // test simple command
     // ------------------------------------------------------------------------
-    const int test_res = bkk_tee_test();
-    if(test_res != 0) {
+    const bkk_tee_client_status_t test_res = bkk_tee_test();
+    if(test_res != bkk_tee_client_err_none) {
       printf("BKK Key TEE Test failed, error code: %d\n", test_res);
     }
     else {
@@ -49,13 +49,13 @@ int main(int argc, char *argv[]) {
     const char *message = argv[2];
     char echo_response[256];
     size_t echo_response_len = sizeof(echo_response);
-    const int echo_res = bkk_tee_echo(
+    const bkk_tee_client_status_t echo_res = bkk_tee_echo(
       message, 
       strlen(message), 
       echo_response, 
       &echo_response_len);
 
-    if (echo_res != 0) {
+    if (echo_res != bkk_tee_client_err_none) {
       printf("Failed to echo message, error code: %d\n", echo_res);
       return echo_res;
     }
@@ -72,9 +72,9 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     const char *key = argv[2];
-    const int store_res = bkk_tee_store(
+    const bkk_tee_client_status_t store_res = bkk_tee_store(
       tee_object_type_api_key, key, strlen(key));
-    if (store_res != 0) {
+    if (store_res != bkk_tee_client_err_none) {
       printf("Failed to store key, error code: %d\n", store_res);
       return store_res;
     }
@@ -86,9 +86,9 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------------------------------
     char retrieved_key[256];
     size_t retrieved_key_len = sizeof(retrieved_key);
-    const int retrieve_res = bkk_tee_get(
+    const bkk_tee_client_status_t retrieve_res = bkk_tee_get(
       tee_object_type_api_key, retrieved_key, &retrieved_key_len);
-    if (retrieve_res != 0) {
+    if (retrieve_res != bkk_tee_client_err_none) {
       printf("Failed to retrieve key, error code: %d\n", retrieve_res);
       return retrieve_res;
     }
@@ -104,9 +104,9 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     const char *wifi_pw = argv[2];
-    const int store_res = bkk_tee_store(
+    const bkk_tee_client_status_t store_res = bkk_tee_store(
       tee_object_type_wifi_pw, wifi_pw, strlen(wifi_pw));
-    if (store_res != 0) {
+    if (store_res != bkk_tee_client_err_none) {
       printf("Failed to store WiFi password, error code: %d\n", store_res);
       return store_res;
     }
@@ -118,9 +118,9 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------------------------------
     char retrieved_wifi_pw[256];
     size_t retrieved_wifi_pw_len = sizeof(retrieved_wifi_pw);
-    const int retrieve_res = bkk_tee_get(
+    const bkk_tee_client_status_t retrieve_res = bkk_tee_get(
       tee_object_type_wifi_pw, retrieved_wifi_pw, &retrieved_wifi_pw_len);
-    if (retrieve_res != 0) {
+    if (retrieve_res != bkk_tee_client_err_none) {
       printf("Failed to retrieve WiFi password, error code: %d\n", retrieve_res);
       return retrieve_res;
     }

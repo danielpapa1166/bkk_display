@@ -51,7 +51,7 @@ static void init_log(void) {
   }
 }
 
-static int prepare_tee_session(tee_client_ctx *ctx) {
+static bkk_tee_client_status_t prepare_tee_session(tee_client_ctx *ctx) {
   static const char * log_cat = "prep_ctx";
   char msg[100];
 	uint32_t origin;
@@ -62,7 +62,7 @@ static int prepare_tee_session(tee_client_ctx *ctx) {
     snprintf(msg, sizeof(msg), 
       "TEEC_InitializeContext failed with code: %08X", res);
     log_error(log_cat, msg);
-    return -1;
+    return bkk_tee_client_err_session_failed;
   }
 
 	res = TEEC_OpenSession(
@@ -78,10 +78,10 @@ static int prepare_tee_session(tee_client_ctx *ctx) {
     snprintf(msg, sizeof(msg), 
       "TEEC_OpenSession failed with code: %08X, origin: %08X", res, origin);
     log_error(log_cat, msg);
-    return -2;
+    return bkk_tee_client_err_session_failed;
   }
 
-  return 0; 
+  return bkk_tee_client_err_none;
 }
 
 
@@ -95,24 +95,23 @@ static void close_tee_session(tee_client_ctx *ctx) {
 // TEE Client API functions
 // ----------------------------------------------------------------------------
 
-int bkk_tee_test(void) {
+bkk_tee_client_status_t bkk_tee_test(void) {
   init_log(); 
 
   char msg[100];
-  TEEC_Result res;
   uint32_t err_origin = 0U;
 
 
   tee_client_ctx client_ctx;
-  res = prepare_tee_session(&client_ctx);
-  if (res != 0) {
+  const bkk_tee_client_status_t sess_res = prepare_tee_session(&client_ctx);
+  if (sess_res != bkk_tee_client_err_none) {
     snprintf(msg, sizeof(msg), 
-      "Failed to prepare TEE session, error code: %d", res);
+      "Failed to prepare TEE session, error code: %d", sess_res);
     log_error(log_cat_test, msg);
-    return res;
+    return sess_res;
   }
 
-  res = TEEC_InvokeCommand(
+  const TEEC_Result teec_res = TEEC_InvokeCommand(
     &client_ctx.sess, 
     BKK_TEE_TEST_CMD, 
     NULL, 
@@ -120,39 +119,41 @@ int bkk_tee_test(void) {
 
   close_tee_session(&client_ctx);
 
-  if(res != TEEC_SUCCESS) {
+  if(teec_res != TEEC_SUCCESS) {
     snprintf(msg, sizeof(msg), 
       "Failed to invoke command: %08X, error origin: %08X", 
-      res, err_origin);
+      teec_res, err_origin);
     log_error(log_cat_test, msg);  
-    return -4; 
+    return bkk_tee_client_err_invoke_failed; 
   }
 
   log_info(log_cat_test, "Test command executed successfully in the TEE"); 
-  return 0; 
+  return bkk_tee_client_err_none; 
 }
 
-int bkk_tee_echo(const void *in, size_t in_len, void *out, size_t *out_len) {
+bkk_tee_client_status_t bkk_tee_echo(
+    const void *in, size_t in_len, 
+    void *out, size_t *out_len) {
+  
   init_log(); 
 
   char msg[100];
 
   TEEC_Operation op;
-  TEEC_Result res;
   tee_client_ctx client_ctx;
   uint32_t err_origin = 0U;
 
   if (!in || in_len == 0U || !out || !out_len || *out_len == 0U) {
     log_error(log_cat_echo, "Invalid argument"); 
-    return -1;
+    return bkk_tee_client_err_invalid_arg;
   }
 
-  res = prepare_tee_session(&client_ctx);
-  if (res != 0) {
+  const bkk_tee_client_status_t sess_res = prepare_tee_session(&client_ctx);
+  if (sess_res != bkk_tee_client_err_none) {
     snprintf(msg, sizeof(msg), 
-      "Failed to prepare TEE session, error code: %d", res);
+      "Failed to prepare TEE session, error code: %d", sess_res);
     log_error(log_cat_echo, msg);
-    return res;
+    return sess_res;
   }
 
   memset(&op, 0, sizeof(op));
@@ -166,7 +167,7 @@ int bkk_tee_echo(const void *in, size_t in_len, void *out, size_t *out_len) {
   op.params[1].tmpref.buffer = out;
   op.params[1].tmpref.size = *out_len;
 
-  res = TEEC_InvokeCommand(
+  const TEEC_Result teec_res = TEEC_InvokeCommand(
     &client_ctx.sess, 
     BKK_TEE_ECHO_CMD, 
     &op, 
@@ -174,47 +175,49 @@ int bkk_tee_echo(const void *in, size_t in_len, void *out, size_t *out_len) {
 
   close_tee_session(&client_ctx);
 
-  if(res != TEEC_SUCCESS) {
+  if(teec_res != TEEC_SUCCESS) {
     snprintf(msg, sizeof(msg), 
       "Failed to invoke command: %08X, error origin: %08X", 
-      res, err_origin);
+      teec_res, err_origin);
     log_error(log_cat_echo, msg);
-    return -4;
+    return bkk_tee_client_err_invoke_failed;
   }
 
   *out_len = op.params[1].tmpref.size;
   log_info(log_cat_echo, "Echo command executed successfully in the TEE"); 
 
-  return 0;
+  return bkk_tee_client_err_none;
 }
 
 
-int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
+bkk_tee_client_status_t bkk_tee_store(
+    tee_object_type_t obj_type, 
+    const void *buf, size_t buf_len) {
+
   init_log(); 
 
   if( obj_type != tee_object_type_api_key 
       && obj_type != tee_object_type_wifi_pw) {
     log_error(log_cat_set, "Invalid object type"); 
-    return -1;
+    return bkk_tee_client_err_invalid_arg;
   }
 
   char msg[100];
   tee_client_ctx client_ctx;
   TEEC_Operation op;
-  TEEC_Result res;
   uint32_t err_origin = 0U;
 
-  if (!key || key_len == 0U) {
+  if (!buf || buf_len == 0U) {
     log_error(log_cat_set, "Invalid argument"); 
-    return -1;
+    return bkk_tee_client_err_invalid_arg;
   }
 
-  res = prepare_tee_session(&client_ctx);
-  if (res != 0) {
+  const bkk_tee_client_status_t sess_res = prepare_tee_session(&client_ctx);
+  if (sess_res != bkk_tee_client_err_none) {
     snprintf(msg, sizeof(msg), 
-      "Failed to prepare TEE session, error code: %d", res);
+      "Failed to prepare TEE session, error code: %d", sess_res);
     log_error(log_cat_set, msg);
-    return res;
+    return sess_res;
   }
 
   memset(&op, 0, sizeof(op));
@@ -226,8 +229,8 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
   
   char debug_buf[BKK_TEE_MAX_OBJ_ID_LEN];
 
-  op.params[0].tmpref.buffer = (void *)key;
-  op.params[0].tmpref.size = key_len;
+  op.params[0].tmpref.buffer = (void *)buf;
+  op.params[0].tmpref.size = buf_len;
   op.params[1].tmpref.buffer = debug_buf;
   op.params[1].tmpref.size = sizeof(debug_buf);
   
@@ -236,7 +239,7 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
     = (obj_type == tee_object_type_api_key) 
     ? BKK_KEY_CMD_STORE : BKK_WIFI_PW_CMD_STORE; 
 
-  res = TEEC_InvokeCommand(
+  const TEEC_Result teec_res = TEEC_InvokeCommand(
     &client_ctx.sess, 
     cmd, 
     &op, 
@@ -244,11 +247,11 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
 
   close_tee_session(&client_ctx);
 
-  if(res != TEEC_SUCCESS) {
+  if(teec_res != TEEC_SUCCESS) {
     snprintf(msg, sizeof(msg), 
-      "Failed to invoke command: %08X, error origin: %08X", res, err_origin);
+      "Failed to invoke command: %08X, error origin: %08X", teec_res, err_origin);
     log_error(log_cat_set, msg);  
-    return -4; 
+    return bkk_tee_client_err_invoke_failed;
   }
 
   snprintf(msg, sizeof(msg), 
@@ -256,35 +259,34 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
     bkk_tee_get_object_type_name(obj_type));
   log_info(log_cat_set, msg);
 
-  return 0;
+  return bkk_tee_client_err_none;
 }
 
-int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
+bkk_tee_client_status_t bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
   char msg[100];
   init_log(); 
 
   if( obj_type != tee_object_type_api_key 
       && obj_type != tee_object_type_wifi_pw) {
     log_error(log_cat_get, "Invalid object type"); 
-    return -1;
+    return bkk_tee_client_err_invalid_arg;
   }
 
   tee_client_ctx client_ctx;
   TEEC_Operation op;
-  TEEC_Result res;
   uint32_t err_origin = 0U;
 
   if (!buf || !buf_len || *buf_len == 0U) {
     log_error(log_cat_get, "Invalid argument");
-    return -1;
+    return bkk_tee_client_err_invalid_arg;
   }
 
-  res = prepare_tee_session(&client_ctx);
-  if (res != 0) {
+  const bkk_tee_client_status_t sess_res = prepare_tee_session(&client_ctx);
+  if (sess_res != bkk_tee_client_err_none) {
     snprintf(msg, sizeof(msg), 
-      "Failed to prepare TEE session, error code: %d", res);
+      "Failed to prepare TEE session, error code: %d", sess_res);
     log_error(log_cat_get, msg);
-    return res;
+    return sess_res;
   }
 
   memset(&op, 0, sizeof(op));
@@ -304,7 +306,7 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 
     ? BKK_KEY_CMD_GET : BKK_WIFI_PW_CMD_GET;
-  res = TEEC_InvokeCommand(
+  const TEEC_Result teec_res = TEEC_InvokeCommand(
     &client_ctx.sess, 
     cmd, 
     &op, 
@@ -314,11 +316,11 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
 
   close_tee_session(&client_ctx);
 
-  if(res != TEEC_SUCCESS) {
+  if(teec_res != TEEC_SUCCESS) {
     snprintf(msg, sizeof(msg), 
-      "Failed to invoke command: %08X, error origin: %08X", res, err_origin);
+      "Failed to invoke command: %08X, error origin: %08X", teec_res, err_origin);
     log_error(log_cat_get, msg);
-    return -4;
+    return bkk_tee_client_err_invoke_failed;
   }
 
   snprintf(msg, sizeof(msg), 
@@ -326,5 +328,5 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
     bkk_tee_get_object_type_name(obj_type), *buf_len);
   log_info(log_cat_get, msg);
 
-  return 0;
+  return bkk_tee_client_err_none;
 }
