@@ -33,7 +33,7 @@ static const char * log_cat_echo = "key_Echo";
 // internal helper functions
 // ----------------------------------------------------------------------------
 
-inline const char *bkk_tee_get_object_type_name(tee_object_type_t obj_type) {
+const char *bkk_tee_get_object_type_name(tee_object_type_t obj_type) {
   switch (obj_type) {
     case tee_object_type_api_key:
       return "API Key";
@@ -220,13 +220,17 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
   memset(&op, 0, sizeof(op));
   op.paramTypes = TEEC_PARAM_TYPES(
     TEEC_MEMREF_TEMP_INPUT, 
-    TEEC_NONE,
+    TEEC_MEMREF_TEMP_OUTPUT, // debug output
     TEEC_NONE, 
     TEEC_NONE);
   
+  char debug_buf[BKK_TEE_MAX_OBJ_ID_LEN];
+
   op.params[0].tmpref.buffer = (void *)key;
   op.params[0].tmpref.size = key_len;
-
+  op.params[1].tmpref.buffer = debug_buf;
+  op.params[1].tmpref.size = sizeof(debug_buf);
+  
 
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 
@@ -286,17 +290,16 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
   memset(&op, 0, sizeof(op));
   op.paramTypes = TEEC_PARAM_TYPES(
     TEEC_MEMREF_TEMP_OUTPUT,
-    TEEC_NONE,
+    TEEC_MEMREF_TEMP_OUTPUT, // debug output
     TEEC_NONE,
     TEEC_NONE);
 
+  char debug_buf[BKK_TEE_MAX_OBJ_ID_LEN];
+
   op.params[0].tmpref.buffer = buf;
   op.params[0].tmpref.size = *buf_len;
-
-  snprintf(msg, sizeof(msg), 
-    "Invoking command to fetch %s from the TEE", 
-    bkk_tee_get_object_type_name(obj_type));
-  log_info(log_cat_get, msg);
+  op.params[1].tmpref.buffer = debug_buf;
+  op.params[1].tmpref.size = sizeof(debug_buf);
 
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 

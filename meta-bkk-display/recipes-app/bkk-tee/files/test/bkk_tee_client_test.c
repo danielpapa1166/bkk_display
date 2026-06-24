@@ -6,10 +6,12 @@
 static void print_usage(const char *prog_name) {
   printf("Usage: %s [options]\n", prog_name);
   printf("Options:\n");
-  printf("  -test                 Run a simple test command in the TEE\n");
-  printf("  -echo <message>       Echo a message in the TEE\n");
-  printf("  -store <key>          Store an API key in the TEE\n");
-  printf("  -retrieve             Retrieve the stored API key from the TEE\n");
+  printf("  -test                     Run a simple test command in the TEE\n");
+  printf("  -echo <message>           Echo a message in the TEE\n");
+  printf("  -store_key <key>          Store an API key in the TEE\n");
+  printf("  -retrieve_key             Retrieve the stored API key from the TEE\n");
+  printf("  -store_wifi_pw <password> Store a WiFi password in the TEE\n");
+  printf("  -retrieve_wifi_pw         Retrieve the stored WiFi password from the TEE \n"); 
 }
 
 int main(int argc, char *argv[]) {
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
     printf("Echoed message: %s\n", echo_response);
 
   } 
-  else if(strcmp(option, "-store") == 0) {
+  else if(strcmp(option, "-store_key") == 0) {
     // ------------------------------------------------------------------------
     // test key write
     // ------------------------------------------------------------------------
@@ -70,26 +72,60 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     const char *key = argv[2];
-    const int store_res = bkk_tee_store(tee_object_type_api_key, key, strlen(key));
+    const int store_res = bkk_tee_store(
+      tee_object_type_api_key, key, strlen(key));
     if (store_res != 0) {
       printf("Failed to store key, error code: %d\n", store_res);
       return store_res;
     }
     printf("Successfully stored key: %s\n", key);
   } 
-  else if(strcmp(option, "-retrieve") == 0) {
+  else if(strcmp(option, "-retrieve_key") == 0) {
     // ------------------------------------------------------------------------
     // test key read
     // ------------------------------------------------------------------------
     char retrieved_key[256];
     size_t retrieved_key_len = sizeof(retrieved_key);
-    const int retrieve_res = bkk_tee_get(tee_object_type_api_key, retrieved_key, &retrieved_key_len);
+    const int retrieve_res = bkk_tee_get(
+      tee_object_type_api_key, retrieved_key, &retrieved_key_len);
     if (retrieve_res != 0) {
       printf("Failed to retrieve key, error code: %d\n", retrieve_res);
       return retrieve_res;
     }
     printf("Retrieved key: %s\n", retrieved_key);
   } 
+  else if(strcmp(option, "-store_wifi_pw") == 0) {
+    // ------------------------------------------------------------------------
+    // test WiFi password write
+    // ------------------------------------------------------------------------
+    if(argc < 3) {
+      printf("Error: Missing WiFi password for store command\n");
+      print_usage(argv[0]);
+      return -1;
+    }
+    const char *wifi_pw = argv[2];
+    const int store_res = bkk_tee_store(
+      tee_object_type_wifi_pw, wifi_pw, strlen(wifi_pw));
+    if (store_res != 0) {
+      printf("Failed to store WiFi password, error code: %d\n", store_res);
+      return store_res;
+    }
+    printf("Successfully stored WiFi password: %s\n", wifi_pw);
+  } 
+  else if(strcmp(option, "-retrieve_wifi_pw") == 0) {
+    // ------------------------------------------------------------------------
+    // test WiFi password read
+    // ------------------------------------------------------------------------
+    char retrieved_wifi_pw[256];
+    size_t retrieved_wifi_pw_len = sizeof(retrieved_wifi_pw);
+    const int retrieve_res = bkk_tee_get(
+      tee_object_type_wifi_pw, retrieved_wifi_pw, &retrieved_wifi_pw_len);
+    if (retrieve_res != 0) {
+      printf("Failed to retrieve WiFi password, error code: %d\n", retrieve_res);
+      return retrieve_res;
+    }
+    printf("Retrieved WiFi password: %s\n", retrieved_wifi_pw);
+  }
   else {
     printf("Error: Unknown option '%s'\n", option);
     print_usage(argv[0]);

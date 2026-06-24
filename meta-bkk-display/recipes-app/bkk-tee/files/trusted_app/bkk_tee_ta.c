@@ -21,12 +21,12 @@
 // ----------------------------------------------------------------------------
 
 // create a persistent object in the TEE storage and write the data to it
-static TEE_Result bkk_key_create_persistent_object(
+static TEE_Result bkk_key_create_persistent_object(tee_object_type_t obj_type,
     uint32_t param_types, TEE_Param params[4]) {
 
   const uint32_t exp_param_types = TEE_PARAM_TYPES(
     TEE_PARAM_TYPE_MEMREF_INPUT,
-    TEE_PARAM_TYPE_NONE,
+    TEE_PARAM_TYPE_MEMREF_OUTPUT, // debug out 
     TEE_PARAM_TYPE_NONE,
     TEE_PARAM_TYPE_NONE);
 
@@ -45,12 +45,30 @@ static TEE_Result bkk_key_create_persistent_object(
   // --------------------------------------------------------------------------
   // store the object ID from the parameters
   // --------------------------------------------------------------------------
-  obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
-  obj_id = TEE_Malloc(obj_id_sz, 0);
-  if (!obj_id) {
-    return TEE_ERROR_OUT_OF_MEMORY;
+  switch (obj_type) {
+    case tee_object_type_api_key:
+      obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
+      obj_id = TEE_Malloc(obj_id_sz, 0);
+      if (!obj_id) {
+        return TEE_ERROR_OUT_OF_MEMORY;
+      }
+      TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
+      break;
+    case tee_object_type_wifi_pw:
+      obj_id_sz = BKK_TEE_WIFI_PW_OBJ_ID_LEN;
+      obj_id = TEE_Malloc(obj_id_sz, 0);
+      if (!obj_id) {
+        return TEE_ERROR_OUT_OF_MEMORY;
+      }
+      TEE_MemMove(obj_id, BKK_TEE_WIFI_PW_OBJ_ID, obj_id_sz);
+      break;
+    default:
+      return TEE_ERROR_BAD_PARAMETERS;
   }
-  TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
+
+  // debug feedback: copy the object ID to the output parameter
+  TEE_MemMove(params[1].memref.buffer, obj_id, obj_id_sz);
+  params[1].memref.size = obj_id_sz;
 
   // --------------------------------------------------------------------------
   // store the data from the parameters
@@ -108,12 +126,12 @@ static TEE_Result bkk_key_create_persistent_object(
 } 
 
 // read a persistent object from the TEE storage and return the data
-static TEE_Result bkk_key_read_persistent_object(
+static TEE_Result bkk_key_read_persistent_object(tee_object_type_t obj_type,
     uint32_t param_types, TEE_Param params[4]) {
 
   const uint32_t exp_param_types = TEE_PARAM_TYPES(
     TEE_PARAM_TYPE_MEMREF_OUTPUT,
-    TEE_PARAM_TYPE_NONE,
+    TEE_PARAM_TYPE_MEMREF_OUTPUT, // debug out 
     TEE_PARAM_TYPE_NONE,
     TEE_PARAM_TYPE_NONE);
 
@@ -136,12 +154,30 @@ static TEE_Result bkk_key_read_persistent_object(
   // --------------------------------------------------------------------------
   // store the object ID from the parameters
   // --------------------------------------------------------------------------
-  obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
-  obj_id = TEE_Malloc(obj_id_sz, 0);
-  if (!obj_id) {
-    return TEE_ERROR_OUT_OF_MEMORY;
+  switch (obj_type) {
+    case tee_object_type_api_key:
+      obj_id_sz = BKK_TEE_KEY_OBJ_ID_LEN;
+      obj_id = TEE_Malloc(obj_id_sz, 0);
+      if (!obj_id) {
+        return TEE_ERROR_OUT_OF_MEMORY;
+      }
+      TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
+      break;
+    case tee_object_type_wifi_pw:
+      obj_id_sz = BKK_TEE_WIFI_PW_OBJ_ID_LEN;
+      obj_id = TEE_Malloc(obj_id_sz, 0);
+      if (!obj_id) {
+        return TEE_ERROR_OUT_OF_MEMORY;
+      }
+      TEE_MemMove(obj_id, BKK_TEE_WIFI_PW_OBJ_ID, obj_id_sz);
+      break;
+    default:
+      return TEE_ERROR_BAD_PARAMETERS;
   }
-  TEE_MemMove(obj_id, BKK_TEE_KEY_OBJ_ID, obj_id_sz);
+
+  // debug feedback: copy the object ID to the output parameter
+  TEE_MemMove(params[1].memref.buffer, obj_id, obj_id_sz);
+  params[1].memref.size = obj_id_sz;
 
   // --------------------------------------------------------------------------
   // prepare data container for output
@@ -264,10 +300,20 @@ TEE_Result TA_InvokeCommandEntryPoint(
 
   switch (cmd_id) {
   case BKK_KEY_CMD_STORE: {
-    return bkk_key_create_persistent_object(param_types, params);
+    return bkk_key_create_persistent_object(
+      tee_object_type_api_key, param_types, params);
   }
   case BKK_KEY_CMD_GET: {
-    return bkk_key_read_persistent_object(param_types, params);
+    return bkk_key_read_persistent_object(
+      tee_object_type_api_key, param_types, params);
+  }
+  case BKK_WIFI_PW_CMD_STORE: {
+    return bkk_key_create_persistent_object(
+      tee_object_type_wifi_pw, param_types, params);
+  }
+  case BKK_WIFI_PW_CMD_GET: {
+    return bkk_key_read_persistent_object(
+      tee_object_type_wifi_pw, param_types, params);
   }
   case BKK_TEE_TEST_CMD: {
     return TEE_SUCCESS;

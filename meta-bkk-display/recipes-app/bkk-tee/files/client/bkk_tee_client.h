@@ -8,10 +8,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum {
-  tee_object_type_api_key = 0,
-  tee_object_type_wifi_pw = 1,
-} tee_object_type_t;
+#include "bkk_tee_common_defs.h"
 
 
 int bkk_tee_test(void);
