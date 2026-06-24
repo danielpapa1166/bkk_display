@@ -98,8 +98,6 @@ static void close_tee_session(tee_client_ctx *ctx) {
 int bkk_tee_test(void) {
   init_log(); 
 
-  log_info(log_cat_test, "Testing TEE communication with bkk_tee_ta");
-
   char msg[100];
   TEEC_Result res;
   uint32_t err_origin = 0U;
@@ -113,9 +111,6 @@ int bkk_tee_test(void) {
     log_error(log_cat_test, msg);
     return res;
   }
-
-  snprintf(msg, sizeof(msg), "Invoking command to test");
-  log_info(log_cat_test, msg);
 
   res = TEEC_InvokeCommand(
     &client_ctx.sess, 
@@ -141,9 +136,6 @@ int bkk_tee_echo(const void *in, size_t in_len, void *out, size_t *out_len) {
   init_log(); 
 
   char msg[100];
-  snprintf(msg, sizeof(msg), 
-    "Echoing data of length %zu in the TEE", in_len);
-  log_info(log_cat_echo, msg);
 
   TEEC_Operation op;
   TEEC_Result res;
@@ -173,11 +165,6 @@ int bkk_tee_echo(const void *in, size_t in_len, void *out, size_t *out_len) {
 
   op.params[1].tmpref.buffer = out;
   op.params[1].tmpref.size = *out_len;
-
-  snprintf(msg, sizeof(msg), 
-    "Invoking command to echo data in the TEE, paramTypes: %08X", 
-    op.paramTypes);
-  log_info(log_cat_echo, msg);
 
   res = TEEC_InvokeCommand(
     &client_ctx.sess, 
@@ -212,11 +199,6 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
   }
 
   char msg[100];
-  snprintf(msg, sizeof(msg), 
-    "Storing %s %s of length %zu in the TEE", 
-    bkk_tee_get_object_type_name(obj_type), (const char *)key, key_len);
-  log_info(log_cat_set, msg);
-
   tee_client_ctx client_ctx;
   TEEC_Operation op;
   TEEC_Result res;
@@ -245,10 +227,6 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
   op.params[0].tmpref.buffer = (void *)key;
   op.params[0].tmpref.size = key_len;
 
-  snprintf(msg, sizeof(msg), 
-    "Invoking command to store %s in the TEE, paramTypes: %08X", 
-    bkk_tee_get_object_type_name(obj_type), op.paramTypes);
-  log_info(log_cat_set, msg);
 
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 
@@ -297,11 +275,6 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
     return -1;
   }
 
-  snprintf(msg, sizeof(msg), 
-    "Fetching %s from the TEE, buffer length: %zu", 
-    bkk_tee_get_object_type_name(obj_type), *buf_len);
-  log_info(log_cat_get, msg);
-
   res = prepare_tee_session(&client_ctx);
   if (res != 0) {
     snprintf(msg, sizeof(msg), 
@@ -335,8 +308,6 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
     &err_origin);
 
   *buf_len = op.params[0].tmpref.size;
-
-  log_info(log_cat_get, "Closing session and finalizing context");
 
   close_tee_session(&client_ctx);
 
