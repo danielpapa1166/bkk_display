@@ -230,7 +230,7 @@ int bkk_tee_store(tee_object_type_t obj_type, const void *key, size_t key_len) {
 
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 
-    ? BKK_KEY_CMD_STORE : BKK_KEY_CMD_STORE; 
+    ? BKK_KEY_CMD_STORE : BKK_WIFI_PW_CMD_STORE; 
 
   res = TEEC_InvokeCommand(
     &client_ctx.sess, 
@@ -300,7 +300,7 @@ int bkk_tee_get(tee_object_type_t obj_type, void *buf, size_t *buf_len) {
 
   uint32_t cmd  
     = (obj_type == tee_object_type_api_key) 
-    ? BKK_KEY_CMD_GET : BKK_KEY_CMD_GET;
+    ? BKK_KEY_CMD_GET : BKK_WIFI_PW_CMD_GET;
   res = TEEC_InvokeCommand(
     &client_ctx.sess, 
     cmd, 
