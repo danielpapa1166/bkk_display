@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------------------------------
     // test simple command
     // ------------------------------------------------------------------------
-    const int test_res = bkk_key_test();
+    const int test_res = bkk_tee_test();
     if(test_res != 0) {
       printf("BKK Key TEE Test failed, error code: %d\n", test_res);
     }
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     const char *message = argv[2];
     char echo_response[256];
     size_t echo_response_len = sizeof(echo_response);
-    const int echo_res = bkk_key_echo(
+    const int echo_res = bkk_tee_echo(
       message, 
       strlen(message), 
       echo_response, 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
       return -1;
     }
     const char *key = argv[2];
-    const int store_res = bkk_key_store(key, strlen(key));
+    const int store_res = bkk_tee_store(tee_object_type_api_key, key, strlen(key));
     if (store_res != 0) {
       printf("Failed to store key, error code: %d\n", store_res);
       return store_res;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     // ------------------------------------------------------------------------
     char retrieved_key[256];
     size_t retrieved_key_len = sizeof(retrieved_key);
-    const int retrieve_res = bkk_key_get(retrieved_key, &retrieved_key_len);
+    const int retrieve_res = bkk_tee_get(tee_object_type_api_key, retrieved_key, &retrieved_key_len);
     if (retrieve_res != 0) {
       printf("Failed to retrieve key, error code: %d\n", retrieve_res);
       return retrieve_res;
