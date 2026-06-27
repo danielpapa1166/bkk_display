@@ -7,3 +7,4 @@ hdmi_cvt 800 480 60 6 0 0 0\n\
 hdmi_drive=1\n\
 dtparam=spi=on\n\
 "
+
