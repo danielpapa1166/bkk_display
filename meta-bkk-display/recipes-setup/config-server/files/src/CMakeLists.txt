@@ -21,6 +21,10 @@ set(CHTTP_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../chttp"
     CACHE PATH "Path to the chttp submodule")
 
+set(BKK_TEE_SOURCE_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../bkk-tee"
+    CACHE PATH "Path to the chttp submodule")
+
 # ---------------------------------------------------------------------------
 # cJSON shared library
 # ---------------------------------------------------------------------------
@@ -68,6 +72,19 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
+# tee client lib
+# ---------------------------------------------------------------------------
+
+find_library(BKK_TEE_LIB REQUIRED NAMES bkk_tee_client PATH_SUFFIXES bkk-tee HINTS bkk-tee)
+find_path(BKK_TEE_INCLUDE_DIR REQUIRED NAMES bkk_tee_client.h)
+add_library(bkk-tee SHARED IMPORTED)
+set_target_properties(bkk-tee PROPERTIES
+    IMPORTED_LOCATION "${BKK_TEE_LIB}"
+    INTERFACE_INCLUDE_DIRECTORIES "${BKK_TEE_INCLUDE_DIR}")
+
+
+
+# ---------------------------------------------------------------------------
 # config-server executable
 # ---------------------------------------------------------------------------
 add_executable(config-server
@@ -81,12 +98,14 @@ add_executable(config-server
 target_include_directories(config-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CJSON_INCLUDE_DIR}
+    ${BKK_TEE_INCLUDE_DIR}
 )
 
 target_link_libraries(config-server PRIVATE
     chttp
     cjson
     rbuflogd_producer
+    bkk-tee-client
 )
 
 # ---------------------------------------------------------------------------

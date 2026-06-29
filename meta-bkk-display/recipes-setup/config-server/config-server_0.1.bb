@@ -33,7 +33,7 @@ SRC_URI = " \
 "
 
 DEPENDS = "rbuflogd cjson chttp"
-RDEPENDS:${PN} += "rbuflogd cjson wpa-supplicant bash"
+RDEPENDS:${PN} += "rbuflogd cjson wpa-supplicant bash bkk-tee"
 
 S = "${WORKDIR}/src"
 
