@@ -42,6 +42,12 @@ add_executable(bkk-qt-app
 	bkk_screenshot_util.hpp
 )
 
+target_include_directories(bkk-qt-app
+    PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../bkk-tee/files/client
+		${CMAKE_CURRENT_SOURCE_DIR}/../../../bkk-tee/files/common
+)
+
 target_link_libraries(bkk-qt-app PRIVATE
 	Qt5::Core
 	Qt5::Widgets
@@ -50,6 +56,7 @@ target_link_libraries(bkk-qt-app PRIVATE
 	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
 	PkgConfig::CJSON
+	bkk-tee-client
 )
 
 install(TARGETS bkk-qt-app RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

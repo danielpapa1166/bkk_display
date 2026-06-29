@@ -10,8 +10,8 @@ SRC_URI = "file://src/ \
 
 S = "${WORKDIR}/src"
 
-DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd cjson"
-RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd"
+DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd cjson bkk-tee"
+RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd bkk-tee"
 
 # Generate compile_commands.json for clangd tooling.
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
