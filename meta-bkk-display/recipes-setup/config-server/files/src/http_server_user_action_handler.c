@@ -1,7 +1,7 @@
 #include "http_server_user_action_handler.h"
 #include "rbuflogd/logger.h"
 #include "cJSON.h"
-#include "bkk_tee_client.h"
+#include <bkk_tee/bkk_tee_client.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

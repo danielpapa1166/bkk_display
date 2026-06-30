@@ -32,7 +32,7 @@ SRC_URI = " \
     file://services/bkk-setup-api.service \
 "
 
-DEPENDS = "rbuflogd cjson chttp"
+DEPENDS = "rbuflogd cjson chttp bkk-tee"
 RDEPENDS:${PN} += "rbuflogd cjson wpa-supplicant bash bkk-tee"
 
 S = "${WORKDIR}/src"

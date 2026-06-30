@@ -61,8 +61,10 @@ endif()
 # chttp static library
 # ---------------------------------------------------------------------------
 if(EXISTS "${CHTTP_SOURCE_DIR}/CMakeLists.txt")
+    message("If chttp")
     add_subdirectory("${CHTTP_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/chttp")
 else()
+    message("Else chttp")
     find_library(CHTTP_LIB REQUIRED NAMES chttp)
     find_path(CHTTP_INCLUDE_DIR REQUIRED NAMES chttp.h)
     add_library(chttp STATIC IMPORTED)
@@ -75,8 +77,15 @@ endif()
 # tee client lib
 # ---------------------------------------------------------------------------
 
-find_library(BKK_TEE_LIB REQUIRED NAMES bkk_tee_client PATH_SUFFIXES bkk-tee HINTS bkk-tee)
-find_path(BKK_TEE_INCLUDE_DIR REQUIRED NAMES bkk_tee_client.h)
+message(STATUS "Cmake current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "Hint = ${CMAKE_CURRENT_SOURCE_DIR}/../../../bkk-tee*")
+message(STATUS "dirs=${BKK_TEE_DIRS}")
+
+find_library(BKK_TEE_LIB REQUIRED NAMES bkk-tee-client)
+
+set(CMAKE_FIND_DEBUG_MODE TRUE)
+
+set(CMAKE_FIND_DEBUG_MODE FALSE)
 add_library(bkk-tee SHARED IMPORTED)
 set_target_properties(bkk-tee PROPERTIES
     IMPORTED_LOCATION "${BKK_TEE_LIB}"
