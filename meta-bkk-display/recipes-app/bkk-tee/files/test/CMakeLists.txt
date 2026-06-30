@@ -2,7 +2,7 @@ add_executable(bkk_tee_client_test bkk_tee_client_test.c)
 
 target_include_directories(bkk_tee_client_test
     PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/../client
+        include/bkk_tee
 )
 
 

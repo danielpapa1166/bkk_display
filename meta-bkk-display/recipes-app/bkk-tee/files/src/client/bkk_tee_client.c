@@ -1,5 +1,5 @@
-#include "bkk_tee_client.h"
-#include "bkk_tee_common_defs.h"
+#include "bkk_tee/bkk_tee_client.h"
+#include "bkk_tee/bkk_tee_common_defs.h"
 #include <rbuflogd/logger.h>
 
 #include <stdio.h>

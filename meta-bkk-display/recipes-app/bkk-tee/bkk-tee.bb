@@ -1,21 +1,21 @@
 SUMMARY = "BKK OP-TEE trusted app and client shared library"
-DESCRIPTION = "Builds BKK key trusted app (.ta) and libbkk-key-client.so"
+DESCRIPTION = "Builds BKK TEE trusted app (.ta) and libbkk-tee-client.so"
 LICENSE = "CLOSED"
 
 inherit cmake pkgconfig
 
 SRC_URI = "file://CMakeLists.txt \
-		   file://client/CMakeLists.txt \
-		   file://client/bkk_tee_client.c \
-		   file://client/bkk_tee_client.h \
-		   file://trusted_app/CMakeLists.txt \
-		   file://trusted_app/Makefile \
-		   file://trusted_app/sub.mk \
-		   file://trusted_app/user_ta_header_defines.h \
-		   file://trusted_app/bkk_tee_ta.c \
+		   file://src/trusted_app/bkk_tee_ta.c \
+		   file://src/trusted_app/CMakeLists.txt \
+		   file://src/trusted_app/Makefile \
+		   file://src/trusted_app/sub.mk \
+		   file://src/trusted_app/user_ta_header_defines.h \
+		   file://src/client/CMakeLists.txt \
+		   file://src/client/bkk_tee_client.c \
+		   file://include/bkk_tee/bkk_tee_client.h \
+		   file://include/bkk_tee/bkk_tee_common_defs.h 	\
 		   file://test/bkk_tee_client_test.c \
 		   file://test/CMakeLists.txt \
-		   file://common/bkk_tee_common_defs.h 	\
 "
 
 S = "${WORKDIR}"
@@ -34,7 +34,7 @@ EXTRA_OECMAKE += " \
 "
 
 FILES:${PN} += " \
-	${libdir}/libbkk-key-client.so.* \
+	${libdir}/libbkk-tee-client.so.* \
 	${base_libdir}/optee_armtz/*.ta \
 "
 
@@ -45,6 +45,7 @@ do_install:append() {
 }
 
 FILES:${PN}-dev += " \
-	${includedir}/bkk-key-client/bkk_key_client.h \
-	${libdir}/libbkk-key-client.so \
+	${includedir}/bkk-tee-client-foo/bkk_tee_client.h \
+	${includedir}/common/bkk_tee_common_defs.h \
+	${libdir}/libbkk-tee-client.so \
 "

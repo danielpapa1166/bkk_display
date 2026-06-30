@@ -1,4 +1,4 @@
-#include "bkk_tee_client.h"
+#include "bkk_tee/bkk_tee_client.h"
 #include <string.h>
 #include <stdio.h>
 

@@ -8,7 +8,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include "bkk_tee_common_defs.h"
+#include "bkk_tee/bkk_tee_common_defs.h"
 
 typedef enum {
   bkk_tee_client_err_none = 0,

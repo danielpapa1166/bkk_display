@@ -2,7 +2,7 @@
 
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
-#include "bkk_tee_common_defs.h"
+#include "bkk_tee/bkk_tee_common_defs.h"
 #include <stddef.h>
 
 

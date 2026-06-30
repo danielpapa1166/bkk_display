@@ -25,10 +25,9 @@ set_target_properties(bkk-tee-client PROPERTIES
 )
 
 target_include_directories(bkk-tee-client
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common
-		${TEEC_INCLUDE_DIR}
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/include
+        ${TEEC_INCLUDE_DIR}
 )
 
 target_compile_options(bkk-tee-client PRIVATE -Wall -Wextra -pedantic -g -O0)
@@ -58,12 +57,14 @@ endif()
 
 target_link_libraries(bkk-tee-client PRIVATE 
 	${TEEC_LIBRARY}
-	rbuflogd_producer)
+	rbuflogd_producer
+)
 
 install(TARGETS bkk-tee-client
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(FILES bkk_tee_client.h
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bkk-tee-client
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/include/bkk_tee
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
