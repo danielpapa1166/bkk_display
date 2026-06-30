@@ -5,7 +5,7 @@
 #include "cJSON.h"
 #include "rbuflogd/producer.h"
 #include "rbuflogd/pub_common_types.h"
-#include "bkk_tee_client.h"
+#include "bkk_tee/bkk_tee_client.h"
 
 #include <QString>
 #include <array>
@@ -40,7 +40,7 @@ BkkApiWorker::BkkApiWorker(QObject *parent)
       &loggerProducer,
       RBUF_LOG_LEVEL_ERROR,
       "TEE Test",
-      "Failed to perform TEE test command, error code: " + std::to_string(teeRes)
+      ("Failed to perform TEE test command, error code: " + std::to_string(teeRes)).c_str()
     );
   }
   else {
@@ -83,7 +83,7 @@ int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
       &loggerProducer,
       RBUF_LOG_LEVEL_ERROR,
       "TEE Get",
-      "Failed to retrieve API key from TEE, error code: " + std::to_string(teeRes)
+      ("Failed to retrieve API key from TEE, error code: " + std::to_string(teeRes)).c_str()
     );
   }
   else {
@@ -91,7 +91,7 @@ int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
       &loggerProducer,
       RBUF_LOG_LEVEL_INFO,
       "TEE Get",
-      "Retrieved API key from TEE: " + std::string(key_buffer, key_buffer_len)
+      ("Retrieved API key from TEE: " + std::string(key_buffer, key_buffer_len)).c_str()
     );
   }
 

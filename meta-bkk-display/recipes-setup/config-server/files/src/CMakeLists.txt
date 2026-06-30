@@ -77,15 +77,8 @@ endif()
 # tee client lib
 # ---------------------------------------------------------------------------
 
-message(STATUS "Cmake current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-message(STATUS "Hint = ${CMAKE_CURRENT_SOURCE_DIR}/../../../bkk-tee*")
-message(STATUS "dirs=${BKK_TEE_DIRS}")
-
 find_library(BKK_TEE_LIB REQUIRED NAMES bkk-tee-client)
 
-set(CMAKE_FIND_DEBUG_MODE TRUE)
-
-set(CMAKE_FIND_DEBUG_MODE FALSE)
 add_library(bkk-tee SHARED IMPORTED)
 set_target_properties(bkk-tee PROPERTIES
     IMPORTED_LOCATION "${BKK_TEE_LIB}"
