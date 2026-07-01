@@ -64,8 +64,7 @@ ArrivalTableHandler::~ArrivalTableHandler() {
 QWidget *ArrivalTableHandler::createLineIdCell(const Arrival & arrival, 
     const QColor &backgroundColor) const {
 
-  (void) backgroundColor;
-
+  static const QString defaultLineBoxColor = "#1e1e1e90"; 
   auto *container = new QWidget(arrivalsTable);
   container->setStyleSheet(QString("background-color: %1;").arg(backgroundColor.name()));
   auto *layout = new QHBoxLayout(container);
@@ -80,13 +79,25 @@ QWidget *ArrivalTableHandler::createLineIdCell(const Arrival & arrival,
       lineBoxColor = "#009ee3"; 
       break;
     case VEHICLE_TYPE_TRAM:
-      lineBoxColor = "#ffd900"; 
+      lineBoxColor = "#e0bf00"; 
       break;
     case VEHICLE_TYPE_METRO:
-      lineBoxColor = "#F9AB13"; 
+
+      if(strcmp(arrival.line_id, "M1") == 0) {
+        lineBoxColor = "#e0bf00"; 
+      } else if(strcmp(arrival.line_id, "M2") == 0) {
+        lineBoxColor = "#ff0000"; 
+      } else if(strcmp(arrival.line_id, "M3") == 0) {
+        lineBoxColor = "#005CA5"; 
+      } else if(strcmp(arrival.line_id, "M4") == 0) {
+        lineBoxColor = "#4CA22F";
+      } else {
+        lineBoxColor = defaultLineBoxColor; // default color
+      }
       break;
+
     default:
-      lineBoxColor = "#1e1e1e"; 
+      lineBoxColor = defaultLineBoxColor; 
       break;
   }
 
