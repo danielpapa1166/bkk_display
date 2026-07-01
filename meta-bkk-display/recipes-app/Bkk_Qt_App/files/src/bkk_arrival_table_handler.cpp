@@ -81,17 +81,24 @@ QWidget *ArrivalTableHandler::createLineIdCell(const Arrival & arrival,
     case VEHICLE_TYPE_TRAM:
       lineBoxColor = "#e0bf00"; 
       break;
+    case VEHICLE_TYPE_TROLLEYBUS: 
+      lineBoxColor = "#e41f18"; 
+      break;
     case VEHICLE_TYPE_METRO:
 
       if(strcmp(arrival.line_id, "M1") == 0) {
         lineBoxColor = "#e0bf00"; 
-      } else if(strcmp(arrival.line_id, "M2") == 0) {
+      } 
+      else if(strcmp(arrival.line_id, "M2") == 0) {
         lineBoxColor = "#ff0000"; 
-      } else if(strcmp(arrival.line_id, "M3") == 0) {
-        lineBoxColor = "#005CA5"; 
-      } else if(strcmp(arrival.line_id, "M4") == 0) {
-        lineBoxColor = "#4CA22F";
-      } else {
+      } 
+      else if(strcmp(arrival.line_id, "M3") == 0) {
+        lineBoxColor = "#005ca5"; 
+      } 
+      else if(strcmp(arrival.line_id, "M4") == 0) {
+        lineBoxColor = "#4ca22f";
+      } 
+      else {
         lineBoxColor = defaultLineBoxColor; // default color
       }
       break;
