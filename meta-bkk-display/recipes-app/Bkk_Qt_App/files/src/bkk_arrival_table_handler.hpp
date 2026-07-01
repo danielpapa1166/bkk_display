@@ -23,6 +23,7 @@ private:
   QTableWidget *arrivalsTable;
 
   // internal helper table handler functions: 
+  QWidget* createLineIdCell(const Arrival & arrival, const QColor &backgroundColor) const;
   QWidget* createDepartureCell(
     int departsInMin, const QColor &backgroundColor) const;
     
