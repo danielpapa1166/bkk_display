@@ -104,7 +104,7 @@ bkk_screen_error_code_t bkk_client_acquire_screen_component(
     return acquire_resp->error_code;
   }
 
-  *token = acquire_resp->component.token;
+  *token = -1; // acquire_resp->component.token;
   return BKK_SCREEN_ERROR_NONE;
 
 }
