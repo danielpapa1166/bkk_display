@@ -22,28 +22,8 @@ pkg_check_modules(ADS7846_CONTROLLER REQUIRED IMPORTED_TARGET ads7846-controller
 
 add_executable(bkk-qt-app
 	main.cpp
-	mainwindow.cpp
-	mainwindow.hpp
-	resources.qrc
-	bkk_clock_update.cpp
-	bkk_clock_update.hpp
-	bkk_online_check.cpp
-	bkk_online_check.hpp
-	bkk_api_worker.cpp
-	bkk_api_worker.hpp
-	bkk_worker_thread.cpp
-	bkk_worker_thread.hpp
-	bkk_elapsed_timer.hpp
-	bkk_touchscreen.cpp
-	bkk_touchscreen.hpp
-	bkk_touchscreen_feedback.cpp
-	bkk_touchscreen_feedback.hpp
-	bkk_arrival_table_handler.cpp
-	bkk_arrival_table_handler.hpp
-	bkk_info_bar_handler.cpp
-	bkk_info_bar_handler.hpp
-	bkk_screenshot_util.cpp
-	bkk_screenshot_util.hpp
+	screen.cpp
+	screen.hpp
 )
 
 
