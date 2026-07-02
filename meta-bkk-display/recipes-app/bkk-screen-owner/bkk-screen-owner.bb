@@ -18,3 +18,7 @@ RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd bkk-tee"
 
 # Generate compile_commands.json for clangd tooling.
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
+FILES:${PN}-dev += " \
+	${includedir}/bkk_screen_client/ \
+"
