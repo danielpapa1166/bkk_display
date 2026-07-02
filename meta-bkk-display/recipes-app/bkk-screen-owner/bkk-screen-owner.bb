@@ -3,9 +3,12 @@ LICENSE = "CLOSED"
 
 inherit cmake_qt5 pkgconfig systemd
 
-SRC_URI = "file://src/ \
-           file://icon/ \
-           file://bkk-qt-app.service \
+SRC_URI = "file://CMakeLists.txt        \
+           file://client/               \
+           file://common/               \
+           file://include/              \
+           file://owner/                \
+           file://icon/                 \
            "
 
 S = "${WORKDIR}/src"
@@ -15,11 +18,3 @@ RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd bkk-tee"
 
 # Generate compile_commands.json for clangd tooling.
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-
-SYSTEMD_SERVICE:${PN} = "bkk-qt-app.service"
-SYSTEMD_AUTO_ENABLE:${PN} = "disable"
-
-do_install:append() {
-    install -d ${D}${systemd_system_unitdir}
-    install -m 0644 ${WORKDIR}/bkk-qt-app.service ${D}${systemd_system_unitdir}/bkk-qt-app.service
-}

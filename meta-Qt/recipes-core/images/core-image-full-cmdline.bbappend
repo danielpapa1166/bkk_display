@@ -1,6 +1,6 @@
 IMAGE_INSTALL:append = "    \
     qtbase                  \
     liberation-fonts        \
-    bkk-qt-app              \
+    bkk-screen-owner        \
     bkk-helper              \
 "
