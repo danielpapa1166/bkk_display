@@ -63,6 +63,13 @@ BkkScreen::BkkScreen(QWidget *parent)
   setup_base_ui();
 }
 
+BkkScreen::~BkkScreen() {
+  if (receive_thread_fd != -1) {
+    pthread_cancel(receive_thread_fd);
+    pthread_join(receive_thread_fd, nullptr);
+  }
+}
+
 void BkkScreen::setup_base_ui() {
   setMinimumSize(480, 320);
   setWindowTitle("BKK Display");
@@ -203,7 +210,7 @@ int BkkScreen::handle_client_request(int client_fd) {
     bkk_screen_info_bar_data_t * info_bar_data =
       reinterpret_cast<bkk_screen_info_bar_data_t *>(request.payload);
     (void)info_bar_data->clock; 
-    printf("Received info bar data with clock: %s\n", info_bar_data->clock);
+    printf("Received info bar data with clock: %s\n", info_bar_data->clock.c_str());
   } 
   else {
     printf("Unknown command ID received: %d\n", request.cmd_id);
@@ -211,6 +218,6 @@ int BkkScreen::handle_client_request(int client_fd) {
   }
 
 
-  close(client_fd);
+  ::close(client_fd);
   return 0;
 }

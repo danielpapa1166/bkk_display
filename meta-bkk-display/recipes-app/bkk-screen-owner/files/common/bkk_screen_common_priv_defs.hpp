@@ -31,10 +31,6 @@ typedef struct {
 } bkk_screen_component_list_t;
 
 typedef struct {
-  std::string clock; 
-} bkk_screen_info_bar_data_t;
-
-typedef struct {
   bkk_screen_command_id_t cmd_id; 
   uint8_t payload[BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE];
 } bkk_screen_uds_request_t;

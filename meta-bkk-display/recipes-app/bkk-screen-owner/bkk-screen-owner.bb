@@ -11,7 +11,7 @@ SRC_URI = "file://CMakeLists.txt        \
            file://icon/                 \
            "
 
-S = "${WORKDIR}/src"
+S = "${WORKDIR}"
 
 DEPENDS = "qtbase bkk-api ads7846-controller rbuflogd cjson bkk-tee"
 RDEPENDS:${PN} += "bkk-api bkk-api-client bkk-api-keyenv rbuflogd bkk-tee"

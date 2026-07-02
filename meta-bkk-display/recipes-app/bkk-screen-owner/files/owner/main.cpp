@@ -13,14 +13,11 @@ int main(int argc, char *argv[])
   rbuflogd_logger_init("ScrOwner");
 
   BkkScreen screen(nullptr);
-  screen_error_t error = screen.expose_screen_components();
-  if (error != BKK_SCREEN_ERROR_NONE) {
-    log_error("Init", 
-      ("Failed to expose screen components. Error code: " 
-        + std::to_string(error)).c_str()
-    );
-    rbuflogd_logger_close(); 
-    return -1;
+
+  int start_thread_res = screen.start_receive_thread();
+  if (start_thread_res != 0) {
+    log_error("Init", "Failed to start receive thread");
+    return 1;
   }
 
   screen.show();

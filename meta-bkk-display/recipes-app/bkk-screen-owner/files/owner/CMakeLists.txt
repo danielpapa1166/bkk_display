@@ -20,6 +20,13 @@ add_executable(bkk-screen-owner
 	screen.hpp
 )
 
+message(STATUS "cmake current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(bkk-screen-owner
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common
+		${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
+
 target_link_libraries(bkk-screen-owner PRIVATE
 	Qt5::Core
 	Qt5::Widgets

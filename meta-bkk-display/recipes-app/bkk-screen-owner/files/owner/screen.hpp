@@ -3,12 +3,8 @@
 
 #include <QWidget>
 #include <QVBoxLayout>
+#include <pthread.h>
 #include "bkk_screen_common_priv_defs.hpp"
-
-typedef enum {
-  BKK_SCREEN_ERROR_NONE, 
-  BKK_SCREEN_ERROR_OTHER
-} screen_error_t; 
 
 
 class BkkScreen : public QWidget
@@ -31,7 +27,7 @@ private:
   static void * receive_thread_func(void * ctx);
   int handle_client_request(int client_fd);
 
-  int receive_thread_fd = -1;
+  pthread_t receive_thread_fd = -1;
 }; 
 
 
