@@ -1,7 +1,7 @@
 #ifndef BKK_SCREEN_CLIENT_HPP
 #define BKK_SCREEN_CLIENT_HPP
 
-#include "bkk_screen_common_defs.hpp"
+#include "bkk_screen_client/common_defs.hpp"
 
 
 bkk_screen_error_code_t bkk_client_acquire_screen_component(

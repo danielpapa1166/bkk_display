@@ -1,7 +1,7 @@
 #ifndef BKK_SCREEN_COMMON_PRIV_DEFS_HPP
 #define BKK_SCREEN_COMMON_PRIV_DEFS_HPP
 
-#include "bkk_screen_common_defs.hpp"
+#include "bkk_screen_client/common_defs.hpp"
 #include <stdint.h>
 #include <string>
 

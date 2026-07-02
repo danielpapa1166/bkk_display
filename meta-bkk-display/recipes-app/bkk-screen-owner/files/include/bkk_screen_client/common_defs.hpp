@@ -1,6 +1,9 @@
 #ifndef BKK_SCREEN_COMMON_DEFS_HPP
 #define BKK_SCREEN_COMMON_DEFS_HPP
 
+#include <string>
+#include <stdbool.h>
+
 typedef enum {
   BKK_SCREEN_ERROR_NONE, 
   BKK_SCREEN_ERROR_OTHER 
@@ -16,6 +19,11 @@ typedef struct {
   bkk_screen_component_id_t component_id;
   bool taken; 
 } bkk_screen_component_t;
+
+typedef struct {
+  std::string clock; 
+} bkk_screen_info_bar_data_t;
+
 
 
 #endif // BKK_SCREEN_COMMON_DEFS_HPP
