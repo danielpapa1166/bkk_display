@@ -3,4 +3,5 @@ IMAGE_INSTALL:append = "    \
     liberation-fonts        \
     bkk-screen-owner        \
     bkk-helper              \
+    bkk-screen-info-bar     \
 "
