@@ -17,7 +17,6 @@ class BkkScreen : public QWidget
 public:
   explicit BkkScreen(QWidget *parent = nullptr);
   ~BkkScreen();
-  screen_error_t expose_screen_components(void); 
 
 private: 
 
@@ -25,10 +24,6 @@ private:
   QWidget * infoBar = nullptr;
   QWidget * contentWidget = nullptr;
   void setup_base_ui();
-
-  int shmem_fd = -1;
-  bkk_screen_component_list_t * component_list = nullptr;
-
 }; 
 
 

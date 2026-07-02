@@ -1,5 +1,3 @@
-#include <fcntl.h>
-#include <sys/mman.h>
 #include <unistd.h>
 #include "screen.hpp"
 
@@ -35,43 +33,4 @@ void BkkScreen::setup_base_ui() {
 
   contentWidget = new QWidget(this);
   layout->addWidget(contentWidget, 1);
-}
-
-
-screen_error_t BkkScreen::expose_screen_components() {
-  shmem_fd = shm_open(BKK_SCREEN_SHMEM_NAME, O_RDWR | O_CREAT, 0666);
-  if (shmem_fd == -1) {
-    return BKK_SCREEN_ERROR_OTHER;
-  }
-
-  const int ftrunc_res = ftruncate(
-    shmem_fd, 
-    sizeof(bkk_screen_component_list_t));
-
-  if (ftrunc_res == -1) {
-    return BKK_SCREEN_ERROR_OTHER;
-  }
-
-  component_list = static_cast<bkk_screen_component_list_t *>(
-    mmap(
-      NULL, 
-      sizeof(bkk_screen_component_list_t), 
-      PROT_READ | PROT_WRITE, 
-      MAP_SHARED, 
-      shmem_fd, 
-      0
-    )
-  );
-  if (component_list == MAP_FAILED) {
-    component_list = nullptr;
-    return BKK_SCREEN_ERROR_OTHER;
-  }
-
-
-  // Expose the info bar component
-  component_list->info_bar.instance = static_cast<void *>(infoBar);
-  component_list->info_bar.component_id = BKK_SCREEN_COMPONENT_INFO_BAR;
-  component_list->info_bar.taken = false;
-
-  return BKK_SCREEN_ERROR_NONE;
 }
