@@ -115,13 +115,15 @@ bkk_screen_error_code_t bkk_screen_client_acquire_component(
 }
 
 
-bkk_screen_error_code_t bkk_screen_client_release_screen_component(int token) {
-  (void)token; // Placeholder for future implementation
+bkk_screen_error_code_t bkk_screen_client_release_screen_component(int key) {
+  (void)key; // Placeholder for future implementation
   return BKK_SCREEN_ERROR_NONE;
 }
 
 bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
-    const bkk_screen_info_bar_data_t * data) {
+    int key, const bkk_screen_info_bar_data_t * data) {
+
+  (void)  key; // Placeholder for future implementation
 
   if(data == nullptr) {
     return BKK_SCREEN_ERROR_INVALID_PARAM;
