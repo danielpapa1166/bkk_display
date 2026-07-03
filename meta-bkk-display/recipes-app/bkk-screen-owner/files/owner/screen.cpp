@@ -48,7 +48,7 @@ void * BkkScreen::receive_thread_func(void * ctx) {
           printf("Failed to accept client connection\n");
           continue;
         }
-        screen->handle_client_request(client_fd);
+        screen->dispatch_client_request(client_fd);
       }
     }
   }
@@ -60,14 +60,12 @@ void * BkkScreen::receive_thread_func(void * ctx) {
 BkkScreen::BkkScreen(QWidget *parent)
     : QWidget(parent)
 {
+  printf("BkkScreen constructor called\n");
+  
+  info_bar_handler = new InfoBarReqHdl(this);
+
   setup_base_ui();
 
-  component_data_t * info_bar_data 
-    = &components[BKK_SCREEN_COMPONENT_INFO_BAR];
-  info_bar_data->component_id = BKK_SCREEN_COMPONENT_INFO_BAR;
-  info_bar_data->widget = infoBar;
-  info_bar_data->taken = false;
-  info_bar_data->key = -1;
 }
 
 BkkScreen::~BkkScreen() {
@@ -93,12 +91,11 @@ void BkkScreen::setup_base_ui() {
   layout->setContentsMargins(8, 8, 8, 8);
   layout->setSpacing(6);
 
-  infoBar = new QWidget(this);
-  infoBar->setFixedHeight(46);
-  layout->addWidget(infoBar);
+  printf("Adding info bar widget to layout\n");
+  layout->addWidget(info_bar_handler->get_widget(), 0);
 
-  contentWidget = new QWidget(this);
-  layout->addWidget(contentWidget, 1);
+  /*contentWidget = new QWidget(this);
+  layout->addWidget(contentWidget, 1);*/ 
 }
 
 int BkkScreen::uds_init(int * const event_fd, int * const server_fd) {
@@ -187,7 +184,7 @@ int BkkScreen::start_receive_thread() {
 }
 
 
-int BkkScreen::handle_client_request(int client_fd) {
+int BkkScreen::dispatch_client_request(int client_fd) {
   bkk_screen_uds_request_t request {};
   int n = recv(
     client_fd, 
@@ -210,10 +207,12 @@ int BkkScreen::handle_client_request(int client_fd) {
 
     bkk_screen_acquire_component_response_t acq_response {};
 
-    bkk_screen_internal_uds_err_t acq_res = handle_acq_comp_req(
-      acquire_req->component_id, &acq_response);
-    
-    acq_response.error_code = static_cast<bkk_screen_error_code_t>(acq_res);
+    /*bkk_screen_internal_uds_err_t acq_res = handle_acq_comp_req(
+      acquire_req->component_id, &acq_response);*/
+
+    int res = info_bar_handler->acquire_component(acquire_req, &acq_response);
+
+    acq_response.error_code = static_cast<bkk_screen_error_code_t>(res);
     memcpy(uds_response.payload, &acq_response, sizeof(acq_response));
 
     send(client_fd, &uds_response, sizeof(uds_response), 0);
@@ -225,8 +224,11 @@ int BkkScreen::handle_client_request(int client_fd) {
     bkk_screen_info_bar_data_t * info_bar_data =
       reinterpret_cast<bkk_screen_info_bar_data_t *>(request.payload);
     (void)info_bar_data->clock; 
-    bkk_screen_internal_uds_err_t set_data_res = handle_set_data_req(
-      &request, &uds_response);
+    /*bkk_screen_internal_uds_err_t set_data_res = handle_set_data_req(
+      &request, &uds_response);*/
+
+    int res = info_bar_handler->update_component(info_bar_data, &uds_response);
+    //uds_response.error_code = static_cast<bkk_screen_error_code_t>(res);
     send(client_fd, &uds_response, sizeof(uds_response), 0);
   } 
   else {
@@ -237,73 +239,4 @@ int BkkScreen::handle_client_request(int client_fd) {
 
   ::close(client_fd);
   return 0;
-}
-
-
-bkk_screen_internal_uds_err_t BkkScreen::handle_acq_comp_req(
-    bkk_screen_component_id_t component_id, 
-    bkk_screen_acquire_component_response_t * response) {
-
-  if(response == nullptr) {
-    return static_cast<bkk_screen_internal_uds_err_t>(
-      BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM
-    );
-  }
-
-  response->key = -1;
-  response->component_id = component_id;
-  
-  if(component_id >= BKK_SCREEN_COMPONENT_MAX || component_id < 0) {
-    response->error_code = static_cast<bkk_screen_error_code_t>(
-      BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM
-    );
-    return static_cast<bkk_screen_internal_uds_err_t>(response->error_code);
-  }
-
-  component_data_t * comp_data = &components[component_id];
-  if(comp_data->taken) {
-    response->error_code = static_cast<bkk_screen_error_code_t>(
-      BKK_SCREEN_INTERNAL_UDS_ERR_COMP_TAKEN
-    );
-    return static_cast<bkk_screen_internal_uds_err_t>(response->error_code);
-  }
-
-  // generate a random key for the component: 
-  comp_data->key = 42;
-
-  comp_data->taken = true;
-  response->key = comp_data->key;
-  response->error_code = BKK_SCREEN_ERROR_NONE;
-
-  return static_cast<bkk_screen_internal_uds_err_t>(
-    BKK_SCREEN_INTERNAL_UDS_ERR_NONE
-  );
-}
-
-
-bkk_screen_internal_uds_err_t BkkScreen::handle_set_data_req(
-    const bkk_screen_uds_request_t * request,
-    bkk_screen_uds_response_t * response) {
-
-  if(request == nullptr || response == nullptr) {
-    return static_cast<bkk_screen_internal_uds_err_t>(
-      BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM
-    ); 
-  }
-
-
-  // for now just handle the info bar data:
-  if(request->cmd_id == BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA) {
-    bkk_screen_info_bar_data_t * info_bar_data 
-      = const_cast<bkk_screen_info_bar_data_t *>(
-        reinterpret_cast<const bkk_screen_info_bar_data_t *>(request->payload)
-      );
-  }
-
-
-  response->cmd_id = request->cmd_id;
-
-  return static_cast<bkk_screen_internal_uds_err_t>(
-    BKK_SCREEN_INTERNAL_UDS_ERR_NONE
-  );
 }

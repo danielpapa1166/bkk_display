@@ -17,7 +17,8 @@ pkg_check_modules(ADS7846_CONTROLLER REQUIRED IMPORTED_TARGET ads7846-controller
 add_executable(bkk-screen-owner
 	main.cpp
 	screen.cpp
-	screen.hpp
+	info_bar_req_handler.cpp
+	component_req_handler.cpp
 )
 
 

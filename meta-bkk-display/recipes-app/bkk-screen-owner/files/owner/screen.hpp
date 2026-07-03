@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <pthread.h>
 #include "bkk_screen_common_priv_defs.hpp"
+#include "info_bar_req_handler.hpp"
 
 
 class BkkScreen : public QWidget
@@ -17,26 +18,17 @@ public:
   int start_receive_thread(); 
 
 private: 
-  typedef struct {
-    bkk_screen_component_id_t component_id;
-    QWidget * widget;
-    bool taken;
-    int key;
-  } component_data_t;
+
 
   QVBoxLayout * layout = nullptr;
-  QWidget * infoBar = nullptr;
-  QWidget * contentWidget = nullptr;
+  InfoBarReqHdl * info_bar_handler = nullptr;
 
-  component_data_t components[BKK_SCREEN_COMPONENT_MAX] = {
-    {BKK_SCREEN_COMPONENT_INFO_BAR, nullptr, false, -1}
-  };
 
   void setup_base_ui();
   int uds_init(int * const event_fd, int * const server_fd);
 
   static void * receive_thread_func(void * ctx);
-  int handle_client_request(int client_fd);
+  int dispatch_client_request(int client_fd);
   bkk_screen_internal_uds_err_t handle_acq_comp_req(
     bkk_screen_component_id_t component_id, 
     bkk_screen_acquire_component_response_t * response);
