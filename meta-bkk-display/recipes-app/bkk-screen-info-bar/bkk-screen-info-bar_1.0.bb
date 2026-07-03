@@ -6,6 +6,8 @@ SRC_URI = "file://CMakeLists.txt        \
            file://info_bar_main.cpp     \
            file://clock_update.cpp      \
            file://clock_update.hpp      \
+           file://online_check.cpp      \
+           file://online_check.hpp      \
            "
 
 S = "${WORKDIR}"
