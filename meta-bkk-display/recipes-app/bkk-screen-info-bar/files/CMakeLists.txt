@@ -3,7 +3,9 @@ project(bkk-screen-info-bar LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 
-add_executable(bkk_screen_info_bar info_bar_main.cpp)
+add_executable(bkk_screen_info_bar 
+    info_bar_main.cpp
+    clock_update.cpp)
 
 
 target_link_libraries(bkk_screen_info_bar
