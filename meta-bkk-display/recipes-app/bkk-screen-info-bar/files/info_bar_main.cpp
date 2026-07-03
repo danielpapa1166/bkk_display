@@ -17,7 +17,12 @@ int main() {
   printf("Successfully acquired screen component, token: %d\n", token);
 
   bkk_screen_info_bar_data_t info_bar_data {};
-  info_bar_data.clock = "12:34 PM";
+  snprintf(
+    info_bar_data.clock, 
+    sizeof(info_bar_data.clock), 
+    "12:34 PM");
+  
+  info_bar_data.online_status = BKK_SCREEN_ONLINE_STATUS_ONLINE;
 
 
   res = bkk_screen_client_set_info_bar_data(&info_bar_data);

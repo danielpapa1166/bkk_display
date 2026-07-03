@@ -48,7 +48,6 @@ void * BkkScreen::receive_thread_func(void * ctx) {
           printf("Failed to accept client connection\n");
           continue;
         }
-
         screen->handle_client_request(client_fd);
       }
     }
@@ -189,7 +188,6 @@ int BkkScreen::start_receive_thread() {
 
 
 int BkkScreen::handle_client_request(int client_fd) {
-
   bkk_screen_uds_request_t request {};
   int n = recv(
     client_fd, 
@@ -209,7 +207,6 @@ int BkkScreen::handle_client_request(int client_fd) {
     bkk_screen_acquire_component_request_t * acquire_req =
       reinterpret_cast<bkk_screen_acquire_component_request_t *>(request.payload);
     (void)acquire_req->component_id; 
-    printf("Received acquire component request for component ID: %d\n", acquire_req->component_id);
 
     bkk_screen_acquire_component_response_t acq_response {};
 
@@ -228,12 +225,9 @@ int BkkScreen::handle_client_request(int client_fd) {
     bkk_screen_info_bar_data_t * info_bar_data =
       reinterpret_cast<bkk_screen_info_bar_data_t *>(request.payload);
     (void)info_bar_data->clock; 
-    std::cout << "Received info bar data with clock: " << info_bar_data->clock << std::endl;
     bkk_screen_internal_uds_err_t set_data_res = handle_set_data_req(
       &request, &uds_response);
-
     send(client_fd, &uds_response, sizeof(uds_response), 0);
-
   } 
   else {
     printf("Unknown command ID received: %d\n", request.cmd_id);
@@ -301,11 +295,9 @@ bkk_screen_internal_uds_err_t BkkScreen::handle_set_data_req(
   // for now just handle the info bar data:
   if(request->cmd_id == BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA) {
     bkk_screen_info_bar_data_t * info_bar_data 
-      =  const_cast<bkk_screen_info_bar_data_t *>(
+      = const_cast<bkk_screen_info_bar_data_t *>(
         reinterpret_cast<const bkk_screen_info_bar_data_t *>(request->payload)
       );
-
-    printf("Received info bar data with clock: %s\n", info_bar_data->clock.c_str());
   }
 
 

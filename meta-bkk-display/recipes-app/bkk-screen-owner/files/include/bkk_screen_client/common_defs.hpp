@@ -21,8 +21,15 @@ typedef enum {
 } bkk_screen_component_id_t;
 
 
+#define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN 64
+typedef enum {
+  BKK_SCREEN_ONLINE_STATUS_OFFLINE = 0,
+  BKK_SCREEN_ONLINE_STATUS_ONLINE
+} bkk_screen_online_status_t;
+
 typedef struct {
-  std::string clock; 
+  char clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN];
+  bkk_screen_online_status_t online_status;
 } bkk_screen_info_bar_data_t;
 
 
