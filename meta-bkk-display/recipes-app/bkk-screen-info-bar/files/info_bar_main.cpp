@@ -5,7 +5,7 @@ int main() {
 
   printf("Starting BKK Screen Client\n");
   int token = 0;
-  int res = bkk_client_acquire_screen_component(
+  int res = bkk_screen_client_acquire_component(
     BKK_SCREEN_COMPONENT_INFO_BAR, 
     &token);
 
@@ -20,7 +20,7 @@ int main() {
   info_bar_data.clock = "12:34 PM";
 
 
-  res = bkk_client_set_info_bar_data(&info_bar_data);
+  res = bkk_screen_client_set_info_bar_data(&info_bar_data);
   if (res != BKK_SCREEN_ERROR_NONE) {
     printf("Failed to set info bar data, error code: %d\n", res);
     return 1;

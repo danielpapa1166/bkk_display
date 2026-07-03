@@ -20,7 +20,11 @@ add_executable(bkk-screen-owner
 	screen.hpp
 )
 
-message(STATUS "cmake current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+
+target_compile_options(bkk-screen-owner 
+	PRIVATE -Wall -Wextra -pedantic -g -O0)
+
+
 target_include_directories(bkk-screen-owner
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../common

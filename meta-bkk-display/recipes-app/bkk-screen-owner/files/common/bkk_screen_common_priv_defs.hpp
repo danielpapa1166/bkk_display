@@ -9,6 +9,13 @@
 #define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE   256
 
 typedef enum {
+  BKK_SCREEN_INTERNAL_UDS_ERR_NONE = 0,
+  BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM,
+  BKK_SCREEN_INTERNAL_UDS_ERR_COMP_TAKEN,
+  
+} bkk_screen_internal_uds_err_t; 
+
+typedef enum {
   BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT = 0, 
   BKK_SCREEN_COMMAND_RELEASE_COMPONENT,
   BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA,
@@ -22,13 +29,10 @@ typedef struct {
 
 typedef struct {
   bkk_screen_error_code_t error_code;
-  bkk_screen_component_t component;
+  bkk_screen_component_id_t component_id;
+  int key; 
 } bkk_screen_acquire_component_response_t;
 
-
-typedef struct {
-  bkk_screen_component_t info_bar; 
-} bkk_screen_component_list_t;
 
 typedef struct {
   bkk_screen_command_id_t cmd_id; 

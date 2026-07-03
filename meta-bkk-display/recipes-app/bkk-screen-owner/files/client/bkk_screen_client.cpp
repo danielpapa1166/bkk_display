@@ -31,7 +31,7 @@ static int uds_open(int * sock_fd) {
   return 0;
 }
 
-static int uds_send_recv(
+static bkk_screen_error_code_t uds_send_recv(
     int sock_fd, 
     void * request, 
     size_t request_size,
@@ -45,7 +45,7 @@ static int uds_send_recv(
     0);
 
   if (send_res != request_size) {
-    return -1;
+    return BKK_SCREEN_ERROR_SOCKET_SEND_FAILED;
   }
 
   const int recv_res = recv(
@@ -55,28 +55,29 @@ static int uds_send_recv(
     0);
 
   if (recv_res != response_size) {
-    return -1;
+    return BKK_SCREEN_ERROR_SOCKET_RECV_FAILED;
   }
 
-  return 0;
+  return BKK_SCREEN_ERROR_NONE;
 }
 
 
-bkk_screen_error_code_t bkk_client_acquire_screen_component(
-    bkk_screen_component_id_t component_id, int * token) {
+bkk_screen_error_code_t bkk_screen_client_acquire_component(
+    bkk_screen_component_id_t component_id, int * key) {
 
 
-  if (token == nullptr) {
-    return BKK_SCREEN_ERROR_OTHER;
+  if (key == nullptr) {
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
   if(component_id < 0 || component_id >= BKK_SCREEN_COMPONENT_MAX) {
-    return BKK_SCREEN_ERROR_OTHER;
+    return BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
   }
 
   int sock_fd = -1;
-  if (uds_open(&sock_fd) != 0) {
-    return BKK_SCREEN_ERROR_OTHER;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
   }
 
   bkk_screen_uds_request_t request {};
@@ -86,7 +87,7 @@ bkk_screen_error_code_t bkk_client_acquire_screen_component(
   acquire_req->component_id = component_id;
 
   bkk_screen_uds_response_t response {};
-  const int uds_res = uds_send_recv(
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
     sock_fd,
     &request,
     sizeof(request),
@@ -94,8 +95,12 @@ bkk_screen_error_code_t bkk_client_acquire_screen_component(
     sizeof(response));
   close(sock_fd);
 
-  if (uds_res != 0) {
-    return BKK_SCREEN_ERROR_OTHER;
+  if (uds_res != BKK_SCREEN_ERROR_NONE) {
+    return uds_res;
+  }
+
+  if(response.cmd_id != BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT) {
+    return BKK_SCREEN_ERROR_RESPONSE_INVALID;
   }
 
   bkk_screen_acquire_component_response_t * acquire_resp =
@@ -104,27 +109,28 @@ bkk_screen_error_code_t bkk_client_acquire_screen_component(
     return acquire_resp->error_code;
   }
 
-  *token = -1; // acquire_resp->component.token;
-  return BKK_SCREEN_ERROR_NONE;
 
+  *key = acquire_resp->key;
+  return BKK_SCREEN_ERROR_NONE;
 }
 
 
-bkk_screen_error_code_t bkk_client_release_screen_component(int token) {
+bkk_screen_error_code_t bkk_screen_client_release_screen_component(int token) {
   (void)token; // Placeholder for future implementation
   return BKK_SCREEN_ERROR_NONE;
 }
 
-bkk_screen_error_code_t bkk_client_set_info_bar_data(
+bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
     const bkk_screen_info_bar_data_t * data) {
 
   if(data == nullptr) {
-    return BKK_SCREEN_ERROR_OTHER;
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
   int sock_fd = -1;
-  if (uds_open(&sock_fd) != 0) {
-    return BKK_SCREEN_ERROR_OTHER;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
   }
 
   bkk_screen_uds_request_t request {};
@@ -134,7 +140,7 @@ bkk_screen_error_code_t bkk_client_set_info_bar_data(
   *info_bar_data = *data;
 
   bkk_screen_uds_response_t response {};
-  const int uds_res = uds_send_recv(
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
     sock_fd,
     &request,
     sizeof(request),
@@ -142,9 +148,11 @@ bkk_screen_error_code_t bkk_client_set_info_bar_data(
     sizeof(response));
   close(sock_fd);
 
-  if (uds_res != 0) {
-    return BKK_SCREEN_ERROR_OTHER;
+  if (uds_res != BKK_SCREEN_ERROR_NONE) {
+    return uds_res;
   }
+
+  // todo handle response 
 
   return BKK_SCREEN_ERROR_NONE;
 }
