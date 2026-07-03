@@ -21,7 +21,7 @@ typedef enum {
 } bkk_screen_component_id_t;
 
 
-#define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN 64
+#define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN 6
 typedef enum {
   BKK_SCREEN_ONLINE_STATUS_OFFLINE = 0,
   BKK_SCREEN_ONLINE_STATUS_ONLINE

@@ -20,7 +20,7 @@ int main() {
   snprintf(
     info_bar_data.clock, 
     sizeof(info_bar_data.clock), 
-    "12:34 PM");
+    "12:34");
   
   info_bar_data.online_status = BKK_SCREEN_ONLINE_STATUS_ONLINE;
 

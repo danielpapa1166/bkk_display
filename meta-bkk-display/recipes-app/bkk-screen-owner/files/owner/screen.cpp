@@ -92,7 +92,8 @@ void BkkScreen::setup_base_ui() {
   layout->setSpacing(6);
 
   printf("Adding info bar widget to layout\n");
-  layout->addWidget(info_bar_handler->get_widget(), 0);
+  layout->addWidget(info_bar_handler->get_widget(), 0, Qt::AlignTop);
+  layout->addStretch(1);
 
   /*contentWidget = new QWidget(this);
   layout->addWidget(contentWidget, 1);*/ 
