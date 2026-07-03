@@ -19,6 +19,7 @@ add_executable(bkk-screen-owner
 	screen.cpp
 	info_bar_req_handler.cpp
 	component_req_handler.cpp
+	resources.qrc
 )
 
 
