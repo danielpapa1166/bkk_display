@@ -1,6 +1,7 @@
 #include "http_server_user_action_handler.h"
 #include "rbuflogd/logger.h"
 #include "cJSON.h"
+#include <bkk_tee/bkk_tee_client.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,17 +137,17 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
     return -1;
   }
 
-  // --- Write api-key.txt ---
+  // --- store api key in OP-TEE ---
   if (request->api_key[0] != '!') {
-    FILE *key_file = fopen("/etc/bkk-api/api-key.txt", "w");
-    if (key_file == NULL) {
-      log_error(TAG, "Failed to open /etc/bkk-api/api-key.txt for writing");
-      return -1;
+    size_t key_len = strlen(request->api_key);
+    bkk_tee_client_status_t tee_stat = bkk_tee_store(
+      tee_object_type_api_key, request->api_key, key_len);
+    if(tee_stat != bkk_tee_client_err_none) {
+      log_error(TAG, "Failed to store API key in TEE");
     }
-      
-    fprintf(key_file, "%s", request->api_key);
-    fclose(key_file);
-    log_info(TAG, "API key written to /etc/bkk-api/api-key.txt");
+    else {
+      log_info(TAG, "API key stored in TEE successfully");
+    }
   }
   else {
     log_info(TAG, "API key starts with '!', skipping api-key.txt write");

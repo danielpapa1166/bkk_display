@@ -5,6 +5,7 @@
 #include "cJSON.h"
 #include "rbuflogd/producer.h"
 #include "rbuflogd/pub_common_types.h"
+#include "bkk_tee/bkk_tee_client.h"
 
 #include <QString>
 #include <array>
@@ -33,6 +34,24 @@ BkkApiWorker::BkkApiWorker(QObject *parent)
   loadStationList();
   arrivals.clear();
 
+  bkk_tee_client_status_t teeRes = bkk_tee_test();
+  if(teeRes != bkk_tee_client_err_none) {
+    rbuflogd_producer_log(
+      &loggerProducer,
+      RBUF_LOG_LEVEL_ERROR,
+      "TEE Test",
+      ("Failed to perform TEE test command, error code: " + std::to_string(teeRes)).c_str()
+    );
+  }
+  else {
+    rbuflogd_producer_log(
+      &loggerProducer,
+      RBUF_LOG_LEVEL_INFO,
+      "TEE Test",
+      "TEE test command executed successfully"
+    );
+  }
+
 }
 
 BkkApiWorker::~BkkApiWorker() {
@@ -40,19 +59,29 @@ BkkApiWorker::~BkkApiWorker() {
 }
 
 int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
-  char * key = nullptr; 
-  const api_key_read_stat_t res = read_api_key_from_file(apiKeyPath, &key);
 
-  if(res != API_KEY_READ_OK || key == nullptr) {
+  char key_buffer[BKK_TEE_MAX_OBJ_ID_LEN];
+  size_t key_buffer_len = sizeof(key_buffer);
+  bkk_tee_client_status_t teeRes = bkk_tee_get(tee_object_type_api_key, key_buffer, &key_buffer_len);
+
+  if(teeRes != bkk_tee_client_err_none) {
     rbuflogd_producer_log(
-      &loggerProducer, 
-      RBUF_LOG_LEVEL_ERROR, 
-      "API Key", 
-      QString("Failed to read API key from file: %1").arg(apiKeyPath).toStdString().c_str());
-    return -1;
+      &loggerProducer,
+      RBUF_LOG_LEVEL_ERROR,
+      "TEE Get",
+      ("Failed to retrieve API key from TEE, error code: " + std::to_string(teeRes)).c_str()
+    );
   }
-  apiKey = key;
-  free(key);
+  else {
+    apiKey = std::string(key_buffer, key_buffer_len);
+    rbuflogd_producer_log(
+      &loggerProducer,
+      RBUF_LOG_LEVEL_INFO,
+      "TEE Get",
+      ("Retrieved API key from TEE: " + std::string(key_buffer, key_buffer_len)).c_str()
+    );
+  }
+
   return 0;
 }
 

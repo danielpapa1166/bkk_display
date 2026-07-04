@@ -1,5 +1,5 @@
-#include "bkk_tee_client.h"
-#include "bkk_tee_common_defs.h"
+#include "bkk_tee/bkk_tee_client.h"
+#include "bkk_tee/bkk_tee_common_defs.h"
 #include <rbuflogd/logger.h>
 
 #include <stdio.h>
@@ -254,11 +254,6 @@ bkk_tee_client_status_t bkk_tee_store(
     return bkk_tee_client_err_invoke_failed;
   }
 
-  snprintf(msg, sizeof(msg), 
-    "Successfully stored %s in the TEE", 
-    bkk_tee_get_object_type_name(obj_type));
-  log_info(log_cat_set, msg);
-
   return bkk_tee_client_err_none;
 }
 
@@ -322,11 +317,6 @@ bkk_tee_client_status_t bkk_tee_get(tee_object_type_t obj_type, void *buf, size_
     log_error(log_cat_get, msg);
     return bkk_tee_client_err_invoke_failed;
   }
-
-  snprintf(msg, sizeof(msg), 
-    "Successfully fetched %s from the TEE, data length: %zu", 
-    bkk_tee_get_object_type_name(obj_type), *buf_len);
-  log_info(log_cat_get, msg);
 
   return bkk_tee_client_err_none;
 }

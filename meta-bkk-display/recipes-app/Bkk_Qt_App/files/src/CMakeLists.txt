@@ -13,6 +13,10 @@ find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(CURL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
+find_library(BKK_TEE_LIB REQUIRED NAMES bkk-tee-client)
+
+add_library(bkk-tee SHARED IMPORTED)
+
 pkg_check_modules(CJSON REQUIRED IMPORTED_TARGET libcjson)
 pkg_check_modules(ADS7846_CONTROLLER REQUIRED IMPORTED_TARGET ads7846-controller)
 
@@ -42,6 +46,7 @@ add_executable(bkk-qt-app
 	bkk_screenshot_util.hpp
 )
 
+
 target_link_libraries(bkk-qt-app PRIVATE
 	Qt5::Core
 	Qt5::Widgets
@@ -50,6 +55,7 @@ target_link_libraries(bkk-qt-app PRIVATE
 	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
 	PkgConfig::CJSON
+	bkk-tee-client
 )
 
 install(TARGETS bkk-qt-app RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
