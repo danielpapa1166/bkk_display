@@ -4,4 +4,5 @@ IMAGE_INSTALL:append = "    \
     bkk-screen-owner        \
     bkk-helper              \
     bkk-screen-info-bar     \
+    bkk-screen-main-content \
 "

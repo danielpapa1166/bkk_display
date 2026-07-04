@@ -221,6 +221,11 @@ bkk_screen_error_code_t BkkScreen::dispatch_client_request(int client_fd) {
     int res = info_bar_handler->handle_request(&request, &uds_response);
     (void) res;
   } 
+  else if(request.header.component_id == BKK_SCREEN_COMPONENT_TABLE) {
+    log_info(CATEGORY, "Received acquire request for TABLE component");
+    int res = main_content_handler->handle_request(&request, &uds_response);
+    (void) res;
+  }
   else {
     uds_response.acquire_resp.error_code = BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
     log_warning(CATEGORY, 

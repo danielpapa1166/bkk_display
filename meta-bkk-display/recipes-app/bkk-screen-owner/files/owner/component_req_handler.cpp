@@ -15,7 +15,7 @@ bkk_screen_error_code_t ComponentReqHdl::handle_request(
     case BKK_SCREEN_COMMAND_RELEASE_COMPONENT:
       // Implement release logic here
       return BKK_SCREEN_ERROR_NONE;
-    case BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA:
+    case BKK_SCREEN_COMMAND_SET_DATA:
       return update_component(request, response);
     default:
       log_warning("CompReq", 

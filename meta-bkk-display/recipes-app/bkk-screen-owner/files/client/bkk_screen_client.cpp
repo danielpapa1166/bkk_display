@@ -134,7 +134,7 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
   }
 
   bkk_screen_uds_message_t request {};
-  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA;
+  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_DATA;
   request.header.component_id = BKK_SCREEN_COMPONENT_INFO_BAR;
   request.set_info_bar_data.key = key;
   strncpy(request.set_info_bar_data.clock, clock, BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN);
@@ -154,6 +154,40 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
   }
 
   // todo handle response 
+
+  return BKK_SCREEN_ERROR_NONE;
+}
+
+
+bkk_screen_error_code_t bkk_screen_client_set_table_data(
+    int key, int foo) {
+
+  (void)  key; // Placeholder for future implementation
+  (void)  foo; // Placeholder for future implementation
+
+
+  int sock_fd = -1;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
+  }
+
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_DATA;
+  request.header.component_id = BKK_SCREEN_COMPONENT_TABLE;
+
+  bkk_screen_uds_message_t response {};
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
+    sock_fd,
+    &request,
+    sizeof(request),
+    &response,
+    sizeof(response));
+  close(sock_fd);
+
+  if (uds_res != BKK_SCREEN_ERROR_NONE) {
+    return uds_res;
+  }
 
   return BKK_SCREEN_ERROR_NONE;
 }
