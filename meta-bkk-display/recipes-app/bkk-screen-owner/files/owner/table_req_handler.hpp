@@ -22,7 +22,19 @@ private:
   const char * const CATEGORY = "Table";
   QTableWidget * arrivalsTable = nullptr;
   void setup_ui();
+  QWidget *createDepartureCell(
+    int departsInMin, const QColor &backgroundColor) const;
   void populateTable(); 
+
+
+  // config constants:
+  static constexpr int kMaxRows = 8;
+  static constexpr int kBlinkThresholdGreen = 10; 
+  static constexpr int kBlinkThresholdRed = 5; 
+
+  static constexpr int kBlinkIntervalMs = 800; // blink interval 
+  static constexpr int kFetchIntervalMs = 5000; // fetch new data 
+
 };
 
 

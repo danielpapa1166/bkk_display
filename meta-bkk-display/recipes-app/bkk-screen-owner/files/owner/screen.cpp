@@ -100,8 +100,8 @@ void BkkScreen::setup_base_ui() {
   layout->setContentsMargins(8, 8, 8, 8);
   layout->setSpacing(6);
 
-  layout->addWidget(info_bar_handler->get_widget(), 0, Qt::AlignTop);
-  layout->addStretch(1);
+  layout->addWidget(info_bar_handler->get_widget(), 0 /*, Qt::AlignTop*/);
+  //layout->addStretch(1);
   layout->addWidget(main_content_handler->get_widget(), 1);
 }
 
