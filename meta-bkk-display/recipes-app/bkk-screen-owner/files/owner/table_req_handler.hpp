@@ -22,6 +22,7 @@ private:
   const char * const CATEGORY = "Table";
   QTableWidget * arrivalsTable = nullptr;
   void setup_ui();
+  void populateTable(); 
 };
 
 

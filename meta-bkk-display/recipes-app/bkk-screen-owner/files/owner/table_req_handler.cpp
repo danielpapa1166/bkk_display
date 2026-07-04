@@ -1,6 +1,10 @@
 #include "table_req_handler.hpp"
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QMetaObject>
+#include <QThread>
+#include <QHeaderView>
+#include <rbuflogd/logger.h>
 
 TableReqHdl::TableReqHdl(QWidget *parent)
   : ComponentReqHdl(parent) {
@@ -19,13 +23,8 @@ TableReqHdl::TableReqHdl(QWidget *parent)
 void TableReqHdl::setup_ui() {
   // Implement the UI setup here
 
-
-  // set text on the base widget for testing: 
-  widget->setWindowTitle("Arrivals Table");
-
-
   // setup GUI table widget:
-  /*arrivalsTable->setColumnCount(4);
+  arrivalsTable->setColumnCount(4);
   arrivalsTable->setHorizontalHeaderLabels(
     {"Station", "Line", "Destination", "Departs"});
 
@@ -45,7 +44,7 @@ void TableReqHdl::setup_ui() {
   arrivalsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
   arrivalsTable->setSelectionMode(QAbstractItemView::SingleSelection);
   arrivalsTable->setAlternatingRowColors(false);
-  arrivalsTable->setSortingEnabled(false);*/
+  arrivalsTable->setSortingEnabled(false);
 
 }
 
@@ -56,8 +55,51 @@ bkk_screen_error_code_t TableReqHdl::update_component(
 ) {
   // Implement the update logic here
 
-  QLabel * label = new QLabel("Table component updated with new data", widget);
-  QVBoxLayout * layout = new QVBoxLayout(widget);
-  layout->addWidget(label);
+
+  auto apply_ui = [this]() {
+    if (arrivalsTable == nullptr) {
+      log_error(CATEGORY, "UI widget is not initialized");
+      return;
+    }
+
+    populateTable();
+
+  };
+
+  if (QThread::currentThread() == thread()) {
+    apply_ui();
+  } 
+  else {
+    QMetaObject::invokeMethod(this, apply_ui, Qt::QueuedConnection);
+  }
+
+  response->header.component_id = request->header.component_id;
+  response->header.cmd_id = request->header.cmd_id;
+  response->generic_resp.error_code = BKK_SCREEN_ERROR_NONE;
   return BKK_SCREEN_ERROR_NONE;
+}
+
+
+
+void TableReqHdl::populateTable() {
+
+  arrivalsTable->clearContents();
+  arrivalsTable->clearSpans();
+  arrivalsTable->setRowCount(7);
+
+  for (int row = 0; row < 7; row++) {
+    const QColor backgroundColor 
+      = (row % 2 == 0) ? QColor("#340a41") : QColor("#505050");
+
+
+    // line number: 
+    auto *lineItem = new QTableWidgetItem(
+        QString::number(row + 1));
+    lineItem->setTextAlignment(Qt::AlignCenter);
+    lineItem->setBackground(backgroundColor);
+    lineItem->setForeground(Qt::white);
+    arrivalsTable->setItem(row, 1, lineItem);
+  }
+
+  arrivalsTable->resizeRowsToContents();
 }
