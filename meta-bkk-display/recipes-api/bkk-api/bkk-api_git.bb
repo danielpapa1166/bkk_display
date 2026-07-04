@@ -12,7 +12,7 @@ SRC_URI = "git://${TOPDIR}/../submodules/bkk_api;protocol=file;nobranch=1;name=b
            file://bkk-uds-server.service \
            "
 
-SRCREV_bkk_api  = "a26651cda87255933fc107e7c140dd13adc5195a"
+SRCREV_bkk_api  = "8df053d8c59c67dc6c72bb93363bb8748af6e1ee"
 SRCREV_cjson    = "fb16e5cf358798aabb049655975cde8427101056"
 SRCREV_rbuflogd = "bda94b03af8f51bf0ad12b5e84d029444c2ca8d5"
 SRCREV_FORMAT   = "bkk_api_cjson_rbuflogd"

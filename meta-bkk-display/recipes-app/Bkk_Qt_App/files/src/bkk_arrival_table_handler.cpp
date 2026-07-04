@@ -61,6 +61,76 @@ ArrivalTableHandler::~ArrivalTableHandler() {
 }
 
 
+QWidget *ArrivalTableHandler::createLineIdCell(const Arrival & arrival, 
+    const QColor &backgroundColor) const {
+
+  static const QString defaultLineBoxColor = "#1e1e1e90"; 
+  auto *container = new QWidget(arrivalsTable);
+  container->setStyleSheet(QString("background-color: %1;").arg(backgroundColor.name()));
+  auto *layout = new QHBoxLayout(container);
+  layout->setContentsMargins(6, 0, 6, 0);
+  layout->setSpacing(6);
+  layout->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+
+  QString lineBoxColor;
+
+  switch (arrival.vehicle_type) {
+    case VEHICLE_TYPE_BUS:
+      lineBoxColor = "#009ee3"; 
+      break;
+    case VEHICLE_TYPE_TRAM:
+      lineBoxColor = "#e0bf00"; 
+      break;
+    case VEHICLE_TYPE_TROLLEYBUS: 
+      lineBoxColor = "#e41f18"; 
+      break;
+    case VEHICLE_TYPE_METRO:
+
+      if(strcmp(arrival.line_id, "M1") == 0) {
+        lineBoxColor = "#e0bf00"; 
+      } 
+      else if(strcmp(arrival.line_id, "M2") == 0) {
+        lineBoxColor = "#ff0000"; 
+      } 
+      else if(strcmp(arrival.line_id, "M3") == 0) {
+        lineBoxColor = "#005ca5"; 
+      } 
+      else if(strcmp(arrival.line_id, "M4") == 0) {
+        lineBoxColor = "#4ca22f";
+      } 
+      else {
+        lineBoxColor = defaultLineBoxColor; // default color
+      }
+      break;
+
+    default:
+      lineBoxColor = defaultLineBoxColor; 
+      break;
+  }
+
+
+  auto *lineBox = new QWidget(container);
+  //lineBox->setFixedSize(60, 60);
+  lineBox->setMinimumSize(60, 10);
+  lineBox->setStyleSheet(QString(
+      "background-color: %1; border-radius: 8px; border: none;").arg(lineBoxColor));
+
+  auto *lineBoxLayout = new QHBoxLayout(lineBox);
+  lineBoxLayout->setContentsMargins(10, 3, 10, 3);
+  lineBoxLayout->setSpacing(0);
+
+  auto *lineLabel = new QLabel(QString::fromStdString(arrival.line_id), lineBox);
+  lineLabel->setAlignment(Qt::AlignCenter);
+  lineLabel->setStyleSheet("color: #ffffff; background: transparent;");
+
+  lineBoxLayout->addWidget(lineLabel);
+  layout->addWidget(lineBox); 
+
+  return container;
+
+}
+
+
 QWidget *ArrivalTableHandler::createDepartureCell(
   int departsInMin, const QColor &backgroundColor) const {
   auto *container = new QWidget(arrivalsTable);
@@ -148,22 +218,19 @@ void ArrivalTableHandler::populateTable() {
     // stop name (truncated to x characters):
     auto *stopItem = new QTableWidgetItem(
         QString::fromStdString(stationArrival.station_name).left(16));
-    stopItem->setTextAlignment(Qt::AlignCenter);
+    stopItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     stopItem->setBackground(backgroundColor);
     stopItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 0, stopItem);
 
     // line number: 
-    auto *lineItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.arrival.line_id));
-    lineItem->setTextAlignment(Qt::AlignCenter);
-    lineItem->setBackground(backgroundColor);
-    lineItem->setForeground(Qt::white);
-    arrivalsTable->setItem(row, 1, lineItem);
+    arrivalsTable->setCellWidget(row, 1,
+      createLineIdCell(stationArrival.arrival, backgroundColor));
 
     // destination:
     auto *destinationItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.arrival.destination).left(16));
+        QString::fromStdString(stationArrival.arrival.destination).left(20));
+    destinationItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     destinationItem->setBackground(backgroundColor);
     destinationItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 2, destinationItem);
