@@ -18,6 +18,7 @@ typedef enum {
 
 typedef enum {
   BKK_SCREEN_COMPONENT_INFO_BAR = 0, 
+  BKK_SCREEN_COMPONENT_TABLE,
   BKK_SCREEN_COMPONENT_MAX
 } bkk_screen_component_id_t;
 

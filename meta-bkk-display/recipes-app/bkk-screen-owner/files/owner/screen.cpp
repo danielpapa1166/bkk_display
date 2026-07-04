@@ -70,6 +70,9 @@ BkkScreen::BkkScreen(QWidget *parent)
 {
   info_bar_handler = new InfoBarReqHdl(this);
 
+  // depends on boot mode which to instanctiate: 
+  main_content_handler = new TableReqHdl(this);
+
   setup_base_ui();
 
 }
@@ -99,9 +102,7 @@ void BkkScreen::setup_base_ui() {
 
   layout->addWidget(info_bar_handler->get_widget(), 0, Qt::AlignTop);
   layout->addStretch(1);
-
-  /*contentWidget = new QWidget(this);
-  layout->addWidget(contentWidget, 1);*/ 
+  layout->addWidget(main_content_handler->get_widget(), 1);
 }
 
 int BkkScreen::uds_init(int * const event_fd, int * const server_fd) {

@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include "bkk_screen_common_priv_defs.hpp"
 #include "info_bar_req_handler.hpp"
+#include "table_req_handler.hpp"
 
 
 class BkkScreen : public QWidget
@@ -22,6 +23,7 @@ private:
 
   QVBoxLayout * layout = nullptr;
   InfoBarReqHdl * info_bar_handler = nullptr;
+  ComponentReqHdl * main_content_handler = nullptr;
 
 
   void setup_base_ui();
