@@ -49,21 +49,28 @@ void InfoBarReqHdl::setup_ui() {
 }
 
 
-int InfoBarReqHdl::update_component(
-    void * request,
-    bkk_screen_uds_response_t * response
+bkk_screen_error_code_t InfoBarReqHdl::update_component(
+    bkk_screen_uds_message_t * request,
+    bkk_screen_uds_message_t * response
 ) {
   if(request == nullptr || response == nullptr) {
-    return static_cast<int>(BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM);
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
-  bkk_screen_info_bar_data_t * info_bar_data = 
-    static_cast<bkk_screen_info_bar_data_t *>(request);
 
-  bkk_screen_info_bar_data_t data_copy = *info_bar_data;
+  bkk_screen_set_info_bar_data_t config_data {};
+  config_data.key = request->set_info_bar_data.key;
+  config_data.online_status = request->set_info_bar_data.online_status;
+  
+  strncpy(
+    config_data.clock, 
+    request->set_info_bar_data.clock, 
+    BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN - 1);
+
+  config_data.clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN - 1] = '\0'; // Ensure null-termination
 
 
-  auto apply_ui = [this, data_copy]() {
+  auto apply_ui = [this, config_data]() {
     if (clockLabel == nullptr || bkkLogoLabel == nullptr || wifiIconLabel == nullptr) {
       log_error(CATEGORY, "UI labels are not initialized");
       return;
@@ -74,14 +81,15 @@ int InfoBarReqHdl::update_component(
       bkkLogoLabel->setPixmap(
         logo.scaled(106, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation)
       );
-    } else {
+    } 
+    else {
       log_error(CATEGORY, "Failed to load logo pixmap from Qt resource");
     }
 
-    clockLabel->setText(data_copy.clock);
+    clockLabel->setText(config_data.clock);
 
     const char *wifi_icon_path =
-      data_copy.online_status == BKK_SCREEN_ONLINE_STATUS_ONLINE
+      config_data.online_status == BKK_SCREEN_ONLINE_STATUS_ONLINE
         ? ":/icons/wifi_on.png"
         : ":/icons/wifi_off.png";
 
@@ -105,6 +113,10 @@ int InfoBarReqHdl::update_component(
     QMetaObject::invokeMethod(this, apply_ui, Qt::QueuedConnection);
   }
 
-  //response->error_code = BKK_SCREEN_ERROR_NONE;
-  return static_cast<int>(BKK_SCREEN_INTERNAL_UDS_ERR_NONE);
+  response->header.component_id = request->header.component_id;
+  response->header.cmd_id = request->header.cmd_id;
+
+  response->generic_resp.error_code = BKK_SCREEN_ERROR_NONE;
+
+  return BKK_SCREEN_ERROR_NONE;
 }

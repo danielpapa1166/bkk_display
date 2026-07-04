@@ -12,9 +12,9 @@ class InfoBarReqHdl : public ComponentReqHdl {
 public:
   explicit InfoBarReqHdl(QWidget *parent = nullptr);
 
-  int update_component(
-    void * request,
-    bkk_screen_uds_response_t * response
+  bkk_screen_error_code_t update_component(
+    bkk_screen_uds_message_t * request,
+    bkk_screen_uds_message_t * response
   ) override;
 
 private: 

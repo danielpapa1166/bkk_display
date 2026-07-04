@@ -80,13 +80,12 @@ bkk_screen_error_code_t bkk_screen_client_acquire_component(
     return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
   }
 
-  bkk_screen_uds_request_t request {};
-  request.cmd_id = BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT;
-  bkk_screen_acquire_component_request_t * acquire_req = 
-    reinterpret_cast<bkk_screen_acquire_component_request_t *>(request.payload);
-  acquire_req->component_id = component_id;
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT;
+  request.header.component_id = component_id;
 
-  bkk_screen_uds_response_t response {};
+
+  bkk_screen_uds_message_t response {};
   const bkk_screen_error_code_t uds_res = uds_send_recv(
     sock_fd,
     &request,
@@ -99,18 +98,17 @@ bkk_screen_error_code_t bkk_screen_client_acquire_component(
     return uds_res;
   }
 
-  if(response.cmd_id != BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT) {
+  if(response.header.cmd_id != BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT) {
     return BKK_SCREEN_ERROR_RESPONSE_INVALID;
   }
 
-  bkk_screen_acquire_component_response_t * acquire_resp =
-    reinterpret_cast<bkk_screen_acquire_component_response_t *>(response.payload);
-  if (acquire_resp->error_code != BKK_SCREEN_ERROR_NONE) {
-    return acquire_resp->error_code;
+
+  if (response.acquire_resp.error_code != BKK_SCREEN_ERROR_NONE) {
+    return response.acquire_resp.error_code;
   }
 
 
-  *key = acquire_resp->key;
+  *key = response.acquire_resp.key;
   return BKK_SCREEN_ERROR_NONE;
 }
 
@@ -121,11 +119,11 @@ bkk_screen_error_code_t bkk_screen_client_release_screen_component(int key) {
 }
 
 bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
-    int key, const bkk_screen_info_bar_data_t * data) {
+    int key, bkk_screen_online_status_t online_status, const char * clock) {
 
   (void)  key; // Placeholder for future implementation
 
-  if(data == nullptr) {
+  if(clock == nullptr) {
     return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
@@ -135,13 +133,14 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
     return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
   }
 
-  bkk_screen_uds_request_t request {};
-  request.cmd_id = BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA;
-  bkk_screen_info_bar_data_t * info_bar_data =
-    reinterpret_cast<bkk_screen_info_bar_data_t *>(request.payload);
-  *info_bar_data = *data;
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_INFO_BAR_DATA;
+  request.header.component_id = BKK_SCREEN_COMPONENT_INFO_BAR;
+  request.set_info_bar_data.key = key;
+  strncpy(request.set_info_bar_data.clock, clock, BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN);
+  request.set_info_bar_data.online_status = online_status;
 
-  bkk_screen_uds_response_t response {};
+  bkk_screen_uds_message_t response {};
   const bkk_screen_error_code_t uds_res = uds_send_recv(
     sock_fd,
     &request,

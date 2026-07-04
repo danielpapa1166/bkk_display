@@ -15,7 +15,7 @@ class BkkScreen : public QWidget
 public:
   explicit BkkScreen(QWidget *parent = nullptr);
   ~BkkScreen();
-  int start_receive_thread(); 
+  bkk_screen_error_code_t start_receive_thread(); 
 
 private: 
   const char * const CATEGORY = "Screen"; 
@@ -28,14 +28,7 @@ private:
   int uds_init(int * const event_fd, int * const server_fd);
 
   static void * receive_thread_func(void * ctx);
-  int dispatch_client_request(int client_fd);
-  bkk_screen_internal_uds_err_t handle_acq_comp_req(
-    bkk_screen_component_id_t component_id, 
-    bkk_screen_acquire_component_response_t * response);
-
-  bkk_screen_internal_uds_err_t handle_set_data_req(
-    const bkk_screen_uds_request_t * request,
-    bkk_screen_uds_response_t * response);
+  bkk_screen_error_code_t dispatch_client_request(int client_fd);
 
   pthread_t receive_thread_fd = -1;
 }; 

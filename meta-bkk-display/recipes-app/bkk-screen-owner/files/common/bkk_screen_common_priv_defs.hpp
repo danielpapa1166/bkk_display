@@ -5,15 +5,9 @@
 #include <stdint.h>
 #include <string>
 
-#define BKK_SCREEN_UDS_NAME               "/tmp/bkk_screen.sock"
-#define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE   256
-
-typedef enum {
-  BKK_SCREEN_INTERNAL_UDS_ERR_NONE = 0,
-  BKK_SCREEN_INTERNAL_UDS_ERR_INVALID_PARAM,
-  BKK_SCREEN_INTERNAL_UDS_ERR_COMP_TAKEN,
-  
-} bkk_screen_internal_uds_err_t; 
+#define BKK_SCREEN_UDS_NAME                   "/tmp/bkk_screen.sock"
+#define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN     6
+#define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE       256
 
 typedef enum {
   BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT = 0, 
@@ -24,24 +18,49 @@ typedef enum {
 
 
 typedef struct {
+  bkk_screen_command_id_t cmd_id;
   bkk_screen_component_id_t component_id;
-} bkk_screen_acquire_component_request_t;
+} msg_header_t;
 
 typedef struct {
+  msg_header_t header;
+} bkk_screen_acq_comp_req_t;
+
+typedef struct {
+  msg_header_t header;
   bkk_screen_error_code_t error_code;
-  bkk_screen_component_id_t component_id;
   int key; 
-} bkk_screen_acquire_component_response_t;
+} bkk_screen_acq_comp_resp_t;
 
 
 typedef struct {
-  bkk_screen_command_id_t cmd_id; 
-  uint8_t payload[BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE];
-} bkk_screen_uds_request_t;
+  msg_header_t header;
+  int key; 
+  char clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN];
+  bkk_screen_online_status_t online_status;
+} bkk_screen_set_info_bar_data_t;
 
 typedef struct {
-  bkk_screen_command_id_t cmd_id; 
+  msg_header_t header;
+  bkk_screen_error_code_t error_code;
+} bkk_screen_generic_resp_t;
+
+
+typedef struct {
   uint8_t payload[BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE];
-} bkk_screen_uds_response_t;
+} uds_trx_buffer_t;
+
+
+
+typedef union {
+  msg_header_t header;
+  uds_trx_buffer_t buffer; // general buffer for all requests and responses
+
+  bkk_screen_acq_comp_req_t acquire_req;
+  bkk_screen_acq_comp_resp_t acquire_resp;
+  bkk_screen_set_info_bar_data_t set_info_bar_data;
+  bkk_screen_generic_resp_t generic_resp;
+
+} bkk_screen_uds_message_t;
 
 #endif // BKK_SCREEN_COMMON_PRIV_DEFS_HPP

@@ -13,14 +13,19 @@ public:
   ) {};
   ~ComponentReqHdl() {};
   
-  virtual int acquire_component(
-    bkk_screen_acquire_component_request_t * request, 
-    bkk_screen_acquire_component_response_t * response
+  virtual bkk_screen_error_code_t handle_request(
+    bkk_screen_uds_message_t * request, 
+    bkk_screen_uds_message_t * response
   );
 
-  virtual int update_component(
-    void * request,
-    bkk_screen_uds_response_t * response
+  virtual bkk_screen_error_code_t acquire_component(
+    bkk_screen_uds_message_t * request, 
+    bkk_screen_uds_message_t * response
+  );
+
+  virtual bkk_screen_error_code_t update_component(
+    bkk_screen_uds_message_t * request,
+    bkk_screen_uds_message_t * response
   ) = 0;
 
   QWidget * get_widget() const {
