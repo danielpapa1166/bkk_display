@@ -59,20 +59,6 @@ BkkApiWorker::~BkkApiWorker() {
 }
 
 int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
-  char * key = nullptr; 
-  const api_key_read_stat_t res = read_api_key_from_file(apiKeyPath, &key);
-
-  if(res != API_KEY_READ_OK || key == nullptr) {
-    rbuflogd_producer_log(
-      &loggerProducer, 
-      RBUF_LOG_LEVEL_ERROR, 
-      "API Key", 
-      QString("Failed to read API key from file: %1").arg(apiKeyPath).toStdString().c_str());
-    return -1;
-  }
-  apiKey = key;
-  free(key);
-
 
   char key_buffer[BKK_TEE_MAX_OBJ_ID_LEN];
   size_t key_buffer_len = sizeof(key_buffer);
@@ -87,6 +73,7 @@ int BkkApiWorker::loadApiKey(const char * apiKeyPath) {
     );
   }
   else {
+    apiKey = std::string(key_buffer, key_buffer_len);
     rbuflogd_producer_log(
       &loggerProducer,
       RBUF_LOG_LEVEL_INFO,

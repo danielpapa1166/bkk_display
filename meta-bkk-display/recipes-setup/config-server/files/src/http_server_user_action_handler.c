@@ -137,29 +137,11 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
     return -1;
   }
 
-  // --- Write api-key.txt ---
+  // --- store api key in OP-TEE ---
   if (request->api_key[0] != '!') {
-    FILE *key_file = fopen("/etc/bkk-api/api-key.txt", "w");
-    if (key_file == NULL) {
-      log_error(TAG, "Failed to open /etc/bkk-api/api-key.txt for writing");
-      return -1;
-    }
-      
-    fprintf(key_file, "%s", request->api_key);
-    fclose(key_file);
-    log_info(TAG, "API key written to /etc/bkk-api/api-key.txt");
-
-
-    bkk_tee_client_status_t tee_stat = bkk_tee_test(); 
-    if(tee_stat != bkk_tee_client_err_none) {
-      log_error(TAG, "Failed to perform TEE test command");
-    }
-    else {
-      log_info(TAG, "TEE test command executed successfully");
-    }
-
     size_t key_len = strlen(request->api_key);
-    tee_stat = bkk_tee_store(tee_object_type_api_key, request->api_key, key_len);
+    bkk_tee_client_status_t tee_stat = bkk_tee_store(
+      tee_object_type_api_key, request->api_key, key_len);
     if(tee_stat != bkk_tee_client_err_none) {
       log_error(TAG, "Failed to store API key in TEE");
     }
