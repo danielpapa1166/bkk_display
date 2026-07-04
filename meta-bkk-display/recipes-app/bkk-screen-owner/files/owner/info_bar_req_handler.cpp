@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QObject>
 #include <QWidget>
+#include <rbuflogd/logger.h>
 
 InfoBarReqHdl::InfoBarReqHdl(QWidget *parent)
     : ComponentReqHdl(parent) {
@@ -43,6 +44,8 @@ void InfoBarReqHdl::setup_ui() {
   statusRowLayout->addSpacing(12);
 
   statusRowLayout->addWidget(clockLabel);
+
+  log_info(CATEGORY, "InfoBar UI setup complete");
 }
 
 
@@ -59,18 +62,10 @@ int InfoBarReqHdl::update_component(
 
   bkk_screen_info_bar_data_t data_copy = *info_bar_data;
 
-  // for now just print the data to console:
-  printf("Info Bar Data Received:\n");
-  printf("Clock: %s\n", info_bar_data->clock);
-  printf("Online Status: %s\n", 
-    info_bar_data->online_status 
-    == BKK_SCREEN_ONLINE_STATUS_ONLINE ? "Online" : "Offline"
-  );
-
 
   auto apply_ui = [this, data_copy]() {
     if (clockLabel == nullptr || bkkLogoLabel == nullptr || wifiIconLabel == nullptr) {
-      printf("Info bar labels are not initialized\n");
+      log_error(CATEGORY, "UI labels are not initialized");
       return;
     }
 
@@ -80,7 +75,7 @@ int InfoBarReqHdl::update_component(
         logo.scaled(106, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation)
       );
     } else {
-      printf("Failed to load logo pixmap from Qt resource\n");
+      log_error(CATEGORY, "Failed to load logo pixmap from Qt resource");
     }
 
     clockLabel->setText(data_copy.clock);
@@ -97,8 +92,9 @@ int InfoBarReqHdl::update_component(
       );
     } 
     else {
-      printf("Failed to load Wi-Fi icon pixmap"
-        " from Qt resource: %s\n", wifi_icon_path);
+      log_error(CATEGORY, 
+        ("Failed to load Wi-Fi icon pixmap from Qt resource: " 
+          + std::string(wifi_icon_path)).c_str());
     }
   };
 

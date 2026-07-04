@@ -14,6 +14,7 @@ add_executable(bkk_screen_info_bar
 target_link_libraries(bkk_screen_info_bar
     PRIVATE
         bkk-screen-client
+        rbuflogd_producer
         CURL::libcurl
 )
 

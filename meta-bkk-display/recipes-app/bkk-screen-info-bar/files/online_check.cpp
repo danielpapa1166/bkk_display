@@ -1,5 +1,6 @@
 #include "online_check.hpp"
 #include <curl/curl.h>
+#include <rbuflogd/logger.h>
 
 namespace online_check {
 
@@ -11,7 +12,7 @@ bool is_online() {
 
   CURL* curl = curl_easy_init();
   if (!curl) {
-    printf("Failed to initialize CURL\n");
+    log_error("OnlineCheck", "Failed to initialize CURL");
     return false; // Initialization failed
   }
 
@@ -26,12 +27,8 @@ bool is_online() {
 
   CURLcode result = curl_easy_perform(curl);
 
-  printf("CURL result: %d\n", result);
-
   long responseCode = 0;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-
-    printf("CURL response code: %ld\n", responseCode);
 
   curl_easy_cleanup(curl);
 

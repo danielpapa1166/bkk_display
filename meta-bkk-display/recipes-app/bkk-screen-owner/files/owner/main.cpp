@@ -5,10 +5,6 @@
 
 int main(int argc, char *argv[])
 {
-  rbuflogd_producer_t loggerProducer {};
-
-
-
   QApplication app(argc, argv);
   rbuflogd_logger_init("ScrOwner");
 

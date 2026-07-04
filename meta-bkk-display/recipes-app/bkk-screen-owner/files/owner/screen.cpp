@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "screen.hpp"
 #include "bkk_screen_common_priv_defs.hpp"
+#include <rbuflogd/logger.h>
 #include <pthread.h>
 
 #include <sys/socket.h>
@@ -18,8 +19,10 @@ typedef struct {
 } receive_thread_ctx_t;
 
 void * BkkScreen::receive_thread_func(void * ctx) {
+  static const char * const CAT = "RxThr";
   receive_thread_ctx_t * thread_ctx = static_cast<receive_thread_ctx_t *>(ctx);
   if (thread_ctx == nullptr) {
+    log_error(CAT, "Receive thread context is null");
     return nullptr;
   }
 
@@ -30,6 +33,8 @@ void * BkkScreen::receive_thread_func(void * ctx) {
 
   epoll_event events[MAX_EVENTS];
 
+  log_info(CAT, "Receive thread started, waiting for events...");
+
   while(1) {
     int num_events = epoll_wait(
       event_fd, events, 
@@ -37,7 +42,7 @@ void * BkkScreen::receive_thread_func(void * ctx) {
       -1); 
 
     if(num_events < 0) {
-      printf("Failed to wait for events\n");
+      log_error(CAT, "epoll_wait failed");
       return nullptr;
     }
 
@@ -45,7 +50,7 @@ void * BkkScreen::receive_thread_func(void * ctx) {
       if(events[i].data.fd == sock_fd) {
         int client_fd = accept(sock_fd, nullptr, nullptr);
         if(client_fd < 0) {
-          printf("Failed to accept client connection\n");
+          log_error(CAT, "Failed to accept client connection");
           continue;
         }
         screen->dispatch_client_request(client_fd);
@@ -60,8 +65,6 @@ void * BkkScreen::receive_thread_func(void * ctx) {
 BkkScreen::BkkScreen(QWidget *parent)
     : QWidget(parent)
 {
-  printf("BkkScreen constructor called\n");
-  
   info_bar_handler = new InfoBarReqHdl(this);
 
   setup_base_ui();
@@ -91,7 +94,6 @@ void BkkScreen::setup_base_ui() {
   layout->setContentsMargins(8, 8, 8, 8);
   layout->setSpacing(6);
 
-  printf("Adding info bar widget to layout\n");
   layout->addWidget(info_bar_handler->get_widget(), 0, Qt::AlignTop);
   layout->addStretch(1);
 
@@ -108,6 +110,7 @@ int BkkScreen::uds_init(int * const event_fd, int * const server_fd) {
   
   *server_fd = socket(AF_UNIX, SOCK_SEQPACKET, 0); 
   if(*server_fd < 0) {
+    log_error(CATEGORY, "Failed to create UDS socket");
     return 1;
   }
 
@@ -124,18 +127,19 @@ int BkkScreen::uds_init(int * const event_fd, int * const server_fd) {
     sizeof(server_addr));
 
   if(bind_res < 0) {
+    log_error(CATEGORY, "Failed to bind UDS socket");
     return 1;
   }
 
   const int listen_res = listen(*server_fd, 32);
   if(listen_res < 0) {
+    log_error(CATEGORY, "Failed to listen on UDS socket");
     return 1;
   }
 
-  printf("Server is listening on %s\n", BKK_SCREEN_UDS_NAME);
-
   *event_fd = epoll_create1(0);
   if(*event_fd < 0) {
+    log_error(CATEGORY, "Failed to create epoll instance");
     return 1;
   }
 
@@ -149,8 +153,13 @@ int BkkScreen::uds_init(int * const event_fd, int * const server_fd) {
     *server_fd, 
     &event);
   if(ctl_res < 0) {
+    log_error(CATEGORY, "Failed to add server fd to epoll");
     return 1;
   }
+
+  log_info(CATEGORY, 
+    ("UDS server is listening on socket: " 
+      + std::string(BKK_SCREEN_UDS_NAME)).c_str());
 
   return 0; 
 }
@@ -161,8 +170,10 @@ int BkkScreen::start_receive_thread() {
   int event_fd = -1;
 
 
-  const int uds_init_res = uds_init(&event_fd, &sock_fd);
+  const int uds_init_res = uds_init(
+    &event_fd, &sock_fd);
   if(uds_init_res != 0) {
+    log_error(CATEGORY, "Failed to initialize UDS server");
     return -1;
   }
 
@@ -178,6 +189,7 @@ int BkkScreen::start_receive_thread() {
     thread_ctx);
 
   if (thread_create_res != 0) {
+    log_error(CATEGORY, "Failed to create receive thread");
     return -1;
   }
 
@@ -194,7 +206,7 @@ int BkkScreen::dispatch_client_request(int client_fd) {
     0); 
 
   if (n != sizeof(request)) {
-    printf("Failed to receive data from client\n");
+    log_error(CATEGORY, "Failed to receive data from client");
     return -1;
   }
 
@@ -233,7 +245,9 @@ int BkkScreen::dispatch_client_request(int client_fd) {
     send(client_fd, &uds_response, sizeof(uds_response), 0);
   } 
   else {
-    printf("Unknown command ID received: %d\n", request.cmd_id);
+    log_error(CATEGORY,
+      ("Unknown command ID received: " 
+        + std::to_string(request.cmd_id)).c_str());
     return -1;
   }
 

@@ -18,7 +18,7 @@ public:
   int start_receive_thread(); 
 
 private: 
-
+  const char * const CATEGORY = "Screen"; 
 
   QVBoxLayout * layout = nullptr;
   InfoBarReqHdl * info_bar_handler = nullptr;

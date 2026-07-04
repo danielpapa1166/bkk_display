@@ -18,6 +18,7 @@ public:
   ) override;
 
 private: 
+  const char * const CATEGORY = "InfoBar";
   QLabel * clockLabel = nullptr;
   QLabel * bkkLogoLabel = nullptr;
   QLabel * wifiIconLabel = nullptr;
