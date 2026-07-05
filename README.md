@@ -10,8 +10,10 @@ Living in Budapest, I have two bus stations near my home, each in opposite direc
 *A map illustrating the two lines I frequently use.*
 
 ## Modules 
+Description of modules used in this project 
 
 ## Get started
+HW setup, install and build
 
 ## Screenshots 
 ![Bus Lines presented on the map above](doc/display_demo_01.png)
