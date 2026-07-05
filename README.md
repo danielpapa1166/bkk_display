@@ -13,7 +13,21 @@ Living in Budapest, I have two bus stations near my home, each in opposite direc
 Description of modules used in this project 
 
 ## Get started
-HW setup, install and build
+
+### BOM 
+- Raspberry Pi 4 
+- Display module 
+
+### SW setup 
+- build and flash chain and tools 
+
+### User config 
+- wifi config
+- BKK api config 
+- normal operation 
+
+![HW setup](/doc/hw_setup.png)
+*HW setup during normal operation*
 
 ## Screenshots 
 ![Bus Lines presented on the map above](doc/display_demo_01.png)
