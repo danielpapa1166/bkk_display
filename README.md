@@ -16,7 +16,7 @@ Description of modules used in this project
 
 ### BOM 
 - Raspberry Pi 4 
-- Display module 
+- Display module: todo: link
 
 ### SW setup 
 - build and flash chain and tools 
@@ -28,6 +28,8 @@ Description of modules used in this project
 
 ![HW setup](/doc/hw_setup.png =250x)
 *HW setup during normal operation*
+
+<img src="/doc/hw_setup.png" alt="HW_setup" width="200"/>
 
 ## Screenshots 
 ![Bus Lines presented on the map above](doc/display_demo_01.png)
