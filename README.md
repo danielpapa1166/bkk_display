@@ -26,7 +26,7 @@ Description of modules used in this project
 - BKK api config 
 - normal operation 
 
-![HW setup](/doc/hw_setup.png)
+![HW setup](/doc/hw_setup.png =250x)
 *HW setup during normal operation*
 
 ## Screenshots 
