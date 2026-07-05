@@ -7,6 +7,8 @@
 #include <QHeaderView>
 #include <QSizePolicy>
 #include <rbuflogd/logger.h>
+#include <algorithm>
+#include <utility>
 
 TableReqHdl::TableReqHdl(QWidget *parent)
   : ComponentReqHdl(parent) {
@@ -63,17 +65,32 @@ bkk_screen_error_code_t TableReqHdl::update_component(
   bkk_screen_uds_message_t * request,
   bkk_screen_uds_message_t * response
 ) {
-  // Implement the update logic here
+  if (request == nullptr || response == nullptr) {
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
+  }
 
+  int row_count = request->set_table_data.num_arrivals;
+  row_count = std::clamp(row_count, 0, BKK_SCREEN_MAX_ARRIVALS);
 
-  auto apply_ui = [this]() {
+  std::vector<arrival_info_t> arrivals;
+  arrivals.reserve(static_cast<size_t>(row_count));
+  for (int i = 0; i < row_count; ++i) {
+    arrival_info_t item = request->set_table_data.arrivals[i];
+
+    // Ensure network payload strings are always terminated.
+    item.station[BKK_SCREEN_STATION_NAME_MAX_LEN - 1] = '\0';
+    item.line[BKK_SCREEN_LINE_NAME_MAX_LEN - 1] = '\0';
+    item.destination[BKK_SCREEN_DESTINATION_NAME_MAX_LEN - 1] = '\0';
+    arrivals.push_back(item);
+  }
+
+  auto apply_ui = [this, arrivals = std::move(arrivals)]() {
     if (arrivalsTable == nullptr) {
       log_error(CATEGORY, "UI widget is not initialized");
       return;
     }
 
-    populateTable();
-
+    populateTable(arrivals);
   };
 
   if (QThread::currentThread() == thread()) {
@@ -126,23 +143,18 @@ QWidget *TableReqHdl::createDepartureCell(
 }
 
 
-void TableReqHdl::populateTable() {
+void TableReqHdl::populateTable(const std::vector<arrival_info_t> & arrivals) {
 
   arrivalsTable->clearContents();
   arrivalsTable->clearSpans();
-  arrivalsTable->setRowCount(7);
+  arrivalsTable->setRowCount(kMaxRows);
 
-  static const arrival_info_t arrivals[7] = {
-    {0, "Station A", "1", "Destination X", 1},
-    {0, "Station B", "2", "Destination Y", 5},
-    {0, "Station C", "3", "Destination Z", 10},
-    {0, "Station D", "4", "Destination W", 15},
-    {0, "Station E", "5", "Destination V", 20},
-    {0, "Station F", "6", "Destination U", 25},
-    {0, "Station G", "7", "Destination T", 30}
-  };
+  const int rowsToRender = std::min(
+    static_cast<int>(arrivals.size()),
+    kMaxRows
+  );
 
-  for (int row = 0; row < sizeof(arrivals) / sizeof(arrivals[0]); row++) {
+  for (int row = 0; row < rowsToRender; row++) {
     const QColor backgroundColor 
       = (row % 2 == 0) ? QColor("#340a41") : QColor("#505050");
 
@@ -150,7 +162,7 @@ void TableReqHdl::populateTable() {
 
     // stop name (truncated to x characters):
     auto *stopItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.station).left(16));
+        QString::fromUtf8(stationArrival.station).left(16));
     stopItem->setTextAlignment(Qt::AlignCenter);
     stopItem->setBackground(backgroundColor);
     stopItem->setForeground(Qt::white);
@@ -158,7 +170,7 @@ void TableReqHdl::populateTable() {
 
     // line number: 
     auto *lineItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.line));
+      QString::fromUtf8(stationArrival.line));
     lineItem->setTextAlignment(Qt::AlignCenter);
     lineItem->setBackground(backgroundColor);
     lineItem->setForeground(Qt::white);
@@ -166,7 +178,7 @@ void TableReqHdl::populateTable() {
 
     // destination:
     auto *destinationItem = new QTableWidgetItem(
-        QString::fromStdString(stationArrival.destination).left(16));
+      QString::fromUtf8(stationArrival.destination).left(16));
     destinationItem->setBackground(backgroundColor);
     destinationItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 2, destinationItem);

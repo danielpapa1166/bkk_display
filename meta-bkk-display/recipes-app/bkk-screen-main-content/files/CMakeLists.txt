@@ -6,13 +6,16 @@ include(GNUInstallDirs)
 find_package(CURL REQUIRED)
 
 add_executable(bkk_screen_main_content
-    content_main.cpp)
+    content_main.cpp
+    bkk_api_client.cpp
+)
 
 
 target_link_libraries(bkk_screen_main_content
     PRIVATE
         bkk-screen-client
         rbuflogd_producer
+        bkk_uds_client
 )
 
 

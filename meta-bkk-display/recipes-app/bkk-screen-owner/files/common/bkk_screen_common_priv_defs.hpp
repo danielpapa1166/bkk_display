@@ -42,6 +42,13 @@ typedef struct {
 
 typedef struct {
   msg_header_t header;
+  int key; 
+  int num_arrivals;
+  arrival_info_t arrivals[BKK_SCREEN_MAX_ARRIVALS];
+} bkk_screen_set_table_data_t;
+
+typedef struct {
+  msg_header_t header;
   bkk_screen_error_code_t error_code;
 } bkk_screen_generic_resp_t;
 
@@ -59,6 +66,7 @@ typedef union {
   bkk_screen_acq_comp_req_t acquire_req;
   bkk_screen_acq_comp_resp_t acquire_resp;
   bkk_screen_set_info_bar_data_t set_info_bar_data;
+  bkk_screen_set_table_data_t set_table_data;
   bkk_screen_generic_resp_t generic_resp;
 
 } bkk_screen_uds_message_t;

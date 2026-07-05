@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QObject>
 #include <QTableWidget>
+#include <vector>
 #include "bkk_screen_common_priv_defs.hpp"
 #include "component_req_handler.hpp"
 
@@ -24,7 +25,7 @@ private:
   void setup_ui();
   QWidget *createDepartureCell(
     int departsInMin, const QColor &backgroundColor) const;
-  void populateTable(); 
+  void populateTable(const std::vector<arrival_info_t> & arrivals);
 
 
   // config constants:

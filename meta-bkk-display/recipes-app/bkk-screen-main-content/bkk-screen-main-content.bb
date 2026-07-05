@@ -3,7 +3,9 @@ LICENSE = "CLOSED"
 inherit cmake
 
 SRC_URI = "file://CMakeLists.txt        \
-           file://content_main.cpp     \
+           file://content_main.cpp      \
+           file://bkk_api_client.cpp    \
+           file://bkk_api_client.hpp    \
            "
 
 S = "${WORKDIR}"

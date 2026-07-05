@@ -160,10 +160,10 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
 
 
 bkk_screen_error_code_t bkk_screen_client_set_table_data(
-    int key, int foo) {
+    int key, std::vector<arrival_info_t>& arrivals) {
 
   (void)  key; // Placeholder for future implementation
-  (void)  foo; // Placeholder for future implementation
+  (void)  arrivals; // Placeholder for future implementation
 
 
   int sock_fd = -1;
@@ -175,6 +175,16 @@ bkk_screen_error_code_t bkk_screen_client_set_table_data(
   bkk_screen_uds_message_t request {};
   request.header.cmd_id = BKK_SCREEN_COMMAND_SET_DATA;
   request.header.component_id = BKK_SCREEN_COMPONENT_TABLE;
+
+  request.set_table_data.key = key;
+  request.set_table_data.num_arrivals 
+    = arrivals.size() > BKK_SCREEN_MAX_ARRIVALS 
+      ? BKK_SCREEN_MAX_ARRIVALS 
+      : arrivals.size();
+      
+  for (size_t i = 0; i < arrivals.size() && i < BKK_SCREEN_MAX_ARRIVALS; i++) {
+    request.set_table_data.arrivals[i] = arrivals[i];
+  }
 
   bkk_screen_uds_message_t response {};
   const bkk_screen_error_code_t uds_res = uds_send_recv(

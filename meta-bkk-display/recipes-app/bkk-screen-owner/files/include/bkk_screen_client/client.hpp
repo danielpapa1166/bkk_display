@@ -1,6 +1,6 @@
 #ifndef BKK_SCREEN_CLIENT_HPP
 #define BKK_SCREEN_CLIENT_HPP
-
+#include <vector>
 #include "bkk_screen_client/common_defs.hpp"
 
 
@@ -14,6 +14,6 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
   int key, bkk_screen_online_status_t online_status, const char * clock);
 
 bkk_screen_error_code_t bkk_screen_client_set_table_data(
-  int key, int foo);
+  int key, std::vector<arrival_info_t>& arrivals);
 
 #endif // BKK_SCREEN_CLIENT_HPP
