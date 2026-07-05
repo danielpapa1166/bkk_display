@@ -26,14 +26,15 @@ Description of modules used in this project
 - BKK api config 
 - normal operation 
 
-![HW setup](/doc/hw_setup.png =250x)
-*HW setup during normal operation*
-
-<img src="/doc/hw_setup.png" alt="HW_setup" width="200"/>
+<p align="center">
+    <img src="/doc/hw_setup.png" alt="HW_setup" width="400"/>
+    HW setup during normal operation
+</p>
 
 ## Screenshots 
 ![Bus Lines presented on the map above](doc/display_demo_01.png)
 *Bus Lines presented on the map above.*
 
 ![Other stations](doc/display_demo_02.png)
+
 ![Other stations](doc/display_demo_03.png)
