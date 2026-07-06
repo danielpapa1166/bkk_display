@@ -11,9 +11,33 @@ int main() {
   log_info("Main", "Starting BKK Screen Client");
 
   int key = 0;
-  std::string apiKey = "de586d3b-4e9d-4708-a56b-8a46c5ac52a4";
+  std::string apiKey;
+  int res = api_client::load_api_key(apiKey);
 
-  int res = bkk_screen_client_acquire_component(
+  if (res != 0) {
+    log_error("Main", (
+      "Failed to load API key, error code: "
+      + std::to_string(res)).c_str());
+    return 1;
+  }
+
+
+  std::vector<std::string> stationIdList;
+  std::vector<std::string> stationNameList;
+
+  res = api_client::load_station_ids(
+    stationIdList, 
+    stationNameList
+  );
+
+  if (res != 0) {
+    log_error("Main", (
+      "Failed to load station IDs, error code: "
+      + std::to_string(res)).c_str());
+    return 1;
+  }
+
+  res = bkk_screen_client_acquire_component(
     BKK_SCREEN_COMPONENT_TABLE, 
     &key);
 
@@ -28,8 +52,6 @@ int main() {
     "Successfully acquired screen component, key: "
     + std::to_string(key)).c_str()
   );
-
-  std::vector<std::string> stationIdList = {"F01335", "056234"};
 
   std::vector<arrival_info_t> arrivals;
 

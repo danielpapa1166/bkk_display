@@ -9,15 +9,11 @@
 #include <vector>
 
 namespace api_client {
-
-  int load_api_key(
-    std::string& api_key
-  );
-
+  int load_api_key(std::string& api_key);
   int load_station_ids(
-    std::vector<std::string>& stationIdList
+    std::vector<std::string>& stationIdList, 
+    std::vector<std::string>& stationNameList
   );
-
   int fetch_arrivals(
     std::string& apiKey,
     std::vector<std::string>& stationIdList,

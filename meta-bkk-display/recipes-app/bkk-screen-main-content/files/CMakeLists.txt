@@ -3,7 +3,11 @@ project(bkk-screen-main-content LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 
-find_package(CURL REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CJSON REQUIRED IMPORTED_TARGET libcjson)
+
+find_library(BKK_TEE_LIB REQUIRED NAMES bkk-tee-client)
+add_library(bkk-tee SHARED IMPORTED)
 
 add_executable(bkk_screen_main_content
     content_main.cpp
@@ -16,6 +20,8 @@ target_link_libraries(bkk_screen_main_content
         bkk-screen-client
         rbuflogd_producer
         bkk_uds_client
+        PkgConfig::CJSON
+        bkk-tee-client
 )
 
 
