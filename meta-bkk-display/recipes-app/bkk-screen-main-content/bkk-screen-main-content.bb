@@ -1,6 +1,6 @@
 LICENSE = "CLOSED"
 
-inherit cmake
+inherit cmake pkgconfig
 
 SRC_URI = "file://CMakeLists.txt        \
            file://content_main.cpp      \
@@ -10,5 +10,5 @@ SRC_URI = "file://CMakeLists.txt        \
 
 S = "${WORKDIR}"
 
-DEPENDS = "bkk-screen-owner bkk-api rbuflogd"
-RDEPENDS:${PN} += "bkk-screen-owner bkk-api bkk-api-client bkk-api-keyenv rbuflogd"
+DEPENDS = "bkk-screen-owner bkk-api rbuflogd bkk-tee"
+RDEPENDS:${PN} += "bkk-screen-owner bkk-api bkk-api-client rbuflogd bkk-tee"
