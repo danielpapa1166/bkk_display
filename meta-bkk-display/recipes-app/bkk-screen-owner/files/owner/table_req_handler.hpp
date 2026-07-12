@@ -20,12 +20,16 @@ public:
   ) override;
 
 private: 
-  const char * const CATEGORY = "Table";
   QTableWidget * arrivalsTable = nullptr;
-  void setup_ui();
+  std::vector<arrival_info_t> arrivals;
+
+  void init_ui() override;
+  void refresh_ui() override;
+  void qt_thread_clear_component() override;
+
   QWidget *createDepartureCell(
     int departsInMin, const QColor &backgroundColor) const;
-  void populateTable(const std::vector<arrival_info_t> & arrivals);
+  void populateTable();
 
 
   // config constants:

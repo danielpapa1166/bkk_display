@@ -18,11 +18,14 @@ public:
   ) override;
 
 private: 
-  const char * const CATEGORY = "InfoBar";
   QLabel * clockLabel = nullptr;
   QLabel * bkkLogoLabel = nullptr;
   QLabel * wifiIconLabel = nullptr;
-  void setup_ui(); 
+
+  bkk_screen_set_info_bar_data_t config_data {};
+
+  void init_ui() override;
+  void refresh_ui() override;
 
 };
 

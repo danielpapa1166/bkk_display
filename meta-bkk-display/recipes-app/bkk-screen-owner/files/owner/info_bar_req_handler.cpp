@@ -12,15 +12,39 @@
 InfoBarReqHdl::InfoBarReqHdl(QWidget *parent)
     : ComponentReqHdl(parent) {
   component_id = BKK_SCREEN_COMPONENT_INFO_BAR;
-  widget = new QWidget(parent);
+  CATEGORY = "InfoBar";
   taken = false;
   key = 42;
 
-  widget->setFixedHeight(46);
-  setup_ui();
+  qt_thread_init_ui();
 }
 
-void InfoBarReqHdl::setup_ui() {
+
+// Do not call this function directly from a non-Qt thread. 
+// Use qt_thread_init_ui() instead.
+void InfoBarReqHdl::init_ui() {
+
+  if(!is_Qt_thread()) {
+    log_warning(
+      CATEGORY, 
+      "init_ui() called from non-Qt thread"
+    ); 
+    return;
+  }
+
+  if(parent_widget == nullptr) {
+    log_error(CATEGORY, "Parent widget is null, cannot initialize UI");
+    return;
+  }
+
+  if(widget != nullptr) {
+    log_warning(CATEGORY, "UI widget is already initialized");
+    return;
+  }
+
+  widget = new QWidget(parent_widget);
+  widget->setFixedHeight(46);
+
   auto *statusRowLayout = new QHBoxLayout(widget);
   statusRowLayout->setContentsMargins(0, 0, 0, 0);
   statusRowLayout->setSpacing(8);
@@ -45,7 +69,60 @@ void InfoBarReqHdl::setup_ui() {
 
   statusRowLayout->addWidget(clockLabel);
 
+  const QPixmap logo(":/icons/bkk_logo.png");
+  if (!logo.isNull()) {
+    bkkLogoLabel->setPixmap(
+      logo.scaled(106, 40, 
+        Qt::KeepAspectRatio, 
+        Qt::SmoothTransformation)
+    );
+  } 
+  else {
+    log_error(CATEGORY, "Failed to load logo pixmap from Qt resource");
+  }
+
+
   log_info(CATEGORY, "InfoBar UI setup complete");
+
+  state_machine_transition(ComponentState::Ready);
+}
+
+
+// Do not call this function directly from a non-Qt thread. 
+// Use qt_thread_refresh_ui() instead.
+void InfoBarReqHdl::refresh_ui() {
+  if (clockLabel == nullptr || bkkLogoLabel == nullptr || wifiIconLabel == nullptr) {
+    log_error(CATEGORY, "UI labels are not initialized");
+    return;
+  }
+
+  if(!is_Qt_thread()) {
+    log_warning(
+      CATEGORY, 
+      "refresh_ui() called from non-Qt thread"
+    ); 
+    return;
+  }
+
+
+  clockLabel->setText(config_data.clock);
+
+  const char *wifi_icon_path =
+    config_data.online_status == BKK_SCREEN_ONLINE_STATUS_ONLINE
+      ? ":/icons/wifi_on.png"
+      : ":/icons/wifi_off.png";
+
+  const QPixmap wifi_icon(wifi_icon_path);
+  if (!wifi_icon.isNull()) {
+    wifiIconLabel->setPixmap(
+      wifi_icon.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+    );
+  } 
+  else {
+    log_error(CATEGORY, 
+      ("Failed to load Wi-Fi icon pixmap from Qt resource: " 
+        + std::string(wifi_icon_path)).c_str());
+  }
 }
 
 
@@ -54,11 +131,12 @@ bkk_screen_error_code_t InfoBarReqHdl::update_component(
     bkk_screen_uds_message_t * response
 ) {
   if(request == nullptr || response == nullptr) {
+    log_error(CATEGORY, "Invalid parameters: request or response is null");
     return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
+  memset(&config_data, 0, sizeof(config_data));
 
-  bkk_screen_set_info_bar_data_t config_data {};
   config_data.key = request->set_info_bar_data.key;
   config_data.online_status = request->set_info_bar_data.online_status;
   
@@ -69,49 +147,7 @@ bkk_screen_error_code_t InfoBarReqHdl::update_component(
 
   config_data.clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN - 1] = '\0'; // Ensure null-termination
 
-
-  auto apply_ui = [this, config_data]() {
-    if (clockLabel == nullptr || bkkLogoLabel == nullptr || wifiIconLabel == nullptr) {
-      log_error(CATEGORY, "UI labels are not initialized");
-      return;
-    }
-
-    const QPixmap logo(":/icons/bkk_logo.png");
-    if (!logo.isNull()) {
-      bkkLogoLabel->setPixmap(
-        logo.scaled(106, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-      );
-    } 
-    else {
-      log_error(CATEGORY, "Failed to load logo pixmap from Qt resource");
-    }
-
-    clockLabel->setText(config_data.clock);
-
-    const char *wifi_icon_path =
-      config_data.online_status == BKK_SCREEN_ONLINE_STATUS_ONLINE
-        ? ":/icons/wifi_on.png"
-        : ":/icons/wifi_off.png";
-
-    const QPixmap wifi_icon(wifi_icon_path);
-    if (!wifi_icon.isNull()) {
-      wifiIconLabel->setPixmap(
-        wifi_icon.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-      );
-    } 
-    else {
-      log_error(CATEGORY, 
-        ("Failed to load Wi-Fi icon pixmap from Qt resource: " 
-          + std::string(wifi_icon_path)).c_str());
-    }
-  };
-
-  if (QThread::currentThread() == thread()) {
-    apply_ui();
-  } 
-  else {
-    QMetaObject::invokeMethod(this, apply_ui, Qt::QueuedConnection);
-  }
+  qt_thread_refresh_ui();
 
   response->header.component_id = request->header.component_id;
   response->header.cmd_id = request->header.cmd_id;

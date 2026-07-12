@@ -5,8 +5,8 @@
 #include <QVBoxLayout>
 #include <pthread.h>
 #include "bkk_screen_common_priv_defs.hpp"
+#include "component_req_handler.hpp"
 #include "info_bar_req_handler.hpp"
-#include "table_req_handler.hpp"
 
 
 class BkkScreen : public QWidget
@@ -17,6 +17,7 @@ public:
   explicit BkkScreen(QWidget *parent = nullptr);
   ~BkkScreen();
   bkk_screen_error_code_t start_receive_thread(); 
+  bkk_screen_error_code_t start_alive_check_thread();
 
 private: 
   const char * const CATEGORY = "Screen"; 
@@ -27,12 +28,18 @@ private:
 
 
   void setup_base_ui();
+  void updateWidgets();
   int uds_init(int * const event_fd, int * const server_fd);
+  ComponentReqHdl * ensure_info_bar_handler(); 
+  ComponentReqHdl * ensure_main_content_handler(
+    bkk_screen_component_id_t component_id);
 
   static void * receive_thread_func(void * ctx);
+  static void * alive_check_thread_func(void * ctx);
   bkk_screen_error_code_t dispatch_client_request(int client_fd);
 
   pthread_t receive_thread_fd = -1;
+  pthread_t alive_check_thread_fd = -1;
 }; 
 
 

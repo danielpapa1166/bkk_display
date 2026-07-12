@@ -19,6 +19,12 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  start_thread_res = screen.start_alive_check_thread();
+  if (start_thread_res != 0) {
+    log_error("Init", "Failed to start alive check thread");
+    return 1; 
+  }
+
   screen.show();
 
   const int exitCode = app.exec();

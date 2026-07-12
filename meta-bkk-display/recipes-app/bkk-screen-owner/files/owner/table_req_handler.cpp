@@ -13,7 +13,29 @@
 TableReqHdl::TableReqHdl(QWidget *parent)
   : ComponentReqHdl(parent) {
 
-  widget = new QWidget(parent);
+  component_id = BKK_SCREEN_COMPONENT_TABLE;
+  CATEGORY = "Table";
+  taken = false;
+  key = 43;
+
+
+  qt_thread_init_ui();
+}
+
+
+// Do not call this function directly from a non-Qt thread. 
+// Use qt_thread_init_ui() instead.
+void TableReqHdl::init_ui() {
+  // Implement the UI setup here
+  if(!is_Qt_thread()) {
+    log_warning(
+      CATEGORY, 
+      "init_ui() called from non-Qt thread"
+    ); 
+    return;
+  }
+
+  widget = new QWidget(parent_widget);
   arrivalsTable = new QTableWidget(widget);
   auto *tableLayout = new QVBoxLayout(widget);
   tableLayout->setContentsMargins(0, 0, 0, 0);
@@ -23,17 +45,6 @@ TableReqHdl::TableReqHdl(QWidget *parent)
   widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   arrivalsTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-  component_id = BKK_SCREEN_COMPONENT_TABLE;
-  taken = false;
-  key = 43;
-
-
-  setup_ui();
-}
-
-
-void TableReqHdl::setup_ui() {
-  // Implement the UI setup here
 
   // setup GUI table widget:
   arrivalsTable->setColumnCount(4);
@@ -58,6 +69,27 @@ void TableReqHdl::setup_ui() {
   arrivalsTable->setAlternatingRowColors(false);
   arrivalsTable->setSortingEnabled(false);
 
+  state_machine_transition(ComponentState::Ready);
+}
+
+
+// Do not call this function directly from a non-Qt thread. 
+// Use qt_thread_refresh_ui() instead.
+void TableReqHdl::refresh_ui() {
+
+  if(!is_Qt_thread()) {
+    log_warning(
+      CATEGORY, 
+      "refresh_ui() called from non-Qt thread"
+    ); 
+    return;
+  }
+
+  if (arrivalsTable == nullptr) {
+    log_error(CATEGORY, "UI widget is not initialized");
+    return;
+  }
+  populateTable();
 }
 
 
@@ -69,10 +101,22 @@ bkk_screen_error_code_t TableReqHdl::update_component(
     return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
+  if(state != ComponentState::Acquired) {
+    response->header.component_id = request->header.component_id;
+    response->header.cmd_id = request->header.cmd_id;
+    response->generic_resp.error_code = BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
+    log_warning(CATEGORY,
+      ("Update request received for component "
+        + get_component_name()
+        + " which is not taken").c_str());
+    return BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
+  }
+
   int row_count = request->set_table_data.num_arrivals;
   row_count = std::clamp(row_count, 0, BKK_SCREEN_MAX_ARRIVALS);
 
-  std::vector<arrival_info_t> arrivals;
+  
+  arrivals.clear();
   arrivals.reserve(static_cast<size_t>(row_count));
   for (int i = 0; i < row_count; ++i) {
     arrival_info_t item = request->set_table_data.arrivals[i];
@@ -84,27 +128,64 @@ bkk_screen_error_code_t TableReqHdl::update_component(
     arrivals.push_back(item);
   }
 
-  auto apply_ui = [this, arrivals = std::move(arrivals)]() {
-    if (arrivalsTable == nullptr) {
-      log_error(CATEGORY, "UI widget is not initialized");
-      return;
-    }
-
-    populateTable(arrivals);
-  };
-
-  if (QThread::currentThread() == thread()) {
-    apply_ui();
-  } 
-  else {
-    QMetaObject::invokeMethod(this, apply_ui, Qt::QueuedConnection);
-  }
+  qt_thread_refresh_ui();
 
   response->header.component_id = request->header.component_id;
   response->header.cmd_id = request->header.cmd_id;
   response->generic_resp.error_code = BKK_SCREEN_ERROR_NONE;
   return BKK_SCREEN_ERROR_NONE;
 }
+
+
+void TableReqHdl::qt_thread_clear_component() {
+  log_info(CATEGORY, 
+    ("Clearing component " + get_component_name()).c_str());
+  taken = false;
+  key = -1; 
+  alive_counter = MAX_ALIVE_COUNTER;
+  arrivals.clear();
+
+  if (QThread::currentThread() == thread()) {
+    if (arrivalsTable != nullptr) {
+      arrivalsTable->setRowCount(0);
+      arrivalsTable->clearContents();
+      arrivalsTable->clearSpans();
+      arrivalsTable->hide();
+      arrivalsTable->deleteLater();
+      arrivalsTable = nullptr;
+    }
+
+    if (widget != nullptr) {
+      widget->hide();
+      widget->deleteLater();
+      widget = nullptr;
+    }
+    state_machine_transition(ComponentState::Empty);
+    return;
+  }
+  QMetaObject::invokeMethod(this, [this]() {
+    if (arrivalsTable != nullptr) {
+      arrivalsTable->setRowCount(0);
+      arrivalsTable->clearContents();
+      arrivalsTable->clearSpans();
+      arrivalsTable->hide();
+      arrivalsTable->deleteLater();
+      arrivalsTable = nullptr;
+    }
+
+    if (widget != nullptr) {
+      widget->hide();
+      widget->deleteLater();
+      widget = nullptr;
+    }
+    state_machine_transition(ComponentState::Empty);
+  }, Qt::BlockingQueuedConnection);
+
+  log_info(CATEGORY, 
+    ("Component " + get_component_name() + " cleared").c_str());
+}
+
+
 
 
 QWidget *TableReqHdl::createDepartureCell(
@@ -143,7 +224,7 @@ QWidget *TableReqHdl::createDepartureCell(
 }
 
 
-void TableReqHdl::populateTable(const std::vector<arrival_info_t> & arrivals) {
+void TableReqHdl::populateTable() {
 
   arrivalsTable->clearContents();
   arrivalsTable->clearSpans();
