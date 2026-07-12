@@ -1,0 +1,51 @@
+#ifndef BKK_SCREEN_COMMON_DEFS_HPP
+#define BKK_SCREEN_COMMON_DEFS_HPP
+
+#include <string>
+#include <stdbool.h>
+
+typedef enum {
+  BKK_SCREEN_ERROR_NONE, 
+  BKK_SCREEN_ERROR_INVALID_PARAM,
+  BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND,
+  BKK_SCREEN_ERROR_COMPONENT_ALREADY_ACQUIRED,
+  BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED,
+  BKK_SCREEN_ERROR_SOCKET_SEND_FAILED,
+  BKK_SCREEN_ERROR_SOCKET_RECV_FAILED,
+  BKK_SCREEN_ERROR_RESPONSE_INVALID,
+  BKK_SCREEN_ERROR_OTHER 
+} bkk_screen_error_code_t;
+
+typedef enum {
+  BKK_SCREEN_COMPONENT_INFO_BAR = 0, 
+  BKK_SCREEN_COMPONENT_STATUS_SCREEN, 
+  BKK_SCREEN_COMPONENT_TABLE,
+  BKK_SCREEN_COMPONENT_MAX
+} bkk_screen_component_id_t;
+
+
+
+typedef enum {
+  BKK_SCREEN_ONLINE_STATUS_OFFLINE = 0,
+  BKK_SCREEN_ONLINE_STATUS_ONLINE
+} bkk_screen_online_status_t;
+
+
+#define BKK_SCREEN_MAX_ARRIVALS 8
+
+#define BKK_SCREEN_STATION_NAME_MAX_LEN 16
+#define BKK_SCREEN_LINE_NAME_MAX_LEN 4
+#define BKK_SCREEN_DESTINATION_NAME_MAX_LEN 32
+
+
+typedef struct {
+  int foo; 
+  char station[BKK_SCREEN_STATION_NAME_MAX_LEN]; // must use char[] in uds sturct 
+  char line[BKK_SCREEN_LINE_NAME_MAX_LEN];
+  int vehicle_type;
+  char destination[BKK_SCREEN_DESTINATION_NAME_MAX_LEN];
+  int departure_time; 
+} arrival_info_t;
+
+
+#endif // BKK_SCREEN_COMMON_DEFS_HPP
