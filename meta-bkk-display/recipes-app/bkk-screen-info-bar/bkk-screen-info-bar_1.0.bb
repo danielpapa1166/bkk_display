@@ -14,3 +14,6 @@ S = "${WORKDIR}"
 
 DEPENDS = "bkk-screen-owner"
 RDEPENDS:${PN} += " bkk-screen-owner"
+
+# Generate compile_commands.json for clangd tooling.
+EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
