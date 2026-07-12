@@ -36,14 +36,14 @@ typedef enum {
 #define BKK_SCREEN_STATION_NAME_MAX_LEN 16
 #define BKK_SCREEN_LINE_NAME_MAX_LEN 4
 #define BKK_SCREEN_DESTINATION_NAME_MAX_LEN 32
-#define BKK_SCREEN_DEPARTURE_TIME_MAX_LEN       16
+
 
 typedef struct {
   int foo; 
   char station[BKK_SCREEN_STATION_NAME_MAX_LEN]; // must use char[] in uds sturct 
   char line[BKK_SCREEN_LINE_NAME_MAX_LEN];
+  int vehicle_type;
   char destination[BKK_SCREEN_DESTINATION_NAME_MAX_LEN];
-  //char departure_time[BKK_SCREEN_DEPARTURE_TIME_MAX_LEN];
   int departure_time; 
 } arrival_info_t;
 
