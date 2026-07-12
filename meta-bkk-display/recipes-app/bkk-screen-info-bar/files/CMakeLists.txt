@@ -18,6 +18,7 @@ target_link_libraries(bkk_screen_info_bar
         bkk-screen-client
         rbuflogd_producer
         CURL::libcurl
+        bkk_utils_timing
 )
 
 

@@ -12,8 +12,8 @@ SRC_URI = "file://CMakeLists.txt        \
 
 S = "${WORKDIR}"
 
-DEPENDS = "bkk-screen-owner"
-RDEPENDS:${PN} += " bkk-screen-owner"
+DEPENDS = "bkk-screen-owner bkk-common-utils"
+RDEPENDS:${PN} += " bkk-screen-owner bkk-common-utils"
 
 # Generate compile_commands.json for clangd tooling.
 EXTRA_OECMAKE:append = " -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
