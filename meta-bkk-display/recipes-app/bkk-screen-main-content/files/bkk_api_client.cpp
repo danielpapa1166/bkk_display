@@ -4,7 +4,7 @@
 #include "rbuflogd/logger.h"
 #include "bkk_tee/bkk_tee_client.h"
 #include "cJSON.h"
-
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 
@@ -109,6 +109,7 @@ int load_station_ids(
 int fetch_arrivals(
     std::string& api_key,
     std::vector<std::string>& stationIdList,
+    std::vector<std::string>& stationNameList,
     std::vector<arrival_info_t>& arrivals
   ) {
 
@@ -117,7 +118,7 @@ int fetch_arrivals(
   for (size_t i = 0; i < stationIdList.size(); i++) {
     
     const auto &stationId = stationIdList[i];
-    const char *stationName = stationIdList[i].c_str(); // todo get station name 
+    const char *stationName = stationNameList[i].c_str();
     bkk_uds_request_t request {};
     bkk_uds_response_t response {};
 
@@ -146,6 +147,8 @@ int fetch_arrivals(
           BKK_SCREEN_LINE_NAME_MAX_LEN - 1
         );
 
+        arrivalInfo.vehicle_type = (int)response.arrivals[arrivalIdx].vehicle_type;
+
 
         strncpy(
           arrivalInfo.destination, 
@@ -162,7 +165,19 @@ int fetch_arrivals(
 
     }
   }
-  return fetchedAny;
+
+  if(fetchedAny) {
+    std::sort(arrivals.begin(), arrivals.end(), 
+      [](const arrival_info_t &left, const arrival_info_t &right) {
+      // sort by departure time
+      return left.departure_time < right.departure_time;
+    });
+  } 
+  else {
+    log_warning("API Fetch", "No arrival data fetched from API");
+  }
+
+  return fetchedAny ? 0 : -1;
 
 
 }

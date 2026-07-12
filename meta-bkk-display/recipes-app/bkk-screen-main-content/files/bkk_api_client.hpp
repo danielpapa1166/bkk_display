@@ -17,6 +17,7 @@ namespace api_client {
   int fetch_arrivals(
     std::string& apiKey,
     std::vector<std::string>& stationIdList,
+    std::vector<std::string>& stationNameList,
     std::vector<arrival_info_t>& arrivals
   );
 }; // namespace api_client
