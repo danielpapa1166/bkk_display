@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <pthread.h>
+#include <bkk_utils/bkk_utils_timing.h>
 #include "bkk_screen_common_priv_defs.hpp"
 #include "component_req_handler.hpp"
 #include "info_bar_req_handler.hpp"
@@ -17,7 +18,6 @@ public:
   explicit BkkScreen(QWidget *parent = nullptr);
   ~BkkScreen();
   bkk_screen_error_code_t start_receive_thread(); 
-  bkk_screen_error_code_t start_alive_check_thread();
 
 private: 
   const char * const CATEGORY = "Screen"; 
@@ -35,11 +35,30 @@ private:
     bkk_screen_component_id_t component_id);
 
   static void * receive_thread_func(void * ctx);
-  static void * alive_check_thread_func(void * ctx);
+  static int alive_check(void * ctx);
   bkk_screen_error_code_t dispatch_client_request(int client_fd);
 
   pthread_t receive_thread_fd = -1;
-  pthread_t alive_check_thread_fd = -1;
+
+
+  timer_thread_ctx_t alive_check_thread_ctx = {
+    .config = {
+      .timer_fd = -1,
+      .cyclic_expiration_sec = 1,
+      .cyclic_expiration_nsec = 0,
+      .initial_expiration_sec = 1,
+      .initial_expiration_nsec = 0,
+    },
+    .callback = alive_check,
+    .arg = this,
+    /*.stop_fd = -1,
+    .is_running = false,
+    .thread_created = false,
+    .thread_joined = false,
+    .thread = 0,
+    .thread_id = 0,*/
+  };
+
 }; 
 
 

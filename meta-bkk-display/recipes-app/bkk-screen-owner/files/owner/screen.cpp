@@ -26,60 +26,6 @@ typedef struct {
 } receive_thread_ctx_t;
 
 
-
-#include <sys/timerfd.h>
-#include <sys/select.h>
-
-// these function should be moved to a common utility file
-static int setup_timer(int time_sec, int * timer_fd, fd_set * readfds) {
-  *timer_fd = timerfd_create(CLOCK_REALTIME, 0);
-  if (*timer_fd < 0) {
-    return -1;
-  }
-
-  struct itimerspec timerSpec;
-  timerSpec.it_interval.tv_sec = time_sec; // Interval for periodic timer
-  timerSpec.it_interval.tv_nsec = 0;
-  timerSpec.it_value.tv_sec = time_sec; // Initial expiration
-  timerSpec.it_value.tv_nsec = 0;
-
-  const int res = timerfd_settime(
-    *timer_fd, 
-    0, 
-    &timerSpec, 
-    nullptr);
-
-  if (res < 0) {
-    return -1;
-  }
-  
-  FD_ZERO(readfds);
-  FD_SET(*timer_fd, readfds);
-  return 0;
-}
-
-static int wait_on_timer(int timer_fd, fd_set * readfds) {
-  int res = select(
-    timer_fd + 1, 
-    readfds, 
-    nullptr, 
-    nullptr, 
-    nullptr);
-
-  if (res < 0) {
-    return -1;
-  }
-
-  char buf[8];
-  ssize_t n = read(timer_fd, buf, sizeof(buf));
-  if (n < 0) {
-    return -1;
-  }
-
-  return 0;
-}
-
-
 void * BkkScreen::receive_thread_func(void * ctx) {
   static const char * const CAT = "RxThr";
   receive_thread_ctx_t * thread_ctx = static_cast<receive_thread_ctx_t *>(ctx);
@@ -126,50 +72,31 @@ void * BkkScreen::receive_thread_func(void * ctx) {
   return nullptr;
 }
 
-void * BkkScreen::alive_check_thread_func(void * ctx) {
+int BkkScreen::alive_check(void * ctx) {
   static const char * const CAT = "AliveChk";
-  receive_thread_ctx_t * thread_ctx = static_cast<receive_thread_ctx_t *>(ctx);
-  if (thread_ctx == nullptr) {
+  BkkScreen * screen = static_cast<BkkScreen *>(ctx);
+  if (screen == nullptr) {
     log_error(CAT, "Alive check thread context is null");
-    return nullptr;
+    return -1;
   }
 
-  BkkScreen * screen = thread_ctx->screen;
-
-  int timer_fd = -1;
-  fd_set readfds;
-
-  if (setup_timer(1, &timer_fd, &readfds) < 0) {
-    log_error(CAT, "Failed to set up timer");
-    return nullptr;
-  }
-
-  log_info(CAT, "Alive check thread started, waiting for timer events...");
-
-  while (1) {
-    if (wait_on_timer(timer_fd, &readfds) < 0) {
-      log_error(CAT, "Failed to wait on timer");
-      continue;
-    }
-
-    if (screen->main_content_handler != nullptr) {
-      const int res = screen->main_content_handler->cyclic_alive_check();
-      if (res == 0) {
-        log_warning(CAT, "Alive Counter 0, Clearing Main Content handler");
-        screen->main_content_handler->qt_thread_clear_component();
-      }
-    }
-
-    if(screen->info_bar_handler != nullptr) {
-      const int res = screen->info_bar_handler->cyclic_alive_check();
-      if(res == 0) {
-        log_warning(CAT, "Alive Counter 0, Clearing Info Bar handler");
-        screen->info_bar_handler->qt_thread_clear_component();
-      }
+  if (screen->main_content_handler != nullptr) {
+    const int res = screen->main_content_handler->cyclic_alive_check();
+    if (res == 0) {
+      log_warning(CAT, "Alive Counter 0, Clearing Main Content handler");
+      screen->main_content_handler->qt_thread_clear_component();
     }
   }
 
-  return nullptr;
+  if(screen->info_bar_handler != nullptr) {
+    const int res = screen->info_bar_handler->cyclic_alive_check();
+    if(res == 0) {
+      log_warning(CAT, "Alive Counter 0, Clearing Info Bar handler");
+      screen->info_bar_handler->qt_thread_clear_component();
+    }
+  }
+
+  return 0;
 }
 
 
@@ -178,13 +105,19 @@ BkkScreen::BkkScreen(QWidget *parent)
 {
   setup_base_ui();
   updateWidgets();
+
+  timer_error_t timer_st = bkk_setup_timer_with_callback(
+    &alive_check_thread_ctx);
+  if (timer_st != TIMER_ERROR_NONE) {
+    log_error(CATEGORY, "Failed to setup alive check timer"); 
+  }
 }
 
 BkkScreen::~BkkScreen() {
   pthread_cancel(receive_thread_fd);
-  pthread_cancel(alive_check_thread_fd);
   pthread_join(receive_thread_fd, nullptr);
-  pthread_join(alive_check_thread_fd, nullptr);
+
+  (void) bkk_cleanup_timer_with_callback(&alive_check_thread_ctx);
 }
 
 ComponentReqHdl * BkkScreen::ensure_info_bar_handler() {
@@ -445,25 +378,6 @@ bkk_screen_error_code_t BkkScreen::start_receive_thread() {
 
   if (thread_create_res != 0) {
     log_error(CATEGORY, "Failed to create receive thread");
-    return BKK_SCREEN_ERROR_OTHER;
-  }
-
-  return BKK_SCREEN_ERROR_NONE;
-}
-
-
-bkk_screen_error_code_t BkkScreen::start_alive_check_thread() {
-  receive_thread_ctx_t * thread_ctx = new receive_thread_ctx_t;
-  thread_ctx->screen = this;
-
-  const int thread_create_res = pthread_create(
-    &alive_check_thread_fd, 
-    nullptr, 
-    alive_check_thread_func, 
-    thread_ctx);
-
-  if (thread_create_res != 0) {
-    log_error(CATEGORY, "Failed to create alive check thread");
     return BKK_SCREEN_ERROR_OTHER;
   }
 

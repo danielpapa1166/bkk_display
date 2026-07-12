@@ -101,7 +101,7 @@ protected:
   bool taken = false;
   int key = 0;
 
-  static constexpr uint8_t MAX_ALIVE_COUNTER = 3; 
+  static constexpr uint8_t MAX_ALIVE_COUNTER = 10; 
   uint8_t alive_counter = MAX_ALIVE_COUNTER; 
 
   const char * CATEGORY; 

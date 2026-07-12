@@ -29,9 +29,6 @@ bkk_screen_error_code_t ComponentReqHdl::handle_request(
   switch(request->header.cmd_id) {
     case BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT: {
 
-      log_info(CATEGORY, 
-        ("Received acquire request for component " 
-          + get_component_name()).c_str());
       const bkk_screen_error_code_t acquire_res 
         = acquire_component(request, response);
 
@@ -53,33 +50,12 @@ bkk_screen_error_code_t ComponentReqHdl::handle_request(
     }
 
     case BKK_SCREEN_COMMAND_PING: {
-
-      log_info(CATEGORY,
-        ("Received ping request for component " 
-          + get_component_name()).c_str());
-
       const bkk_screen_error_code_t ping_res 
         = handle_ping_request(request, response);
-
-      if (ping_res != BKK_SCREEN_ERROR_NONE) {
-        log_warning(CATEGORY,
-          ("Failed to handle ping for component " 
-            + get_component_name()
-            + ", error code: " 
-            + std::to_string(ping_res)).c_str());
-      }
-      else {
-        log_info(CATEGORY,
-          ("Ping handled successfully for component " 
-            + get_component_name()).c_str());
-      }
 
       return ping_res;
     }
     case BKK_SCREEN_COMMAND_RELEASE_COMPONENT: {
-      log_info(CATEGORY,
-        ("Received release request for component " 
-          + get_component_name()).c_str());
 
       const bkk_screen_error_code_t release_res
         = handle_release_request(request, response);
@@ -100,10 +76,6 @@ bkk_screen_error_code_t ComponentReqHdl::handle_request(
       return release_res;
     }
     case BKK_SCREEN_COMMAND_SET_DATA: {
-
-      log_info(CATEGORY, 
-        ("Received update request for component " 
-          + get_component_name()).c_str());
 
       alive_counter = MAX_ALIVE_COUNTER; // Reset alive counter on data update
       const bkk_screen_error_code_t update_res 
