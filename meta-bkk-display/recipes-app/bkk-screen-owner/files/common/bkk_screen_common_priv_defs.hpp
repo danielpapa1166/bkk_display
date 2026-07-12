@@ -11,6 +11,7 @@
 
 typedef enum {
   BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT = 0, 
+  BKK_SCREEN_COMMAND_PING,
   BKK_SCREEN_COMMAND_RELEASE_COMPONENT,
   BKK_SCREEN_COMMAND_SET_DATA,
   BKK_SCREEN_COMMAND_MAX
@@ -35,10 +36,21 @@ typedef struct {
 
 typedef struct {
   msg_header_t header;
+} bkk_screen_ping_req_t;
+
+typedef struct {
+  msg_header_t header;
   int key; 
   char clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN];
   bkk_screen_online_status_t online_status;
 } bkk_screen_set_info_bar_data_t;
+
+
+typedef struct {
+  msg_header_t header;
+  int key; 
+  char status_text[64];
+} bkk_screen_set_status_screen_data_t;
 
 typedef struct {
   msg_header_t header;
@@ -61,11 +73,13 @@ typedef struct {
 
 typedef union {
   msg_header_t header;
+  bkk_screen_ping_req_t ping; 
   uds_trx_buffer_t buffer; // general buffer for all requests and responses
 
   bkk_screen_acq_comp_req_t acquire_req;
   bkk_screen_acq_comp_resp_t acquire_resp;
   bkk_screen_set_info_bar_data_t set_info_bar_data;
+  bkk_screen_set_status_screen_data_t set_status_screen_data;
   bkk_screen_set_table_data_t set_table_data;
   bkk_screen_generic_resp_t generic_resp;
 
