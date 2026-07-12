@@ -135,6 +135,17 @@ bkk_screen_error_code_t InfoBarReqHdl::update_component(
     return BKK_SCREEN_ERROR_INVALID_PARAM;
   }
 
+  if(state != ComponentState::Acquired) {
+    response->header.component_id = request->header.component_id;
+    response->header.cmd_id = request->header.cmd_id;
+    response->generic_resp.error_code = BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
+    log_warning(CATEGORY,
+      ("Update request received for component "
+        + get_component_name()
+        + " which is not taken").c_str());
+    return BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
+  }
+
   memset(&config_data, 0, sizeof(config_data));
 
   config_data.key = request->set_info_bar_data.key;
