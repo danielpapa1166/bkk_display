@@ -24,6 +24,7 @@ target_link_libraries(bkk_screen_main_content
         bkk_uds_client
         PkgConfig::CJSON
         bkk-tee-client
+        bkk_utils_timing
 )
 
 
