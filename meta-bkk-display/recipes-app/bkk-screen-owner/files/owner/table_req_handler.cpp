@@ -1,5 +1,6 @@
 #include "table_req_handler.hpp"
 #include "bkk_screen_client/common_defs.hpp"
+#include <bkk_utils/bkk_utils_timing.h>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QMetaObject>
@@ -9,6 +10,39 @@
 #include <rbuflogd/logger.h>
 #include <algorithm>
 #include <utility>
+
+typedef enum {
+  VEHICLE_TYPE_UNKNOWN,
+  VEHICLE_TYPE_BUS,
+  VEHICLE_TYPE_TRAM,
+  VEHICLE_TYPE_TROLLEYBUS,
+  VEHICLE_TYPE_METRO,
+  VEHICLE_TYPE_SUBURB_RAIL,
+  VEHICLE_TYPE_RAIL,
+  VEHICLE_TYPE_FERRY,
+  VEHICLE_TYPE_CABLE_CAR,
+  VEHICLE_TYPE_FUNICULAR,
+  VEHICLE_TYPE_GONDOLA,
+  VEHICLE_TYPE_COACH,
+  VEHICLE_TYPE_BICYCLE,
+  VEHICLE_TYPE_CAR,
+  VEHICLE_TYPE_WALK,
+  VEHICLE_TYPE_LOCAL,
+  VEHICLE_TYPE_TRANSIT
+} vehicle_screen_type_t;
+
+
+int TableReqHdl::blink_screen_thread_func(void * arg) {
+  TableReqHdl * self = static_cast<TableReqHdl *>(arg);
+  if (self == nullptr) {
+    log_error("Blink", "Invalid argument for blink_screen_thread_func");
+    return -1;
+  }
+
+  self->blinkState = !self->blinkState;
+  self->qt_thread_refresh_ui();
+  return 0;
+}
 
 TableReqHdl::TableReqHdl(QWidget *parent)
   : ComponentReqHdl(parent) {
@@ -112,6 +146,10 @@ bkk_screen_error_code_t TableReqHdl::update_component(
     return BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND;
   }
 
+  if(!blink_timer_ctx.is_running) {
+    bkk_setup_timer_with_callback(&blink_timer_ctx);
+  }
+
   int row_count = request->set_table_data.num_arrivals;
   row_count = std::clamp(row_count, 0, BKK_SCREEN_MAX_ARRIVALS);
 
@@ -144,6 +182,12 @@ void TableReqHdl::qt_thread_clear_component() {
   key = -1; 
   alive_counter = MAX_ALIVE_COUNTER;
   arrivals.clear();
+
+  if(blink_timer_ctx.is_running) {
+    // stop timer thread if running: 
+    bkk_stop_timer_with_callback(&blink_timer_ctx);
+    bkk_join_timer_with_callback(&blink_timer_ctx);
+  }
 
   if (QThread::currentThread() == thread()) {
     if (arrivalsTable != nullptr) {
@@ -187,6 +231,76 @@ void TableReqHdl::qt_thread_clear_component() {
 
 
 
+QWidget *TableReqHdl::createLineIdCell(const arrival_info_t & arrival,
+    const QColor &backgroundColor) const {
+
+  static const QString defaultLineBoxColor = "#1e1e1e90"; 
+  auto *container = new QWidget(arrivalsTable);
+  container->setStyleSheet(QString("background-color: %1;").arg(backgroundColor.name()));
+  auto *layout = new QHBoxLayout(container);
+  layout->setContentsMargins(6, 0, 6, 0);
+  layout->setSpacing(6);
+  layout->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+
+  QString lineBoxColor;
+
+  switch (arrival.vehicle_type) {
+    case VEHICLE_TYPE_BUS:
+      lineBoxColor = "#009ee3"; 
+      break;
+    case VEHICLE_TYPE_TRAM:
+      lineBoxColor = "#e0bf00"; 
+      break;
+    case VEHICLE_TYPE_TROLLEYBUS: 
+      lineBoxColor = "#e41f18"; 
+      break;
+    case VEHICLE_TYPE_METRO:
+
+      if(strcmp(arrival.line, "M1") == 0) {
+        lineBoxColor = "#e0bf00"; 
+      } 
+      else if(strcmp(arrival.line, "M2") == 0) {
+        lineBoxColor = "#ff0000"; 
+      } 
+      else if(strcmp(arrival.line, "M3") == 0) {
+        lineBoxColor = "#005ca5"; 
+      } 
+      else if(strcmp(arrival.line, "M4") == 0) {
+        lineBoxColor = "#4ca22f";
+      } 
+      else {
+        lineBoxColor = defaultLineBoxColor; // default color
+      }
+      break;
+
+    default:
+      lineBoxColor = defaultLineBoxColor; 
+      break;
+  }
+
+
+  auto *lineBox = new QWidget(container);
+  //lineBox->setFixedSize(60, 60);
+  lineBox->setMinimumSize(60, 10);
+  lineBox->setStyleSheet(QString(
+      "background-color: %1; border-radius: 8px; border: none;").arg(lineBoxColor));
+
+  auto *lineBoxLayout = new QHBoxLayout(lineBox);
+  lineBoxLayout->setContentsMargins(10, 3, 10, 3);
+  lineBoxLayout->setSpacing(0);
+
+  auto *lineLabel = new QLabel(QString::fromStdString(arrival.line), lineBox);
+  lineLabel->setAlignment(Qt::AlignCenter);
+  lineLabel->setStyleSheet("color: #ffffff; background: transparent;");
+
+  lineBoxLayout->addWidget(lineLabel);
+  layout->addWidget(lineBox); 
+
+  return container;
+
+}
+
+
 
 QWidget *TableReqHdl::createDepartureCell(
   int departsInMin, const QColor &backgroundColor) const {
@@ -201,7 +315,7 @@ QWidget *TableReqHdl::createDepartureCell(
   auto *dot = new QLabel(container);
   dot->setFixedSize(8, 8);
 
-  bool blinkOn = true; 
+  bool blinkOn = blinkState;
   QString dotColor = "transparent";
   if (blinkOn) {
     if (departsInMin < kBlinkThresholdRed) {
@@ -243,23 +357,19 @@ void TableReqHdl::populateTable() {
 
     // stop name (truncated to x characters):
     auto *stopItem = new QTableWidgetItem(
-        QString::fromUtf8(stationArrival.station).left(16));
+        QString::fromUtf8(stationArrival.station).left(numOfStationCharsToDisplay));
     stopItem->setTextAlignment(Qt::AlignCenter);
     stopItem->setBackground(backgroundColor);
     stopItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 0, stopItem);
 
     // line number: 
-    auto *lineItem = new QTableWidgetItem(
-      QString::fromUtf8(stationArrival.line));
-    lineItem->setTextAlignment(Qt::AlignCenter);
-    lineItem->setBackground(backgroundColor);
-    lineItem->setForeground(Qt::white);
-    arrivalsTable->setItem(row, 1, lineItem);
+    arrivalsTable->setCellWidget(row, 1,
+      createLineIdCell(stationArrival, backgroundColor));
 
     // destination:
     auto *destinationItem = new QTableWidgetItem(
-      QString::fromUtf8(stationArrival.destination).left(16));
+      QString::fromUtf8(stationArrival.destination).left(numOfDestinationCharsToDisplay));
     destinationItem->setBackground(backgroundColor);
     destinationItem->setForeground(Qt::white);
     arrivalsTable->setItem(row, 2, destinationItem);
