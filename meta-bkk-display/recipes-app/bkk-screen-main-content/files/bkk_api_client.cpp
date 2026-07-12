@@ -1,9 +1,12 @@
 #include "bkk_api_client.hpp"
-#include <bkk_uds/bkk_uds_client.h>
+#include "bkk_uds/bkk_uds_client.h"
 #include "bkk_screen_client/common_defs.hpp"
-#include <cstring>
-#include "rbuflogd/producer.h"
+#include "rbuflogd/logger.h"
 #include "bkk_tee/bkk_tee_client.h"
+#include "cJSON.h"
+
+#include <cstring>
+#include <fstream>
 
 namespace api_client {
 
@@ -153,13 +156,6 @@ int fetch_arrivals(
         arrivalInfo.departure_time = response.arrivals[arrivalIdx].departs_in_min;
         arrivals.push_back(arrivalInfo);
 
-        printf(
-          "Fetched arrival: station=%s, line=%s, destination=%s, departure_time=%d\n", 
-          arrivalInfo.station, 
-          arrivalInfo.line, 
-          arrivalInfo.destination, 
-          arrivalInfo.departure_time
-        );
       }
     } 
     else {

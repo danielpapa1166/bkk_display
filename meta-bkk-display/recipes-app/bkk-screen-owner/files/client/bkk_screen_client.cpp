@@ -112,10 +112,59 @@ bkk_screen_error_code_t bkk_screen_client_acquire_component(
   return BKK_SCREEN_ERROR_NONE;
 }
 
+bkk_screen_error_code_t bkk_screen_client_ping(int key, bkk_screen_component_id_t component_id) {
+  int sock_fd = -1;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
+  }
 
-bkk_screen_error_code_t bkk_screen_client_release_screen_component(int key) {
-  (void)key; // Placeholder for future implementation
-  return BKK_SCREEN_ERROR_NONE;
+  bkk_screen_uds_message_t request {};
+  request.ping.header.cmd_id = BKK_SCREEN_COMMAND_PING;
+  request.ping.header.component_id = component_id;
+
+  bkk_screen_uds_message_t response {};
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
+    sock_fd,
+    &request,
+    sizeof(request),
+    &response,
+    sizeof(response));
+  close(sock_fd);
+
+  if (uds_res != BKK_SCREEN_ERROR_NONE) {
+    return uds_res;
+  }
+
+  if(response.header.cmd_id != BKK_SCREEN_COMMAND_PING) {
+    return BKK_SCREEN_ERROR_RESPONSE_INVALID;
+  }
+
+  return response.generic_resp.error_code;
+}
+
+
+bkk_screen_error_code_t bkk_screen_client_release_screen_component(
+    int key, bkk_screen_component_id_t component_id) {
+
+  int sock_fd = -1;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
+  }
+
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_RELEASE_COMPONENT;
+  request.header.component_id = component_id;
+  bkk_screen_uds_message_t response {};
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
+    sock_fd,
+    &request,
+    sizeof(request),
+    &response,
+    sizeof(response));
+  close(sock_fd);
+  return response.generic_resp.error_code;
 }
 
 bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
@@ -158,13 +207,50 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
   return BKK_SCREEN_ERROR_NONE;
 }
 
+bkk_screen_error_code_t bkk_screen_client_set_status_screen_data(
+    int key, const char * status_text, size_t status_text_len) {
+
+  if(status_text == nullptr || status_text_len == 0) {
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
+  }
+
+  int sock_fd = -1;
+  const int uds_open_res = uds_open(&sock_fd);
+  if (uds_open_res != 0) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
+  }
+
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_DATA;
+  request.header.component_id = BKK_SCREEN_COMPONENT_STATUS_SCREEN;
+  request.set_status_screen_data.key = key;
+
+  // Ensure we don't exceed the maximum length of the status text
+  size_t copy_len = std::min(status_text_len, sizeof(request.set_status_screen_data.status_text) - 1);
+  strncpy(request.set_status_screen_data.status_text, status_text, copy_len);
+  request.set_status_screen_data.status_text[copy_len] = '\0'; // Null-terminate
+
+  bkk_screen_uds_message_t response {};
+  const bkk_screen_error_code_t uds_res = uds_send_recv(
+    sock_fd,
+    &request,
+    sizeof(request),
+    &response,
+    sizeof(response));
+  close(sock_fd);
+
+  if (uds_res != BKK_SCREEN_ERROR_NONE) {
+    return uds_res;
+  }
+
+  // todo handle response 
+
+  return BKK_SCREEN_ERROR_NONE;
+}
+
 
 bkk_screen_error_code_t bkk_screen_client_set_table_data(
     int key, std::vector<arrival_info_t>& arrivals) {
-
-  (void)  key; // Placeholder for future implementation
-  (void)  arrivals; // Placeholder for future implementation
-
 
   int sock_fd = -1;
   const int uds_open_res = uds_open(&sock_fd);

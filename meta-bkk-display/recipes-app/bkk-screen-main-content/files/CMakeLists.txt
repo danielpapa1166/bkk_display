@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(bkk-screen-main-content LANGUAGES C CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include(GNUInstallDirs)
 
 find_package(PkgConfig REQUIRED)
