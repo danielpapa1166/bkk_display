@@ -149,15 +149,34 @@
       "after_exited": "wpa_supplicant:normal"
     },
     {
-      "name": "bkk-qt-app",
-      "binary": "/usr/bin/bkk-qt-app",
+      "name": "bkk-screen-owner", 
+      "binary": "/usr/bin/bkk-screen-owner",
       "phases": ["NORMAL"],
       "environment": [
         "QT_QPA_PLATFORM=eglfs",
         "QT_QPA_EGLFS_HIDECURSOR=1"
       ],
-      "args": ["-k", "/etc/bkk-api/api-key.txt"],
       "after_started": "bkk_uds_server"
+    },
+    {
+      "name": "screen-setup-time",
+      "binary": "/bin/sleep",
+      "args": ["2"],
+      "phases": ["NORMAL"],
+      "after_started": "bkk-screen-owner"
+    }, 
+    {
+      "name": "bkk-screen-info-bar",
+      "binary": "/usr/bin/bkk_screen_info_bar",
+      "phases": ["NORMAL"],
+      "after_exited": "screen-setup-time"
+    }, 
+    {
+      "name": "bkk-screen-main-content",
+      "binary": "/usr/bin/bkk_screen_main_content",
+      "phases": ["NORMAL"],
+      "after_exited": "screen-setup-time"
     }
+
   ]
 }
