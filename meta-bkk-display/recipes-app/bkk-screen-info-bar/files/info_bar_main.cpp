@@ -49,6 +49,8 @@ int main() {
     res = bkk_screen_client_set_info_bar_data(
       key, online_status, current_time.c_str());
 
+    bkk_screen_client_ping(key, BKK_SCREEN_COMPONENT_INFO_BAR);
+
     if (res != BKK_SCREEN_ERROR_NONE) {
       log_error("Main", 
         ("Failed to set info bar data, error code: " 
