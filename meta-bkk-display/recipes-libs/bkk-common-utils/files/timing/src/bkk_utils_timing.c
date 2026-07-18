@@ -55,24 +55,38 @@ timer_error_t bkk_wait_on_timer(timer_config_t * const config) {
     return TIMER_ERROR_INVALID_CONFIG;
   }
 
-  fd_set readfds;
-  FD_ZERO(&readfds);
-  FD_SET(config->timer_fd, &readfds);
+  int res = -1;
+  while (1) {
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(config->timer_fd, &readfds);
 
-  int res = select(
-    config->timer_fd + 1, 
-    &readfds, 
-    NULL, 
-    NULL, 
-    NULL);
+    res = select(
+      config->timer_fd + 1,
+      &readfds,
+      NULL,
+      NULL,
+      NULL);
+
+    if (res < 0 && errno == EINTR) {
+      continue;
+    }
+    break;
+  }
 
   if (res < 0) {
     return TIMER_ERROR_SELECT_FAILED;
   }
 
   uint64_t expirations = 0;
-  ssize_t n = read(config->timer_fd, &expirations, sizeof(expirations));
-  if (n != (ssize_t)sizeof(expirations)) {
+  while (1) {
+    const ssize_t n = read(config->timer_fd, &expirations, sizeof(expirations));
+    if (n == (ssize_t)sizeof(expirations)) {
+      break;
+    }
+    if (n < 0 && errno == EINTR) {
+      continue;
+    }
     return TIMER_ERROR_READ_FAILED;
   }
 
