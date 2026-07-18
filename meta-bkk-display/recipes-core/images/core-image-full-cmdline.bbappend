@@ -9,4 +9,5 @@ IMAGE_INSTALL:append = "        \
     optee-test                  \
     bkk-tee                     \
     valgrind                    \
+    bkk-screen-fb-playground    \
 "
