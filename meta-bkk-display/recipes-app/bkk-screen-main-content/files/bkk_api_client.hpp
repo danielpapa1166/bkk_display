@@ -9,12 +9,19 @@
 #include <vector>
 
 namespace api_client {
+
+  typedef struct {
+    int any_error; 
+    std::string local_server_status; 
+    std::string remote_server_status;
+  } api_fetch_status_t;
+
   int load_api_key(std::string& api_key);
   int load_station_ids(
     std::vector<std::string>& stationIdList, 
     std::vector<std::string>& stationNameList
   );
-  int fetch_arrivals(
+  api_fetch_status_t fetch_arrivals(
     std::string& apiKey,
     std::vector<std::string>& stationIdList,
     std::vector<std::string>& stationNameList,

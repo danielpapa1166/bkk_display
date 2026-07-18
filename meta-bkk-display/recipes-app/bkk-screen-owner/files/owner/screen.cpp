@@ -110,7 +110,7 @@ BkkScreen::BkkScreen(QWidget *parent)
     &alive_check_thread_ctx);
   if (timer_st != TIMER_ERROR_NONE) {
     log_error(CATEGORY, "Failed to setup alive check timer"); 
-  }
+  }  
 }
 
 BkkScreen::~BkkScreen() {

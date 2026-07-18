@@ -10,6 +10,26 @@
 
 namespace api_client {
 
+static std::string bkk_client_status_to_string(bkk_client_status_t status) {
+  switch (status) {
+    case client_OK:
+      return "OK";
+    case client_InvalidArguments:
+      return "Invalid Arguments";
+    case client_SocketError:
+      return "Socket Error";
+    case client_ConnectionFailed:
+      return "Connection Failed";
+    case client_SendFailed:
+      return "Send Failed";
+    case client_ReceiveFailed:
+      return "Receive Failed";
+    default:
+      return "Unknown Status";
+  }
+}
+
+
 int load_api_key(std::string& api_key) {
 
   char key_buffer[BKK_TEE_MAX_OBJ_ID_LEN];
@@ -106,13 +126,18 @@ int load_station_ids(
 }
 
 
-int fetch_arrivals(
+api_fetch_status_t fetch_arrivals(
     std::string& api_key,
     std::vector<std::string>& stationIdList,
     std::vector<std::string>& stationNameList,
     std::vector<arrival_info_t>& arrivals
   ) {
 
+  api_fetch_status_t fetch_status = { 
+    0, 
+    "", 
+    ""
+  };
 
   bool fetchedAny = false;
   for (size_t i = 0; i < stationIdList.size(); i++) {
@@ -127,42 +152,64 @@ int fetch_arrivals(
 
     const int res = send_bkk_uds_query(&request, &response);
     if(res == 0) {
-      fetchedAny = true;
-      for(int arrivalIdx = 0; arrivalIdx < response.number_of_arrivals; arrivalIdx++) {
 
-        // copy fetched arrivals: 
+      if(response.status == bkk_api_status::Ok) {
+        fetchedAny = true;
+        for(int arrivalIdx = 0; arrivalIdx < response.number_of_arrivals; arrivalIdx++) {
 
-        arrival_info_t arrivalInfo = { 0 };
+          // copy fetched arrivals: 
 
-        arrivalInfo.foo = 0;
-        strncpy(
-          arrivalInfo.station, 
-          stationName, 
-          BKK_SCREEN_STATION_NAME_MAX_LEN - 1
-        );
+          arrival_info_t arrivalInfo = { 0 };
 
-        strncpy(
-          arrivalInfo.line, 
-          response.arrivals[arrivalIdx].line_id, 
-          BKK_SCREEN_LINE_NAME_MAX_LEN - 1
-        );
+          arrivalInfo.foo = 0;
+          strncpy(
+            arrivalInfo.station, 
+            stationName, 
+            BKK_SCREEN_STATION_NAME_MAX_LEN - 1
+          );
 
-        arrivalInfo.vehicle_type = (int)response.arrivals[arrivalIdx].vehicle_type;
+          strncpy(
+            arrivalInfo.line, 
+            response.arrivals[arrivalIdx].line_id, 
+            BKK_SCREEN_LINE_NAME_MAX_LEN - 1
+          );
+
+          arrivalInfo.vehicle_type = (int)response.arrivals[arrivalIdx].vehicle_type;
 
 
-        strncpy(
-          arrivalInfo.destination, 
-          response.arrivals[arrivalIdx].destination, 
-          BKK_SCREEN_DESTINATION_NAME_MAX_LEN - 1
-        );
+          strncpy(
+            arrivalInfo.destination, 
+            response.arrivals[arrivalIdx].destination, 
+            BKK_SCREEN_DESTINATION_NAME_MAX_LEN - 1
+          );
 
-        arrivalInfo.departure_time = response.arrivals[arrivalIdx].departs_in_min;
-        arrivals.push_back(arrivalInfo);
+          arrivalInfo.departure_time = response.arrivals[arrivalIdx].departs_in_min;
+          arrivals.push_back(arrivalInfo);
 
+        }
+      }
+      else {
+        fetch_status.any_error = 1;
+        fetch_status.local_server_status = bkk_client_status_to_string((bkk_client_status_t)res);
+        fetch_status.remote_server_status = error_code_to_string((bkk_api_status_t)res);
+
+        return fetch_status;
       }
     } 
     else {
+      // handle error: 
+      log_error("API Fetch", (
+        "Failed to fetch arrivals for station ID: " 
+        + stationId 
+        + ", error code: " 
+        + std::to_string(res)).c_str()
+      );
 
+      fetch_status.any_error = 1;
+      fetch_status.local_server_status = bkk_client_status_to_string((bkk_client_status_t)res);
+      fetch_status.remote_server_status = error_code_to_string((bkk_api_status_t)res);
+
+      return fetch_status;
     }
   }
 
@@ -176,9 +223,7 @@ int fetch_arrivals(
   else {
     log_warning("API Fetch", "No arrival data fetched from API");
   }
-
-  return fetchedAny ? 0 : -1;
-
-
+  
+  return fetch_status;
 }
 } // namespace api_client
