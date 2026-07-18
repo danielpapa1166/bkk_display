@@ -14,6 +14,8 @@ add_library(bkk-tee SHARED IMPORTED)
 add_executable(bkk_screen_main_content
     content_main.cpp
     bkk_api_client.cpp
+    screen_context.cpp 
+    api_context.cpp
 )
 
 

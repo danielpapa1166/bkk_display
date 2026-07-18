@@ -6,6 +6,10 @@ SRC_URI = "file://CMakeLists.txt        \
            file://content_main.cpp      \
            file://bkk_api_client.cpp    \
            file://bkk_api_client.hpp    \
+           file://screen_context.cpp   \
+           file://screen_context.hpp   \
+           file://api_context.cpp       \
+           file://api_context.hpp       \
            "
 
 S = "${WORKDIR}"
