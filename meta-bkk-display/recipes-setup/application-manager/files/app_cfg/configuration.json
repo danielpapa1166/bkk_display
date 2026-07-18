@@ -152,10 +152,7 @@
       "name": "bkk-screen-owner", 
       "binary": "/usr/bin/bkk-screen-owner",
       "phases": ["NORMAL"],
-      "environment": [
-        "QT_QPA_PLATFORM=eglfs",
-        "QT_QPA_EGLFS_HIDECURSOR=1"
-      ],
+      "args": ["-platform", "linuxfb"],
       "after_started": "bkk_uds_server"
     },
     {
