@@ -39,11 +39,18 @@
       "after_started": "network-manager"
     },
     {
+      "name": "screen_owner_delay", 
+      "binary": "/bin/sleep",
+      "args": ["2"],
+      "phases": ["NORMAL"],
+      "after_started": "bkk_uds_server"
+    },
+    {
       "name": "bkk-screen-owner", 
       "binary": "/usr/bin/bkk-screen-owner",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
       "args": ["-platform", "linuxfb"],
-      "after_started": "bkk_uds_server"
+      "after_started": "screen_owner_delay"
     },
     {
       "name": "screen-setup-time",
