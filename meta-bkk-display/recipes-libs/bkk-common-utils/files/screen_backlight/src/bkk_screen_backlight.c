@@ -14,7 +14,7 @@ int set_screen_pwr(int enable) {
     return -1;
   }
 
-  const int mode = enable ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+  const int mode = enable ? FB_BLANK_UNBLANK : FB_BLANK_NORMAL;
   const int result = ioctl(framebuffer, FBIOBLANK, mode);
   close(framebuffer);
   return result;
