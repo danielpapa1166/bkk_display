@@ -29,6 +29,11 @@ scp -r "$MAIN_CONTENT_PATH"/package/usr/bin/bkk_screen_main_content "$TARGET":/"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_timing.so "$TARGET":/"$LIB_PATH"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_timing.so.1 "$TARGET":/"$LIB_PATH"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_timing.so.1.0.0 "$TARGET":/"$LIB_PATH"
+
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so.1 "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so.1.0.0 "$TARGET":/"$LIB_PATH"
+
 scp -r "$UTILS_LIB_PATH"/package/usr/include/bkk_utils "$TARGET":/"$INC_PATH"
 
 

@@ -6,8 +6,30 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
+
+static int set_screen_pwr(int enable) {
+  const int framebuffer = open("/dev/fb0", O_RDWR | O_CLOEXEC);
+  if (framebuffer < 0) {
+    return -1;
+  }
+
+  const int mode = enable ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+  const int result = ioctl(framebuffer, FBIOBLANK, mode);
+  close(framebuffer);
+  return result;
+}
+
+
 int main()
 {
+
+  while(1) {
+    set_screen_pwr(1);
+    sleep(5);
+    set_screen_pwr(0);
+    sleep(5);
+  }
+
   int fbfd;
   char *fbp;
   struct fb_var_screeninfo vinfo;

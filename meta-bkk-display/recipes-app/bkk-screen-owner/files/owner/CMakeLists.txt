@@ -21,6 +21,7 @@ add_executable(bkk-screen-owner
 	component_req_handler.cpp
 	table_req_handler.cpp
 	status_screen_req_handler.cpp
+	user_touch_handler.cpp
 	resources.qrc
 )
 
@@ -42,6 +43,7 @@ target_link_libraries(bkk-screen-owner PRIVATE
 	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
 	bkk_utils_timing
+	bkk_screen_backlight
 )
 
 install(TARGETS bkk-screen-owner RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
