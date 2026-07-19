@@ -5,6 +5,7 @@
 #include "component_req_handler.hpp"
 #include "status_screen_req_handler.hpp"
 #include "table_req_handler.hpp"
+#include "user_touch_handler.hpp"
 
 #include "bkk_screen_common_priv_defs.hpp"
 
@@ -100,6 +101,59 @@ int BkkScreen::alive_check(void * ctx) {
 }
 
 
+int BkkScreen::screen_pwr_off_callback(void * ctx) {
+  static const char * const CAT = "ScrPwrOff";
+  BkkScreen * self = static_cast<BkkScreen *>(ctx);
+  if (self == nullptr) {
+    log_error(CAT, "Screen power off callback context is null");
+    return -1;
+  }
+
+  log_debug(CAT, "Screen power off timer expired, turning screen off");
+  SCREEN_PWR_OFF();
+
+  (void) bkk_stop_timer_with_callback(&self->screen_pwr_off_timer_ctx);
+  (void) bkk_cleanup_timer_with_callback(&self->screen_pwr_off_timer_ctx);
+
+  return 0;
+}
+
+void BkkScreen::screen_pwr_on_callback(ts_event_en event, void * ctx) {
+  (void) event; 
+
+  // handle only release event for now, here we want to turn the screen on when the user releases the touch
+  if (event == TOUCHSCREEN_EVENT_RELEASED) {
+    static const char * const CAT = "ScrPwrOn";
+    BkkScreen * self = static_cast<BkkScreen *>(ctx);
+    if (self == nullptr) {
+      log_error(CAT, "Screen power on callback context is null");
+      return;
+    }
+  
+    log_debug(CAT, "Screen power on timer expired, turning screen on");
+    SCREEN_PWR_ON();
+  
+    self->updateWidgets(); 
+
+    if(self->screen_pwr_off_timer_ctx.is_running) {
+      (void) bkk_stop_timer_with_callback(&self->screen_pwr_off_timer_ctx);
+      (void) bkk_cleanup_timer_with_callback(&self->screen_pwr_off_timer_ctx);
+    }
+    // restart the screen power off timer
+    timer_error_t timer_st = bkk_setup_timer_with_callback(
+      &self->screen_pwr_off_timer_ctx);
+    if (timer_st != TIMER_ERROR_NONE) {
+      log_error(CAT, "Failed to setup screen power off timer");
+    }
+  }
+  else {
+    // handle everything else later
+  }
+
+  return;
+}
+
+
 BkkScreen::BkkScreen(QWidget *parent)
     : QWidget(parent)
 {
@@ -110,7 +164,15 @@ BkkScreen::BkkScreen(QWidget *parent)
     &alive_check_thread_ctx);
   if (timer_st != TIMER_ERROR_NONE) {
     log_error(CATEGORY, "Failed to setup alive check timer"); 
-  }  
+  } 
+  
+  timer_st = bkk_setup_timer_with_callback(
+    &screen_pwr_off_timer_ctx);
+  if (timer_st != TIMER_ERROR_NONE) {
+    log_error(CATEGORY, "Failed to setup screen power off timer");
+  }
+
+  touch_handler = new UserTouchHandler(screen_pwr_on_callback, this); 
 }
 
 BkkScreen::~BkkScreen() {
@@ -118,6 +180,7 @@ BkkScreen::~BkkScreen() {
   pthread_join(receive_thread_fd, nullptr);
 
   (void) bkk_cleanup_timer_with_callback(&alive_check_thread_ctx);
+  (void) bkk_cleanup_timer_with_callback(&screen_pwr_off_timer_ctx);
 }
 
 ComponentReqHdl * BkkScreen::ensure_info_bar_handler() {
