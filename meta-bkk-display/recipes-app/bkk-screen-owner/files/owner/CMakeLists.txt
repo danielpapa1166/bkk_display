@@ -42,6 +42,7 @@ target_link_libraries(bkk-screen-owner PRIVATE
 	rbuflogd_producer
 	PkgConfig::ADS7846_CONTROLLER
 	bkk_utils_timing
+	bkk_screen_backlight
 )
 
 install(TARGETS bkk-screen-owner RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
