@@ -11,4 +11,5 @@ IMAGE_INSTALL:append = "        \
     valgrind                    \
     bkk-screen-fb-playground    \
     network-manager             \
+    network-manager-dev         \
 "
