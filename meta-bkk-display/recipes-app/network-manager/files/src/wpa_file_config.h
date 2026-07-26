@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdint.h>
 
+#define SSID_MAX_LEN    128
+#define PSK_MAX_LEN     128 
+
 // Default paths and filenames - AP mode (runtime, volatile)
 #define WPA_CFG_PATH_DEFAULT             "/run"
 #define WPA_CFG_NAME_DEFAULT             "wpa_supplicant-ap.conf"

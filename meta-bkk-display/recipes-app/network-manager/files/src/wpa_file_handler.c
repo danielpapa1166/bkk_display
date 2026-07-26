@@ -165,9 +165,9 @@ wifi_cred_load_status_t load_wifi_credentials(
   psk_out[psk_len - 1] = '\0';
   cJSON_Delete(root);
 
-  snprintf(msg_buf, sizeof(msg_buf),
+  /*snprintf(msg_buf, sizeof(msg_buf),
     "load_wifi_credentials: loaded SSID '%s' from %s", ssid_out, json_path);
-  log_info("wpa_cred", msg_buf);
+  log_info("wpa_cred", msg_buf);*/
   return WIFI_CRED_LOAD_SUCCESS;
 }
 
@@ -183,8 +183,8 @@ wpa_file_config_stat_t write_wpa_config(wpa_config_type_t config_type) {
     case WPA_CONFIG_WIFI_CLIENT:
       config = &wpa_wifi_config;
 
-      char ssid[128];
-      char psk[128];
+      char ssid[SSID_MAX_LEN];
+      char psk[PSK_MAX_LEN];
       wifi_cred_load_status_t load_status = load_wifi_credentials(
         WPA_WIFI_CREDENTIALS_JSON,
         ssid, sizeof(ssid),

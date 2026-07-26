@@ -7,7 +7,9 @@
 #include "wpa_file_handler.h"
 #include "networkd_status.h"
 #include "supplicant_handler.h"
-
+#include "wpa_file_config.h"
+#include <bkk_utils/bkk_dbus_broadcast_server.h>
+#include <network_manager_pub.h>
 // IP: networkctl status wlan0
 
 
@@ -38,14 +40,19 @@ cat /tmp/network_manager.valgrind
 // local function definitions:
 // ----------------------------------------------------------------------------
 
+static wpa_config_type_t load_network_mode(void);
 static int init_clearall(void);
 static int switch_network_mode(wpa_config_type_t config_type); 
+static void broadcast_network_mode_change(wpa_config_type_t new_mode);
+static int dbus_client_handler(
+  const char *sigvalue, size_t sigvalue_len, void *user_data);
 
 // ----------------------------------------------------------------------------
 // local variable definitions:
 // ----------------------------------------------------------------------------
 wpa_config_type_t current_network_mode = WPA_CONFIG_UNKNOWN;
-
+bc_server_t bc_server;  // Broadcast server instance
+bkk_dbus_listener_t bc_listener;  // Broadcast listener instance
 
 
 int main(int argc, char *argv[]) {
@@ -56,62 +63,47 @@ int main(int argc, char *argv[]) {
   rbuflogd_logger_init("NetMngr");
   log_info("Init", "Network Manager started successfully.");
 
-  if(argc < 2) {
-    log_error("Init", "Missing argument: network_mode=<value>");
-    return -1;
-  }
+  // Initialize broadcast server
+  const int bc_init_res = init_broadcast_server(
+    NETWORK_MANAGER_DBUS_NAME,
+    &bc_listener,
+    dbus_client_handler,
+    &bc_server,
+    &bc_server
+  );
 
 
-  if(strcmp(argv[1], "network_mode=ap") == 0) {
-    config_type = WPA_CONFIG_ACCESS_POINT;
-  } 
-  else if(strcmp(argv[1], "network_mode=wifi") == 0) {
-    config_type = WPA_CONFIG_WIFI_CLIENT;
-  } 
-  else {
-    log_error("Init", "Invalid argument: network_mode=<value>");
-    return -1;
-  }
+  config_type = load_network_mode();
+  printf("Switching network mode to: %s\n", 
+    (config_type == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
 
-  printf("Network Manager starting with mode: %s\n", argv[1]);
-
-  printf("Killing any existing wpa_supplicant processes...\n");
-  kill_all_supplicant_processes();
-
-  printf("Clearing all existing WPA config files...\n");
-  res = init_clearall();
-  if(res != 0) {
-    log_error("Init", "Failed to clear existing network mode.");
-    return -1;
-  }
-
-  printf("Switching network mode to: %s\n", argv[1]);
   res = switch_network_mode(config_type);
   if(res != 0) {
     log_error("Init", "Failed to switch network mode.");
     return -1;
   }
 
+  printf("Network Manager started successfully in mode: %s\n", 
+    (config_type == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
 
-  char wpa_cfg_path[PATH_MAX];
-  char network_cfg_path[PATH_MAX];
-  res = get_wpa_config_paths(
-    config_type,
-    wpa_cfg_path, sizeof(wpa_cfg_path),
-    network_cfg_path, sizeof(network_cfg_path));
-  if(res != WPA_FILE_CONFIG_SUCCESS) {
-    log_error("Init", "Failed to get WPA config paths.");
-    return -1;
+
+
+  while(1) {
+    const wpa_config_type_t new_config_type = load_network_mode();
+    if(new_config_type != current_network_mode) {
+      printf("Detected network mode change. Switching to: %s\n",
+        (new_config_type == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
+      res = switch_network_mode(new_config_type);
+      if(res != 0) {
+        log_error("Sw Net", "Failed to switch network mode.");
+      }
+      current_network_mode = new_config_type;
+
+      // Broadcast the network mode change to clients
+      broadcast_network_mode_change(new_config_type);
+    }
+    sleep(2);
   }
-
-  printf("Starting wpa_supplicant with config: %s\n", wpa_cfg_path);
-  res = start_supplicant(wpa_cfg_path, "wlan0");
-  if(res != 0) {
-    log_error("Init", "Failed to start wpa_supplicant.");
-    return -1;
-  }
-
-  printf("Network Manager started successfully in mode: %s\n", argv[1]);
   
 
   return 0;
@@ -121,6 +113,26 @@ int main(int argc, char *argv[]) {
 // ----------------------------------------------------------------------------
 // local function implementations
 // ----------------------------------------------------------------------------
+
+static wpa_config_type_t load_network_mode(void) {
+
+  char ssid[SSID_MAX_LEN];
+  char psk[PSK_MAX_LEN];
+
+
+  const wifi_cred_load_status_t load_wifi_cred_stat = load_wifi_credentials(
+    WPA_WIFI_CREDENTIALS_JSON,
+    ssid, sizeof(ssid),
+    psk,  sizeof(psk));
+
+  if (load_wifi_cred_stat == WIFI_CRED_LOAD_SUCCESS) {
+    return WPA_CONFIG_WIFI_CLIENT;
+  }
+  else {
+    return WPA_CONFIG_ACCESS_POINT;
+  }
+}
+
 
 static int init_clearall(void) {
   log_info("Init", "Clearing all existing WPA config files.");
@@ -150,12 +162,19 @@ static int switch_network_mode(wpa_config_type_t config_type) {
     return 0;
   }
 
+  // Check if systemd-networkd is active before proceeding
   const int networkd_status = networkd_check_status(30);
   if (networkd_status != 0) {
     log_error("Sw Net", "systemd-networkd is not active.");
     return -1;
   }
 
+  printf("Clearing all existing WPA config files...\n");
+  int res = init_clearall();
+  if(res != 0) {
+    log_error("Init", "Failed to clear existing network mode.");
+    return -1;
+  }
 
   // clear existing config files for the given config_type
   if(current_network_mode != WPA_CONFIG_UNKNOWN) {
@@ -168,12 +187,14 @@ static int switch_network_mode(wpa_config_type_t config_type) {
     }
   }
 
+  // write new config files for the given config_type
   const wpa_file_config_stat_t write_status = write_wpa_config(config_type);
   if (write_status != WPA_FILE_CONFIG_SUCCESS) {
     log_error("Sw Net", "Failed to write WPA config files.");
     return -1;
   }
 
+  // reload systemd-networkd to apply the new configuration
   const int reload_status = reload_networkd_config();
   if (reload_status != 0) {
     log_error("Sw Net", "Failed to reload systemd-networkd config.");
@@ -182,6 +203,74 @@ static int switch_network_mode(wpa_config_type_t config_type) {
 
   current_network_mode = config_type;
   log_info("Sw Net", "Network mode switched successfully.");
+
+
+  // Start wpa_supplicant with the new configuration
+  char wpa_cfg_path[PATH_MAX];
+  char network_cfg_path[PATH_MAX];
+  int get_res = get_wpa_config_paths(
+    config_type,
+    wpa_cfg_path, sizeof(wpa_cfg_path),
+    network_cfg_path, sizeof(network_cfg_path));
+  if(get_res != WPA_FILE_CONFIG_SUCCESS) {
+    log_error("Init", "Failed to get WPA config paths.");
+    return -1;
+  }
+
+  printf("Stopping any existing wpa_supplicant processes...\n");
+  kill_all_supplicant_processes(); 
+
+  // Start wpa_supplicant with the new configuration
+  printf("Starting wpa_supplicant with config: %s\n", wpa_cfg_path);
+  int start_res = start_supplicant(wpa_cfg_path, "wlan0");
+  if(start_res != 0) {
+    log_error("Init", "Failed to start wpa_supplicant.");
+    return -1;
+  }
+
+
   return 0;
 }
 
+
+static void broadcast_network_mode_change(wpa_config_type_t new_mode) {
+  bc_data_un data;
+  data.network_manager_data.mode = (new_mode == WPA_CONFIG_ACCESS_POINT) 
+    ? NETWORK_MANAGER_MODE_ACCESS_POINT 
+    : NETWORK_MANAGER_MODE_WIFI_CLIENT;
+
+
+  serve_data(
+    &bc_server,
+    &data.bc_server_data
+  );
+
+  printf("Broadcasted network mode change: %s\n", 
+    (new_mode == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
+}
+
+
+static int dbus_client_handler(
+    const char *sigvalue, size_t sigvalue_len, void *user_data) {
+
+  (void) user_data; 
+
+  bc_client_request_t* received_data = (bc_client_request_t*)sigvalue;
+  bc_server_t *server = (bc_server_t*)user_data;
+
+
+  // do something with the data: 
+  printf("Received request: %s\n", received_data->request);
+
+  bc_data_un data;
+  data.network_manager_data.mode = (current_network_mode == WPA_CONFIG_ACCESS_POINT) 
+    ? NETWORK_MANAGER_MODE_ACCESS_POINT 
+    : NETWORK_MANAGER_MODE_WIFI_CLIENT;
+
+
+  serve_data(
+    server,
+    &data.bc_server_data
+  );
+  return 0;
+}
