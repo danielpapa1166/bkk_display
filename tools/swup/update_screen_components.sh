@@ -34,6 +34,10 @@ scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so "$TARGET":/"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so.1 "$TARGET":/"$LIB_PATH"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_screen_backlight.so.1.0.0 "$TARGET":/"$LIB_PATH"
 
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so.1 "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so.1.0.0 "$TARGET":/"$LIB_PATH"
+
 scp -r "$UTILS_LIB_PATH"/package/usr/include/bkk_utils "$TARGET":/"$INC_PATH"
 
 
