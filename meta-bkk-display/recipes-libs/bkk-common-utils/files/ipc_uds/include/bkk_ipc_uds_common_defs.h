@@ -1,0 +1,30 @@
+#ifndef BKK_IPC_UDS_COMMON_DEFS_H
+#define BKK_IPC_UDS_COMMON_DEFS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef enum {
+  IPC_UDS_ERR_NONE = 0,
+  IPC_UDS_ERR_SOCKET_OPEN_FAILED = -1,
+  IPC_UDS_ERR_SOCKET_BIND_FAILED = -2,
+  IPC_UDS_ERR_SOCKET_LISTEN_FAILED = -3,
+  IPC_UDS_ERR_SOCKET_ACCEPT_FAILED = -4,
+  IPC_UDS_ERR_SOCKET_SEND_FAILED = -5,
+  IPC_UDS_ERR_SOCKET_RECV_FAILED = -6,
+  IPC_UDS_ERR_SOCKET_CONNECT_FAILED = -7,
+  IPC_UDS_ERR_OTHER = -100
+} ipc_uds_err_t; 
+
+
+
+
+
+
+#ifdef __cplusplus
+}  
+#endif
+
+#endif // BKK_IPC_UDS_COMMON_DEFS_H
