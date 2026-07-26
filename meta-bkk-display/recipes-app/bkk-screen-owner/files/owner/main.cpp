@@ -17,12 +17,6 @@ int main(int argc, char *argv[])
   QApplication::setOverrideCursor(cursor);
   QApplication::changeOverrideCursor(cursor);
 
-  int start_thread_res = screen.start_receive_thread();
-  if (start_thread_res != 0) {
-    log_error("Init", "Failed to start receive thread");
-    return 1;
-  }
-
 
   screen.show();
 
