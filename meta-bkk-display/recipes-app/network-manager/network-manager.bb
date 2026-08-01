@@ -6,6 +6,7 @@ SRC_URI = " \
     file://CMakeLists.txt               \
     file://include                       \
     file://src                          \
+    file://test                         \
 "
 
 S = "${WORKDIR}"
