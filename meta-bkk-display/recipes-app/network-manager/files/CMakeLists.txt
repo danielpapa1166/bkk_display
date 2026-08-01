@@ -4,6 +4,7 @@ project(bkk-screen-owner LANGUAGES C CXX)
 include(GNUInstallDirs)
 
 add_subdirectory(src)
+add_subdirectory(test)
 
 install(FILES include/network_manager_pub.h
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
