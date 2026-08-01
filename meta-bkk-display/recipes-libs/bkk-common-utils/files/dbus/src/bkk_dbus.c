@@ -5,6 +5,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
+static pthread_once_t dbus_thread_init_once = PTHREAD_ONCE_INIT;
+static int dbus_thread_init_result = 0;
+
+static void initialize_dbus_thread_support(void) {
+  dbus_thread_init_result = dbus_threads_init_default();
+}
+
+static int ensure_dbus_thread_support(void) {
+  pthread_once(&dbus_thread_init_once, initialize_dbus_thread_support);
+  return dbus_thread_init_result;
+}
 
 
 static void * bkk_dbus_listen_thread(void *arg) {
@@ -89,6 +102,11 @@ bkk_dbus_err_t bkk_dbus_init_listener(
     bkk_dbus_listener_sig_hdl_t sig_handler, 
     void* user_data) {
 
+  if (!ensure_dbus_thread_support()) {
+    fprintf(stderr, "Failed to initialize D-Bus thread support\n");
+    return bkk_dbus_err_other;
+  }
+
   clt->foo = 0;
   clt->sig_handler = sig_handler;
   clt->user_data = user_data;
@@ -101,7 +119,7 @@ bkk_dbus_err_t bkk_dbus_init_listener(
   dbus_error_init(&err);  
 
   // connect to the bus and check for errors
-  conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
+  conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
   if (dbus_error_is_set(&err)) {
     fprintf(stderr, "Connection Error (%s)\n", err.message);
     dbus_error_free(&err);
@@ -191,6 +209,11 @@ bkk_dbus_err_t bkk_dbus_send_signal(
     const char * const bus_name, void *payload, size_t payload_size) {
   (void) bus_name; 
 
+  if (!ensure_dbus_thread_support()) {
+    fprintf(stderr, "Failed to initialize D-Bus thread support\n");
+    return bkk_dbus_err_other;
+  }
+
   DBusMessage* msg;
   DBusMessageIter args;
   DBusConnection* conn;
@@ -201,7 +224,7 @@ bkk_dbus_err_t bkk_dbus_send_signal(
   dbus_error_init(&err);
 
   // connect to the DBUS system bus, and check for errors
-  conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
+  conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
   if (dbus_error_is_set(&err)) {
     fprintf(stderr, "Connection Error (%s)\n", err.message);
     dbus_error_free(&err);
@@ -237,8 +260,6 @@ bkk_dbus_err_t bkk_dbus_send_signal(
   }
   dbus_connection_flush(conn);
 
-  printf("Signal Sent\n");
-
   // free the message
   dbus_message_unref(msg);
 
@@ -259,4 +280,63 @@ bkk_dbus_err_t bkk_dbus_deinit_listener(bkk_dbus_listener_t* clt) {
   }
 
   return bkk_dbus_err_none;
+}
+
+
+dbus_status_t check_dbus_connection(void) {
+  DBusError err;
+  DBusConnection* conn;
+  int ret;
+  // initialise the errors
+  dbus_error_init(&err);
+  // connect to the bus
+  conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+  if (dbus_error_is_set(&err)) { 
+    dbus_error_free(&err); 
+    //dbus_connection_close(conn);
+    return DBUS_NAME_REQUEST_FAILED;
+  }
+  if (NULL == conn) { 
+    dbus_error_free(&err); 
+    //dbus_connection_close(conn);
+    return DBUS_CONNECTION_FAILED;
+  }
+  // request a name on the bus
+  /*ret = dbus_bus_request_name(
+    conn, 
+    "test.method.server", 
+    DBUS_NAME_FLAG_REPLACE_EXISTING, 
+    &err);
+
+  if (dbus_error_is_set(&err)) { 
+    char err_msg[256];
+    snprintf(err_msg, sizeof(err_msg), 
+      "Failed to request D-Bus name: %s", err.message);
+    log_error("DBus", err_msg);
+    dbus_error_free(&err); 
+    dbus_connection_close(conn);
+    return DBUS_INACTIVE;
+  }*/
+  /*if (DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER != ret) { 
+    dbus_connection_close(conn);
+    return DBUS_INACTIVE;
+  }*/
+  //dbus_connection_close(conn);
+  return DBUS_ACTIVE;
+}
+
+
+dbus_status_t wait_for_dbus_connection(int timeout_s) {
+  bool wait_forever = (timeout_s < 0);
+
+  // check connection status: 
+  dbus_status_t dbus_stat;
+
+  do {
+    dbus_stat = check_dbus_connection();
+    if(dbus_stat != DBUS_ACTIVE) {
+      sleep(1);
+    }
+  } while(dbus_stat != DBUS_ACTIVE && (wait_forever || timeout_s-- > 0));
+  return dbus_stat;
 }

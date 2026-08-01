@@ -21,4 +21,11 @@ target_link_libraries(test_broadcast_client
 		bkk-utils-dbus
 )
 
+install(TARGETS
+	test_dbus
+	test_broadcast_server
+	test_broadcast_client
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 
