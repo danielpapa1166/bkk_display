@@ -6,6 +6,7 @@ PROJECT_PATH="/data/projects/bkk_display/build-rpi/tmp/work/cortexa72-poky-linux
 OWNER_PATH="$PROJECT_PATH/bkk-screen-owner/1.0-r0/"
 INFO_BAR_PATH="$PROJECT_PATH/bkk-screen-info-bar/1.0-r0/"
 MAIN_CONTENT_PATH="$PROJECT_PATH/bkk-screen-main-content/1.0-r0/"
+NETWORK_MANAGER_PATH="$PROJECT_PATH/network-manager/1.0-r0/"
 
 UTILS_LIB_PATH="$PROJECT_PATH/bkk-common-utils/1.0-r0/"
 
@@ -38,7 +39,14 @@ scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so "$TARGET":/"$LI
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so.1 "$TARGET":/"$LIB_PATH"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_ipc_uds.so.1.0.0 "$TARGET":/"$LIB_PATH"
 
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so.1 "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so.1.0.0 "$TARGET":/"$LIB_PATH"
+
 scp -r "$UTILS_LIB_PATH"/package/usr/include/bkk_utils "$TARGET":/"$INC_PATH"
+
+
+scp -r "$NETWORK_MANAGER_PATH"/package/usr/bin/network_manager  "$TARGET":/"$BIN_PATH"
 
 
 echo "Update complete."
