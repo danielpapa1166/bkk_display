@@ -6,7 +6,6 @@
 static int client_request_dispather(const char* sigvalue, size_t sigvalue_len, void* user_data) {
 
   bc_server_t *server = (bc_server_t*)user_data;
-  printf("Signal received: %s (length: %zu)\n", sigvalue, sigvalue_len);
 
   if (sigvalue_len < sizeof(broadcast_message_t)) {
     fprintf(stderr, "Received signal is too small to contain a valid broadcast_message_t\n");
@@ -16,14 +15,12 @@ static int client_request_dispather(const char* sigvalue, size_t sigvalue_len, v
   const broadcast_message_t* msg = (const broadcast_message_t*)sigvalue;
 
   if(msg->msg_type == BC_MSG_TYPE_CLIENT_REQUEST) {
-    printf("Received client request: %s\n", msg->data.client_request.request);
     server->client_request_handler(
       msg->data.client_request.request, 
       sizeof(msg->data.client_request.request), 
       server->user_data);
   }
   else {
-    printf("Received server data: %s\n", msg->data.server_data.server_data);
     // dont care 
   }
 
