@@ -8,7 +8,7 @@
 #include <vector>
 #include <unistd.h>
 
-
+namespace screen_ctx {
 // ----------------------------------------------------------------------------
 // Local data structures and functions for managing main content context
 // ----------------------------------------------------------------------------
@@ -277,7 +277,7 @@ static int get_screen_content_ctx(
   return 0;
 }
 
-
+} // namespace screen_ctx
 /*
 static int send_arrival_data(void * arg) {
   screen_content_ctx_t * ctx = static_cast<screen_content_ctx_t *>(arg);

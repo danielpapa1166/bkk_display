@@ -16,6 +16,7 @@ add_executable(bkk_screen_main_content
     bkk_api_client.cpp
     screen_context.cpp 
     api_context.cpp
+    content_state_machine.cpp
 )
 
 
@@ -27,6 +28,7 @@ target_link_libraries(bkk_screen_main_content
         PkgConfig::CJSON
         bkk-tee-client
         bkk_utils_timing
+        bkk-utils-dbus
 )
 
 
