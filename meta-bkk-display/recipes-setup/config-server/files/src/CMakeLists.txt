@@ -6,6 +6,10 @@ include(GNUInstallDirs)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
+
+# TODO: review these include paths: it can be configured more cleanly 
+
 # ---------------------------------------------------------------------------
 # External source paths
 # ---------------------------------------------------------------------------
@@ -99,6 +103,7 @@ add_executable(config-server
 
 target_include_directories(config-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CJSON_INCLUDE_DIR}
     ${BKK_TEE_INCLUDE_DIR}
 )
@@ -108,6 +113,7 @@ target_link_libraries(config-server PRIVATE
     cjson
     rbuflogd_producer
     bkk-tee-client
+    bkk-utils-dbus
 )
 
 # ---------------------------------------------------------------------------
@@ -115,6 +121,10 @@ target_link_libraries(config-server PRIVATE
 # ---------------------------------------------------------------------------
 install(TARGETS config-server
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../include/config_server_pub.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 if(TARGET cjson)

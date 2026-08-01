@@ -1,6 +1,6 @@
 #include "http_server_get_handler.h"
 #include "http_server_utils.h"
-#include "http_server_config.h"
+#include <network_manager_pub.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,12 +100,13 @@ void http_server_handle_resource_request(const chttp_request_t *req,
 void http_server_handle_get_api(const chttp_request_t *req,
                                 chttp_response_t *resp,
                                 void *user_data) {
-  server_mode_t mode = *(server_mode_t *)user_data;
+  network_manager_mode_t mode = *(network_manager_mode_t *)user_data;
 
   if (strcmp(req->path, "/api/mode") == 0) {
-    const char *body = (mode == SERVER_MODE_API)
-        ? "{\"mode\":\"api\"}\n"
-        : "{\"mode\":\"wifi\"}\n";
+    const char *body = 
+      (mode == NETWORK_MANAGER_MODE_ACCESS_POINT) ? "{\"mode\":\"access_point\"}\n" : 
+      (mode == NETWORK_MANAGER_MODE_WIFI_CLIENT) ? "{\"mode\":\"wifi_client\"}\n" : 
+      "{\"mode\":\"unknown\"}\n";
     set_simple_response(resp, "200 OK", "application/json; charset=utf-8", body);
     return;
   }

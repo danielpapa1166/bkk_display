@@ -1,7 +1,8 @@
 #ifndef HTTP_SERVER_USER_ACTION_HANDLER_H
 #define HTTP_SERVER_USER_ACTION_HANDLER_H
 
-#include "http_server_config.h"
+#include <network_manager_pub.h>
+#include <bkk_utils/bkk_dbus_broadcast_server.h>
 
 typedef struct {
   char action[16];
@@ -13,8 +14,8 @@ typedef struct {
   char station_ids[256];
 } api_button_request_t;
 
-
-int handle_user_action(const api_button_request_t *request, server_mode_t mode);
+void set_broadcast_server(bc_server_t *bc_server);
+int handle_user_action(const api_button_request_t *request, network_manager_mode_t mode);
 
 
 #endif

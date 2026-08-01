@@ -194,11 +194,13 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(function(data) {
             currentPhase = data.mode;
-            if (currentPhase === "wifi") {
+            if (currentPhase === "access_point") {
                 showOnlyPage("wifi");
-            } else if (currentPhase === "api") {
+            } 
+            else if (currentPhase === "wifi_client") {
                 showOnlyPage("api-key");
-            } else {
+            } 
+            else {
                 throw new Error("Unknown mode: " + currentPhase);
             }
         })

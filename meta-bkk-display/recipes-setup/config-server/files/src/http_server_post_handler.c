@@ -1,7 +1,7 @@
 #include "http_server_post_handler.h"
 #include "cJSON.h"
 #include "http_server_utils.h"
-#include "http_server_config.h"
+#include <network_manager_pub.h>
 #include "http_server_user_action_handler.h"
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +19,7 @@ static int parse_api_button_request(const cJSON *json, api_button_request_t *out
 void http_server_handle_button_post(const chttp_request_t *req,
                                     chttp_response_t *resp,
                                     void *user_data) {
-  server_mode_t mode = *(server_mode_t *)user_data;
+  network_manager_mode_t mode = *(network_manager_mode_t *)user_data;
 
   if (req->body == NULL || req->body_len == 0) {
     printf("No JSON body found in POST request\n");

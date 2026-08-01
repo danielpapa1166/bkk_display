@@ -2,6 +2,8 @@
 #include "rbuflogd/logger.h"
 #include "cJSON.h"
 #include <bkk_tee/bkk_tee_client.h>
+#include <bkk_utils/bkk_dbus_broadcast_server.h>
+#include "config_server_pub.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,14 +18,24 @@
 #define ACTION_PAGE_API_KEY                 "api-key"
 #define ACTION_PAGE_STATION_IDS             "stations"
 
+static bc_server_t *server = NULL;  // Broadcast server instance
+
 static const char *TAG = "usr_act";
 
 static int usr_act_wifi_apply(const api_button_request_t *request);
 static int usr_act_api_key_apply(const api_button_request_t *request);
 static int usr_act_station_ids_apply(const api_button_request_t *request);
 
+static void notify_peer_applications(); 
+
+
+void set_broadcast_server(bc_server_t *bc_server) {
+  server = bc_server;
+}
+
+
 int handle_user_action(
-    const api_button_request_t *request, server_mode_t mode) {
+    const api_button_request_t *request, network_manager_mode_t mode) {
   (void) mode;
 
   char msg[100];
@@ -99,7 +111,7 @@ static int usr_act_wifi_apply(const api_button_request_t *request) {
   fputs(json_str, cred_file);
   fclose(cred_file);
   free(json_str);
-  log_info(TAG, "WiFi credentials saved to wifi_config.json");
+  log_debug(TAG, "WiFi credentials saved to wifi_config.json");
 
   FILE *flag_file = fopen("/etc/bkk-display-config/wifi-configured", "w");
   if (flag_file == NULL) {
@@ -110,8 +122,12 @@ static int usr_act_wifi_apply(const api_button_request_t *request) {
   fclose(flag_file);
 
   // Schedule a reboot in x seconds
-  log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
-  system("(sleep 2 && reboot) &");
+  /*log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
+  system("(sleep 2 && reboot) &");*/
+
+  notify_peer_applications(); 
+
+  log_info(TAG, "Config written, rebootless mode change ... ");
 
   return wifi_validation_result;
 }
@@ -154,6 +170,7 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
   }
 
   // --- Build stations JSON and write config.json ---
+  log_debug(TAG, "Building stations JSON and writing to /etc/bkk-api/config.json");
   cJSON *root = cJSON_CreateObject();
   if (!root) {
     log_error(TAG, "Failed to create JSON object");
@@ -187,6 +204,8 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
     return -1;
   }
 
+  log_debug(TAG, "Writing config JSON to /etc/bkk-api/config.json");
+
   FILE *config_file = fopen("/etc/bkk-api/config.json", "w");
   if (config_file == NULL) {
     log_error(TAG, "Failed to open /etc/bkk-api/config.json for writing");
@@ -196,25 +215,41 @@ static int usr_act_station_ids_apply(const api_button_request_t *request) {
   fprintf(config_file, "%s\n", json_str);
   fclose(config_file);
   free(json_str);
-  log_info(TAG, "Station IDs written to /etc/bkk-api/config.json");
+  log_debug(TAG, "Station IDs written to /etc/bkk-api/config.json");
 
-  // --- Write api-configured flag ---
-  const char *config_dir = "/etc/bkk-display-config";
-  if (mkdir(config_dir, 0755) != 0 && errno != EEXIST) {
-    log_error(TAG, "Failed to create /etc/bkk-display-config directory");
-    return -1;
-  }
+  /*log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
+  system("(sleep 2 && reboot) &");*/
 
-  FILE *flag_file = fopen("/etc/bkk-display-config/api-configured", "w");
-  if (flag_file == NULL) {
-    log_error(TAG, "Failed to open api-configured file for writing");
-    return -1;
-  }
-  fprintf(flag_file, "1");
-  fclose(flag_file);
+  notify_peer_applications(); 
 
-  log_info(TAG, "Config written, scheduling device reboot in 2 seconds");
-  system("(sleep 2 && reboot) &");
+  log_info(TAG, "Config written, rebootless mode change ... ");
 
   return 0;
+}
+
+
+static void notify_peer_applications() {
+  int res; 
+  if (server == NULL) {
+    log_error(TAG, "Broadcast server not set, cannot notify peer applications");
+    return;
+  }
+
+  log_debug(TAG, "Notifying peer applications of new config data");
+
+  bc_config_server_un data;
+  data.config_server_data.signal = CONFIG_SERVER_NEW_DATA_AVAILABLE; 
+
+  log_debug(TAG, "Sending broadcast signal to peer applications");
+  res = serve_data(
+    server,
+    &data.bc_server_data
+  );
+
+  if (res != 0) {
+    log_error(TAG, "Failed to send broadcast signal to peer applications");
+  } 
+  else {
+    log_info(TAG, "Broadcast signal sent to peer applications successfully");
+  }
 }
