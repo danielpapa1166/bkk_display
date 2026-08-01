@@ -12,3 +12,5 @@ meta-BKK-api/recipes-api/bkk-api-keyenv/files/api-key.txt
 **/__pycache__/
 
 **/.cache/
+
+CODE_REVIEW.md
