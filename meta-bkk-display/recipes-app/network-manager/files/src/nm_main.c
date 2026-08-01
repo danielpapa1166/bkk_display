@@ -3,12 +3,14 @@
 #include <rbuflogd/logger.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "wpa_file_handler.h"
 #include "networkd_status.h"
 #include "supplicant_handler.h"
 #include "wpa_file_config.h"
 #include <bkk_utils/bkk_dbus_broadcast_server.h>
+#include <bkk_utils/bkk_dbus.h>
 #include <network_manager_pub.h>
 // IP: networkctl status wlan0
 
@@ -35,10 +37,10 @@ valgrind \
 cat /tmp/network_manager.valgrind
 */
 
-
 // ----------------------------------------------------------------------------
 // local function definitions:
 // ----------------------------------------------------------------------------
+
 
 static wpa_config_type_t load_network_mode(void);
 static int init_clearall(void);
@@ -61,17 +63,34 @@ int main(int argc, char *argv[]) {
   int res; 
 
   rbuflogd_logger_init("NetMngr");
-  log_info("Init", "Network Manager started successfully.");
+  log_info("Init", "Network Manager started successfully. Wait for DBUS ... ");
 
+  (void) wait_for_dbus_connection(-1);
+  log_debug("Init", "D-Bus connection established, proceeding with initialization.");
+  
   // Initialize broadcast server
-  const int bc_init_res = init_broadcast_server(
-    NETWORK_MANAGER_DBUS_NAME,
-    &bc_listener,
-    dbus_client_handler,
-    &bc_server,
-    &bc_server
-  );
+  int bc_init_res; 
+  int retry_counter = 0;
+  do {
+    bc_init_res = init_broadcast_server(
+      NETWORK_MANAGER_DBUS_NAME,
+      &bc_listener,
+      dbus_client_handler,
+      &bc_server,
+      &bc_server
+    );
+    sleep(1);
+    retry_counter++;
+    if(retry_counter > 5) {
+      log_error("Init", "Exceeded max retries for initializing broadcast server");
+      return 1;
+    }
+  } while(bc_init_res != 0);
 
+  if (bc_init_res != 0) {
+    log_error("Init", "Failed to initialize D-Bus broadcast server");
+    return 1;
+  }
 
   config_type = load_network_mode();
   printf("Switching network mode to: %s\n", 
@@ -260,7 +279,7 @@ static int dbus_client_handler(
 
 
   // do something with the data: 
-  printf("Received request: %s\n", received_data->request);
+  printf("NM REQUEST HANDLER: Received request: %s\n", received_data->request);
 
   bc_data_un data;
   data.network_manager_data.mode = (current_network_mode == WPA_CONFIG_ACCESS_POINT) 
@@ -272,5 +291,7 @@ static int dbus_client_handler(
     server,
     &data.bc_server_data
   );
+
+  printf("Response send. \n"); 
   return 0;
 }
