@@ -11,6 +11,11 @@ target_include_directories(bkk-screen-client
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/
 )
 
+target_link_libraries(bkk-screen-client PRIVATE
+	bkk_utils_ipc_uds
+)
+
+
 install(TARGETS bkk-screen-client
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

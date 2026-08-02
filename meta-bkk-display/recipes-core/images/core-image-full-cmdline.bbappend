@@ -10,4 +10,6 @@ IMAGE_INSTALL:append = "        \
     bkk-tee                     \
     valgrind                    \
     bkk-screen-fb-playground    \
+    network-manager             \
+    network-manager-dev         \
 "
