@@ -5,6 +5,7 @@
 #include "http_server_user_action_handler.h"
 #include <stdio.h>
 #include <string.h>
+#include "rbuflogd/logger.h"
 
 // ----------------------------------------------------------------------------
 // local function declarations
@@ -16,9 +17,12 @@ static int parse_api_button_request(const cJSON *json, api_button_request_t *out
 // public function implementations
 // ----------------------------------------------------------------------------
 
-void http_server_handle_button_post(const chttp_request_t *req,
-                                    chttp_response_t *resp,
-                                    void *user_data) {
+void http_server_handle_button_post(
+    const chttp_request_t *req,
+    chttp_response_t *resp,
+    void *user_data) {
+  
+  log_debug("btn_post", "Handling button post"); 
   network_manager_mode_t mode = *(network_manager_mode_t *)user_data;
 
   if (req->body == NULL || req->body_len == 0) {
@@ -59,13 +63,18 @@ void http_server_handle_button_post(const chttp_request_t *req,
   set_simple_response(resp, "200 OK", "text/plain; charset=utf-8", "ok\n");
 }
 
-void http_server_handle_finish_post(const chttp_request_t *req,
-                                    chttp_response_t *resp,
-                                    void *user_data) {
+void http_server_handle_finish_post(
+    const chttp_request_t *req,
+    chttp_response_t *resp,
+    void *user_data) {
+
+  log_debug("fnsh_hdl", "Handling finish post"); 
   (void)req;
   (void)user_data;
   printf("Received /api/finish POST request\n");
   set_simple_response(resp, "200 OK", "text/plain; charset=utf-8", "ok\n");
+
+  log_debug("fnsh_hdl", "Finish post handled successfully"); 
 }
 
 // ----------------------------------------------------------------------------

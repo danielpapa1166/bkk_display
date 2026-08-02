@@ -1,6 +1,7 @@
 #include "http_server_get_handler.h"
 #include "http_server_utils.h"
 #include <network_manager_pub.h>
+#include "rbuflogd/logger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,9 +11,12 @@
 #define HTTP_SERVER_STATIC_ROOT "/usr/share/config-server/www"
 
 
-void http_server_handle_resource_request(const chttp_request_t *req,
-                                         chttp_response_t *resp,
-                                         void *user_data) {
+void http_server_handle_resource_request(
+    const chttp_request_t *req,
+    chttp_response_t *resp,
+    void *user_data) {
+
+  log_debug("rsc_hdl", "Handling resource request.");               
   (void)user_data;
 
   const char *path = req->path;
@@ -20,13 +24,16 @@ void http_server_handle_resource_request(const chttp_request_t *req,
   if (!is_safe_request_path(path)) {
     set_simple_response(resp, "403 Forbidden",
       "text/plain; charset=utf-8", "Forbidden\n");
+
+    log_warning("rsc_hdl", "403 Forbidden"); 
     return;
   }
 
   char path_clean[256] = { 0 };
   if (strcmp(path, "/") == 0) {
     strncpy(path_clean, "/index.html", sizeof(path_clean) - 1);
-  } else {
+  } 
+  else {
     strncpy(path_clean, path, sizeof(path_clean) - 1);
   }
 
@@ -34,6 +41,7 @@ void http_server_handle_resource_request(const chttp_request_t *req,
     if ((unsigned char)path_clean[i] < 32) {
       set_simple_response(resp, "400 Bad Request",
         "text/plain; charset=utf-8", "Bad Request\n");
+      log_warning("rsc_hdl", "400 Bad Request"); 
       return;
     }
   }
@@ -47,6 +55,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
   if (snprintf_res >= (int)sizeof(full_path)) {
     set_simple_response(resp, "414 URI Too Long",
       "text/plain; charset=utf-8", "URI Too Long\n");
+
+    log_warning("rsc_hdl", "414 URI Too Long"); 
     return;
   }
 
@@ -55,6 +65,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
     set_simple_response(resp, "415 Unsupported Media Type",
       "text/plain; charset=utf-8",
       "Only .html, .css, and .js files are served\n");
+
+    log_warning("rsc_hdl", "415 Unsupported Media Type"); 
     return;
   }
 
@@ -62,6 +74,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
   if (stat(full_path, &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) {
     set_simple_response(resp, "404 Not Found",
       "text/plain; charset=utf-8", "Not Found\n");
+    
+    log_warning("rsc_hdl", "404 Not Found"); 
     return;
   }
 
@@ -69,6 +83,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
   if (file == NULL) {
     set_simple_response(resp, "500 Internal Server Error",
       "text/plain; charset=utf-8", "Internal Server Error\n");
+    
+    log_warning("rsc_hdl", "500 Internal Server Error"); 
     return;
   }
 
@@ -78,6 +94,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
     fclose(file);
     set_simple_response(resp, "500 Internal Server Error",
       "text/plain; charset=utf-8", "Internal Server Error\n");
+    
+    log_warning("rsc_hdl", "500 Internal Server Error"); 
     return;
   }
 
@@ -88,6 +106,8 @@ void http_server_handle_resource_request(const chttp_request_t *req,
     free(buf);
     set_simple_response(resp, "500 Internal Server Error",
       "text/plain; charset=utf-8", "Internal Server Error\n");
+
+    log_warning("rsc_hdl", "500 Internal Server Error"); 
     return;
   }
 
@@ -95,11 +115,16 @@ void http_server_handle_resource_request(const chttp_request_t *req,
   resp->content_type = mime_type;
   resp->body         = buf;
   resp->body_len     = file_size;
+
+  log_debug("rsc_hdl", "Resource request handled successfully."); 
 }
 
-void http_server_handle_get_api(const chttp_request_t *req,
-                                chttp_response_t *resp,
-                                void *user_data) {
+void http_server_handle_get_api(
+    const chttp_request_t *req,
+    chttp_response_t *resp,
+    void *user_data) {
+
+  log_debug("api_hdl", "Handling get api request"); 
   network_manager_mode_t mode = *(network_manager_mode_t *)user_data;
 
   if (strcmp(req->path, "/api/mode") == 0) {
@@ -108,9 +133,12 @@ void http_server_handle_get_api(const chttp_request_t *req,
       (mode == NETWORK_MANAGER_MODE_WIFI_CLIENT) ? "{\"mode\":\"wifi_client\"}\n" : 
       "{\"mode\":\"unknown\"}\n";
     set_simple_response(resp, "200 OK", "application/json; charset=utf-8", body);
+    log_debug("api_hdl", "Served API mode successfully"); 
     return;
   }
 
   set_simple_response(resp, "404 Not Found",
     "text/plain; charset=utf-8", "Not Found\n");
+
+  log_warning("api_hdl", "404 Not Found"); 
 }

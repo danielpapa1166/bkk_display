@@ -64,15 +64,15 @@ int main(int argc, char *argv[])
   bc_client_request_t request;
   request.request[0] = 'a';
   request.request[1] = '\0'; 
-  network_manager_data_t response;
+  bc_data_un response;
   const int request_res = send_client_request(
-    NETWORK_MANAGER_DBUS_NAME, &request, &response);
+    NETWORK_MANAGER_DBUS_NAME, &request, &response.bc_server_data);
   if (request_res != 0) {
     log_error("Main", "Failed to request the initial network mode");
     return 1;
   }
 
-  online_status = response.mode;
+  online_status = response.network_manager_data.mode;
   printf("Online status: %s\n", 
     (online_status == NETWORK_MANAGER_MODE_ACCESS_POINT) ? "AP" : 
     (online_status == NETWORK_MANAGER_MODE_WIFI_CLIENT) ? "WiFi Client" : 
@@ -113,6 +113,7 @@ int main(int argc, char *argv[])
 static int broadcast_signal_handler(
     const char *sigvalue, size_t sigvalue_len, void *user_data) {
 
+  log_debug("br_sig", "Handling broadcast signal"); 
   (void)user_data;
 
   network_manager_data_t *received_data = (network_manager_data_t*)sigvalue;
@@ -147,7 +148,7 @@ static int broadcast_request_handler(
   // to be implemented later, 
   // now requests are ignored, 
   // as only new data is signaled in broadcast
-
+  log_debug("br_req", "Handling broadcast request"); 
 
   bc_server_t *server = (bc_server_t*)user_data;
   bc_config_server_un data;
@@ -156,6 +157,8 @@ static int broadcast_request_handler(
     server,
     &data.bc_server_data
   );
+
+  log_debug("br_req", "Broadcast request handled successfully"); 
   return 0;
 }
 
