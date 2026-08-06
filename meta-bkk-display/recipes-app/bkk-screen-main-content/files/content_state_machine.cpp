@@ -25,6 +25,8 @@ static int exec_normal_display_mode();
 // local variables
 // ----------------------------------------------------------------------------
 
+static bc_client_t client;
+
 static content_state_t current_state = content_state::INIT;
 static network_manager_mode_t online_status = NETWORK_MANAGER_MODE_UNKNOWN;
 static bool api_ready = false;
@@ -39,13 +41,13 @@ int init() {
 
   int res; 
   int retry_counter = 0;
-  bc_client_t client;
-  bkk_dbus_listener_t clt;
+  static bkk_dbus_listener_t clt;
   const char * bus_name = NETWORK_MANAGER_DBUS_NAME;
   retry_counter = 0;
   do {
     res = init_broadcast_client(
       bus_name,
+      DBUS_PEER_NAME,
       &clt,
       broadcast_signal_handler,
       &client,
@@ -217,7 +219,7 @@ static content_state_t get_current_state() {
   do {
     retry_counter++; 
     res = send_client_request(
-      bus_name, &request, &(response.bc_server_data));
+      &client, &request, &(response.bc_server_data));
     if (res != 0 && retry_counter > max_retries) {
       log_error("Main", "Failed to request the initial network mode");
       return content_state::UNKNOWN;
@@ -261,10 +263,9 @@ static int broadcast_signal_handler(
   (void)user_data;
 
   network_manager_data_t *received_data = (network_manager_data_t*)sigvalue;
-  if (sigvalue_len != sizeof(network_manager_data_t)) {
-    log_error("Broadcast", (
-      "Received broadcast signal with unexpected size: "
-      + std::to_string(sigvalue_len)).c_str());
+
+  if(received_data == nullptr || sigvalue_len == 0) {
+    log_warning("Broadcast", "Received null broadcast signal");
     return -1;
   }
 

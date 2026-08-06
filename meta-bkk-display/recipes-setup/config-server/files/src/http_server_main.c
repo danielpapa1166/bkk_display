@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #define PORT 8080
+#define DBUS_PEER_NAME "bkk-http-config"
 
 
 static int setup_broadcast_client(bc_client_t *client, bkk_dbus_listener_t *listener);
@@ -66,7 +67,9 @@ int main(int argc, char *argv[])
   request.request[1] = '\0'; 
   bc_data_un response;
   const int request_res = send_client_request(
-    NETWORK_MANAGER_DBUS_NAME, &request, &response.bc_server_data);
+    &client,
+    &request,
+    &response.bc_server_data);
   if (request_res != 0) {
     log_error("Main", "Failed to request the initial network mode");
     return 1;
@@ -117,10 +120,10 @@ static int broadcast_signal_handler(
   (void)user_data;
 
   network_manager_data_t *received_data = (network_manager_data_t*)sigvalue;
-  if (sigvalue_len != sizeof(network_manager_data_t)) {
+  /*if (sigvalue_len != sizeof(network_manager_data_t)) {
     log_error("Broadcast", "Received broadcast signal with unexpected size");
     return -1;
-  }
+  }*/
 
   printf("Received broadcast signal: Network mode changed to: %s\n", 
     (received_data->mode == NETWORK_MANAGER_MODE_ACCESS_POINT) ? "AP" : 
@@ -148,7 +151,7 @@ static int broadcast_request_handler(
   // to be implemented later, 
   // now requests are ignored, 
   // as only new data is signaled in broadcast
-  log_debug("br_req", "Handling broadcast request"); 
+  log_debug("br_req", "Handling broadcast request, sending data to peers");
 
   bc_server_t *server = (bc_server_t*)user_data;
   bc_config_server_un data;
@@ -166,11 +169,13 @@ static int broadcast_request_handler(
 
 static int setup_broadcast_client(bc_client_t *client, bkk_dbus_listener_t *listener) {
   const char * bus_name = NETWORK_MANAGER_DBUS_NAME;
+  const char * client_name = DBUS_PEER_NAME;
   int bc_res; 
   int retry_counter = 0; 
   do {
     bc_res = init_broadcast_client(
       bus_name,
+      client_name,
       listener,
       broadcast_signal_handler,
       client,
@@ -197,11 +202,13 @@ static int setup_broadcast_client(bc_client_t *client, bkk_dbus_listener_t *list
 
 static int setup_broadcast_server(bc_server_t *server, bkk_dbus_listener_t *listener) {
   const char * bus_name = CONFIG_SERVER_DBUS_NAME;
+  const char * server_name = DBUS_PEER_NAME;
   int bc_res; 
   int retry_counter = 0; 
   do {
     bc_res = init_broadcast_server(
       bus_name,
+      server_name,
       listener,
       broadcast_request_handler,
       server,

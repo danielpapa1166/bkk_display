@@ -264,6 +264,7 @@ static void terminate_signal_handler(int signum) {
 static int setup_config_server_client() {
   const int init_res = init_broadcast_client(
     CONFIG_SERVER_DBUS_NAME,
+    DBUS_PEER_NAME,
     &g_config_server_listener,
     config_server_signal_handler,
     nullptr,
@@ -275,16 +276,19 @@ static int config_server_signal_handler(
     const char *sigvalue, size_t sigvalue_len, void *user_data) {
   (void)user_data;
 
-  if (sigvalue_len != sizeof(bc_server_data_t)) {
-    log_warning("ConfigServer", "Received config-server data with unexpected size");
-    return -1;
-  }
-
   const config_server_data_t *data =
     reinterpret_cast<const config_server_data_t *>(sigvalue);
+  
+  if(data == nullptr || sigvalue_len == 0) {
+    log_warning("ConfigServer", "Received null config-server signal");
+    return -1;
+  }
+  
   log_info("ConfigServer", (
     "Received config-server update, signal: "
-    + std::to_string(static_cast<int>(data->signal))).c_str());
+    + std::to_string(static_cast<int>(data->signal))
+    + " with length: "
+    + std::to_string(sigvalue_len)).c_str());
   request_content_update();
   return 0;
 }
@@ -295,7 +299,7 @@ static int test_config_server_connection() {
 
   bc_config_server_un response = {};
   const int request_res = send_client_request(
-    CONFIG_SERVER_DBUS_NAME, &request, &response.bc_server_data);
+    &g_config_server_client, &request, &response.bc_server_data);
   if (request_res != 0) {
     log_error("ConfigServer", "Failed to request config-server test data");
     return -1;

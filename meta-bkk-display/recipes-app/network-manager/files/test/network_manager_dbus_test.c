@@ -4,6 +4,8 @@
 #include <network_manager_pub.h>
 #include <bkk_utils/bkk_dbus_broadcast_client.h>
 
+#define DBUS_PEER_NAME "bkk-network-manager-test-client"
+
 static int handle_network_mode_change(
     const char *signal_value, size_t signal_value_length, void *user_data)
 {
@@ -32,6 +34,7 @@ int main(void)
 
   result = init_broadcast_client(
     NETWORK_MANAGER_DBUS_NAME,
+    DBUS_PEER_NAME,
     &listener,
     handle_network_mode_change,
     &client,
@@ -45,7 +48,7 @@ int main(void)
   request.request[0] = 'a';
 
   result = send_client_request(
-    NETWORK_MANAGER_DBUS_NAME, &request, &response.bc_server_data);
+    &client, &request, &response.bc_server_data);
   if (result != 0) {
     fprintf(stderr, "Failed to fetch Network Manager mode: %d\n", result);
     bkk_dbus_deinit_listener(&listener);
