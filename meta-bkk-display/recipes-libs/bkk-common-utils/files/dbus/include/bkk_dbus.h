@@ -29,7 +29,7 @@ bkk_dbus_err_t bkk_dbus_init_listener(
   void* user_data);
 
 bkk_dbus_err_t bkk_dbus_send_signal(
-    const char * const bus_name, void *payload, size_t payload_size);
+  const char * const bus_name, void *payload, size_t payload_size);
 
 bkk_dbus_err_t bkk_dbus_deinit_listener(bkk_dbus_listener_t* clt);
 

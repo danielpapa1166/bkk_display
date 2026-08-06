@@ -29,8 +29,8 @@ static void * bkk_dbus_listen_thread(void *arg) {
   const char* bus_name = clt->bus_name;
   DBusError err;
   int ret;
-  char* sigvalue;
-  size_t sigvalue_len;
+  char* sigvalue = NULL;
+  size_t sigvalue_len = 0;
 
   // initialise the errors
   dbus_error_init(&err);  
@@ -49,6 +49,7 @@ static void * bkk_dbus_listen_thread(void *arg) {
 
     // check if the message is a signal from the correct interface and with the correct name
     if (dbus_message_is_signal(msg, bus_name, "Test")) {
+      int payload_is_valid = 0;
       const dbus_bool_t has_args = dbus_message_iter_init(msg, &args);
 
       if (has_args) {
@@ -58,6 +59,7 @@ static void * bkk_dbus_listen_thread(void *arg) {
         if(arg_type == DBUS_TYPE_STRING) {
           dbus_message_iter_get_basic(&args, &sigvalue);
           sigvalue_len = strlen(sigvalue);
+          payload_is_valid = 1;
         }
         else if(arg_type == DBUS_TYPE_ARRAY) {
           DBusMessageIter array_iter;
@@ -71,6 +73,7 @@ static void * bkk_dbus_listen_thread(void *arg) {
             dbus_message_iter_get_fixed_array(&array_iter, &byte_array, &array_len);
             sigvalue = (char*)byte_array;
             sigvalue_len = array_len;
+            payload_is_valid = 1;
           }
         }
         else {
@@ -82,8 +85,7 @@ static void * bkk_dbus_listen_thread(void *arg) {
         fprintf(stderr, "Signal has no arguments!\n");
       }
 
-      // call the user-defined signal handler
-      if (clt->sig_handler) {
+      if (payload_is_valid && clt->sig_handler) {
         clt->sig_handler(sigvalue, sigvalue_len, clt->user_data);
       }
     }
@@ -118,8 +120,7 @@ bkk_dbus_err_t bkk_dbus_init_listener(
   // initialise the errors
   dbus_error_init(&err);  
 
-  // connect to the bus and check for errors
-  conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+  conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &err);
   if (dbus_error_is_set(&err)) {
     fprintf(stderr, "Connection Error (%s)\n", err.message);
     dbus_error_free(&err);
@@ -206,8 +207,7 @@ static bkk_dbus_err_t bkk_dbus_set_binary_payload(
 
 
 bkk_dbus_err_t bkk_dbus_send_signal(
-    const char * const bus_name, void *payload, size_t payload_size) {
-  (void) bus_name; 
+  const char * const bus_name, void *payload, size_t payload_size) {
 
   if (!ensure_dbus_thread_support()) {
     fprintf(stderr, "Failed to initialize D-Bus thread support\n");
@@ -274,6 +274,7 @@ bkk_dbus_err_t bkk_dbus_deinit_listener(bkk_dbus_listener_t* clt) {
 
   // close the DBus connection
   if (clt->conn) {
+    dbus_connection_close((DBusConnection*)clt->conn);
     dbus_connection_unref(
         (DBusConnection*)clt->conn);
     clt->conn = NULL;

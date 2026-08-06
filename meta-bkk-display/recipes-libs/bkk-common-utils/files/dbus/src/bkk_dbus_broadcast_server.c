@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 
+static pthread_key_t request_server_key;
+static pthread_once_t request_server_key_once = PTHREAD_ONCE_INIT;
+
+static void create_request_server_key(void) {
+  (void)pthread_key_create(&request_server_key, NULL);
+}
+
 
 static int client_request_dispather(const char* sigvalue, size_t sigvalue_len, void* user_data) {
 
@@ -15,10 +22,26 @@ static int client_request_dispather(const char* sigvalue, size_t sigvalue_len, v
   const broadcast_message_t* msg = (const broadcast_message_t*)sigvalue;
 
   if(msg->msg_type == BC_MSG_TYPE_CLIENT_REQUEST) {
-    server->client_request_handler(
-      msg->data.client_request.request, 
-      sizeof(msg->data.client_request.request), 
-      server->user_data);
+    if (memchr(msg->peer_id, '\0', sizeof(msg->peer_id)) == NULL) {
+      fprintf(stderr, "Received client request with an invalid peer ID\n");
+      return -1;
+    }
+
+    snprintf(
+      server->request_peer_id,
+      sizeof(server->request_peer_id),
+      "%s",
+      msg->peer_id);
+    pthread_once(&request_server_key_once, create_request_server_key);
+    pthread_setspecific(request_server_key, server);
+    if (server->client_request_handler) {
+      server->client_request_handler(
+        msg->data.client_request.request,
+        sizeof(msg->data.client_request.request),
+        server->user_data);
+    }
+    pthread_setspecific(request_server_key, NULL);
+    server->request_peer_id[0] = '\0';
   }
   else {
     // dont care 
@@ -28,7 +51,7 @@ static int client_request_dispather(const char* sigvalue, size_t sigvalue_len, v
 }
 
 
-int init_broadcast_server(const char * bus_name, 
+int init_broadcast_server(const char * bus_name, const char * server_name,
     bkk_dbus_listener_t* clt, bkk_dbus_listener_sig_hdl_t handler, 
     void* user_data, bc_server_t *server) {
   memset(clt, 0, sizeof(*clt));
@@ -37,6 +60,7 @@ int init_broadcast_server(const char * bus_name,
   server->client_request_handler = handler;
   server->user_data = user_data;
   server->bus_name = bus_name;
+  server->server_name = server_name;
 
   char BROADCAST_BUS_NAME[256];
   snprintf(
@@ -62,6 +86,11 @@ int init_broadcast_server(const char * bus_name,
 
 
 int serve_data(bc_server_t *server, bc_server_data_t *server_data) {
+  if (server == NULL || server_data == NULL || server->server_name == NULL ||
+      strlen(server->server_name) >= BROADCAST_PEER_ID_SIZE) {
+    return -1;
+  }
+
   char bus_name[256];
   snprintf(
     bus_name,
@@ -72,6 +101,11 @@ int serve_data(bc_server_t *server, bc_server_data_t *server_data) {
 
   broadcast_message_t payload;
   payload.msg_type = BC_MSG_TYPE_SERVER_DATA;
+  snprintf(
+    payload.peer_id,
+    sizeof(payload.peer_id),
+    "%s",
+    pthread_getspecific(request_server_key) == server ? server->request_peer_id : "");
   memcpy(
     &payload.data.server_data, 
     server_data, 

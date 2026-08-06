@@ -10,11 +10,11 @@ extern "C" {
 #include "common_types.h"
 
 
-int init_broadcast_client(const char * bus_name, 
+int init_broadcast_client(const char * bus_name, const char * client_name,
     bkk_dbus_listener_t* clt, bkk_dbus_listener_sig_hdl_t handler, 
     void* user_data, bc_client_t *client);
     
-int send_client_request(const char * bus_name, 
+int send_client_request(bc_client_t *client,
   const bc_client_request_t *request, bc_server_data_t * response);
 
 

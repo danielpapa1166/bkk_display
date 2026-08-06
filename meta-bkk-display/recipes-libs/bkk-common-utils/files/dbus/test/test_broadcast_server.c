@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BC_TEST_PEER_NAME "bkk-dbus-test-server"
+
 
 // defined by the user: 
 static int client_request_handler(const char* sigvalue, size_t sigvalue_len, void* user_data) {
@@ -37,6 +39,7 @@ int main() {
   const char * bus_name = BC_TEST_BUS;
   init_broadcast_server(
     BC_TEST_BUS,
+    BC_TEST_PEER_NAME,
     &clt,
     client_request_handler,
     &server,
