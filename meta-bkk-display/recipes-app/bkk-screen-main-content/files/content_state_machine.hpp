@@ -2,6 +2,8 @@
 #define CONTENT_STATE_MACHINE_HPP
 
 
+#define DBUS_PEER_NAME "bkk-screen-main-content"
+
 namespace content_sm {
   
 typedef enum content_state {

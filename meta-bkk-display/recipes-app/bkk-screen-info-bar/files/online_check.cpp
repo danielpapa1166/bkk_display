@@ -1,6 +1,9 @@
 #include "online_check.hpp"
 #include <curl/curl.h>
 #include <rbuflogd/logger.h>
+#include <bkk_utils/bkk_utils_online_status.h>
+#include <netinet/in.h> 
+#include <string> 
 
 namespace online_check {
 
@@ -33,6 +36,21 @@ bool is_online() {
   curl_easy_cleanup(curl);
 
   return (result == CURLE_OK && responseCode == 204) ? true : false;
+}
+
+
+int get_ip_address(std::string &ip_address) {
+  char ip_buffer[INET_ADDRSTRLEN] = {0};
+  const ip_add_status_t ip_status = fetch_ip_addr(
+    "wlan0", ip_buffer);
+
+  if (ip_status != IP_ADD_STATUS_HAS_IP) {
+    log_error("OnlineCheck", "Failed to retrieve IP address");
+    return -1; // Error retrieving IP address
+  }
+
+  ip_address = std::string(ip_buffer);
+  return 0; // Success
 }
 
 } // namespace online_check

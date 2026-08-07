@@ -10,7 +10,7 @@ extern "C" {
 #include "common_types.h"
 
 
-int init_broadcast_server(const char * bus_name, 
+int init_broadcast_server(const char * bus_name, const char * server_name,
   bkk_dbus_listener_t* clt, bkk_dbus_listener_sig_hdl_t handler, 
   void* user_data, bc_server_t *server);
 

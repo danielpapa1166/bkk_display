@@ -4,6 +4,8 @@
 #include <string.h>
 
 
+#define BC_TEST_PEER_NAME "bkk-dbus-test-client"
+
 
 static int sig_handler(const char* sigvalue, size_t sigvalue_len, void* user_data) {
   printf("Signal received: %s (length: %zu)\n", sigvalue, sigvalue_len);
@@ -17,6 +19,7 @@ int main(int argc, char *argv[]) {
   const char * bus_name = BC_TEST_BUS;
   init_broadcast_client(
     BC_TEST_BUS,
+    BC_TEST_PEER_NAME,
     &clt,
     sig_handler,
     &client,
@@ -45,7 +48,7 @@ int main(int argc, char *argv[]) {
   if(client_type == 1) {
     bc_client_request_t request;
     snprintf(request.request, sizeof(request.request), "Hello from client!");
-    send_client_request(bus_name, &request, NULL);
+    send_client_request(&client, &request, NULL);
     bkk_dbus_deinit_listener(&clt);
   }
   else if(client_type == 2) {
@@ -55,7 +58,7 @@ int main(int argc, char *argv[]) {
     bc_client_request_t request;
     snprintf(request.request, sizeof(request.request), "Hello from client!");
     bc_server_data_t response;
-    send_client_request(bus_name, &request, &response);
+    send_client_request(&client, &request, &response);
     printf("Received response: %s\n", response.server_data);
     pthread_join(clt.thread, NULL);
     bkk_dbus_deinit_listener(&clt);

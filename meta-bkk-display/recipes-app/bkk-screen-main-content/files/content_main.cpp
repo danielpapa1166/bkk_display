@@ -2,6 +2,7 @@
 #include <bkk_screen_client/client.hpp>
 #include <bkk_utils/bkk_dbus_broadcast_client.h>
 #include <bkk_utils/bkk_utils_timing.h>
+#include <bkk_utils/bkk_utils_online_status.h>
 #include <config_server_pub.h>
 #include <rbuflogd/logger.h>
 
@@ -70,6 +71,15 @@ int main() {
 
   rbuflogd_logger_init("ScrCltMc");
   log_info("Main", "Starting BKK Screen Client");
+
+  char ipv4[INET_ADDRSTRLEN]; 
+  const ip_add_status_t ip_status = fetch_ip_addr("wlan0", ipv4);
+  if (ip_status == IP_ADD_STATUS_HAS_IP) {
+    printf("wlan0 IPv4 address: %s\n", ipv4);
+  } 
+  else {
+    printf("wlan0 does not currently have an IPv4 address\n");
+  }
 
   g_update_event_fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
   if (g_update_event_fd < 0) {
@@ -264,6 +274,7 @@ static void terminate_signal_handler(int signum) {
 static int setup_config_server_client() {
   const int init_res = init_broadcast_client(
     CONFIG_SERVER_DBUS_NAME,
+    DBUS_PEER_NAME,
     &g_config_server_listener,
     config_server_signal_handler,
     nullptr,
@@ -275,16 +286,19 @@ static int config_server_signal_handler(
     const char *sigvalue, size_t sigvalue_len, void *user_data) {
   (void)user_data;
 
-  if (sigvalue_len != sizeof(bc_server_data_t)) {
-    log_warning("ConfigServer", "Received config-server data with unexpected size");
-    return -1;
-  }
-
   const config_server_data_t *data =
     reinterpret_cast<const config_server_data_t *>(sigvalue);
+  
+  if(data == nullptr || sigvalue_len == 0) {
+    log_warning("ConfigServer", "Received null config-server signal");
+    return -1;
+  }
+  
   log_info("ConfigServer", (
     "Received config-server update, signal: "
-    + std::to_string(static_cast<int>(data->signal))).c_str());
+    + std::to_string(static_cast<int>(data->signal))
+    + " with length: "
+    + std::to_string(sigvalue_len)).c_str());
   request_content_update();
   return 0;
 }
@@ -295,7 +309,7 @@ static int test_config_server_connection() {
 
   bc_config_server_un response = {};
   const int request_res = send_client_request(
-    CONFIG_SERVER_DBUS_NAME, &request, &response.bc_server_data);
+    &g_config_server_client, &request, &response.bc_server_data);
   if (request_res != 0) {
     log_error("ConfigServer", "Failed to request config-server test data");
     return -1;

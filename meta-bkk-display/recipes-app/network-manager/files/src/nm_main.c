@@ -12,6 +12,10 @@
 #include <bkk_utils/bkk_dbus_broadcast_server.h>
 #include <bkk_utils/bkk_dbus.h>
 #include <network_manager_pub.h>
+#include <stdbool.h>
+
+#define DBUS_PEER_NAME "bkk-network-manager"
+
 // IP: networkctl status wlan0
 
 
@@ -52,9 +56,11 @@ static int dbus_client_handler(
 // ----------------------------------------------------------------------------
 // local variable definitions:
 // ----------------------------------------------------------------------------
-wpa_config_type_t current_network_mode = WPA_CONFIG_UNKNOWN;
-bc_server_t bc_server;  // Broadcast server instance
-bkk_dbus_listener_t bc_listener;  // Broadcast listener instance
+static wpa_config_type_t current_network_mode = WPA_CONFIG_UNKNOWN;
+static bc_server_t bc_server;  // Broadcast server instance
+static bkk_dbus_listener_t bc_listener;  // Broadcast listener instance
+static char msg[256];  // Message buffer for logging
+static bool is_bc_server_up = false;  // the broadcast server is up
 
 
 int main(int argc, char *argv[]) {
@@ -74,6 +80,7 @@ int main(int argc, char *argv[]) {
   do {
     bc_init_res = init_broadcast_server(
       NETWORK_MANAGER_DBUS_NAME,
+      DBUS_PEER_NAME,
       &bc_listener,
       dbus_client_handler,
       &bc_server,
@@ -88,13 +95,20 @@ int main(int argc, char *argv[]) {
   } while(bc_init_res != 0);
 
   if (bc_init_res != 0) {
-    log_error("Init", "Failed to initialize D-Bus broadcast server");
-    return 1;
+    log_warning("Init", "Failed to initialize D-Bus broadcast server");
+    // no exit, continue to run, but without broadcast functionality
+  }
+  else {
+    is_bc_server_up = true;
+    log_info("Init", "D-Bus broadcast server initialized successfully");
   }
 
   config_type = load_network_mode();
-  printf("Switching network mode to: %s\n", 
+
+  snprintf(msg, sizeof(msg), "Initial network mode: %s", 
     (config_type == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
+  log_info("Init", msg);
+  printf("%s\n", msg);
 
   res = switch_network_mode(config_type);
   if(res != 0) {
@@ -102,8 +116,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  printf("Network Manager started successfully in mode: %s\n", 
+  snprintf(msg, sizeof(msg), "Network Manager started %s in mode: %s", 
+    (bc_init_res == 0) ? "successfully" : "with warnings (see logs)",
     (config_type == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
+  log_info("Init", msg);
+
+  printf("%s\n", msg);
 
 
 
@@ -253,6 +271,13 @@ static int switch_network_mode(wpa_config_type_t config_type) {
 
 
 static void broadcast_network_mode_change(wpa_config_type_t new_mode) {
+
+  if(!is_bc_server_up) {
+    log_warning("Broadcast", "Broadcast server is not up. "
+      "Cannot broadcast network mode change.");
+    return;
+  }
+
   bc_data_un data;
   data.network_manager_data.mode = (new_mode == WPA_CONFIG_ACCESS_POINT) 
     ? NETWORK_MANAGER_MODE_ACCESS_POINT 
@@ -266,11 +291,20 @@ static void broadcast_network_mode_change(wpa_config_type_t new_mode) {
 
   printf("Broadcasted network mode change: %s\n", 
     (new_mode == WPA_CONFIG_ACCESS_POINT) ? "AP" : "WiFi Client");
+  
+  log_debug("Broadcast", "Network mode change broadcasted successfully.");
+
 }
 
 
 static int dbus_client_handler(
     const char *sigvalue, size_t sigvalue_len, void *user_data) {
+  
+  if(!is_bc_server_up) {
+    log_warning("DBus Handler", "Broadcast server is not up. "
+      "Cannot handle client requests.");
+    return -1;
+  }
 
   (void) user_data; 
 
@@ -293,5 +327,6 @@ static int dbus_client_handler(
   );
 
   printf("Response send. \n"); 
+  log_debug("DBus Handler", "Response sent to client successfully.");
   return 0;
 }

@@ -20,6 +20,7 @@ public:
 private: 
   QLabel * clockLabel = nullptr;
   QLabel * bkkLogoLabel = nullptr;
+  QLabel * ipAddressLabel = nullptr;
   QLabel * wifiIconLabel = nullptr;
 
   bkk_screen_set_info_bar_data_t config_data {};

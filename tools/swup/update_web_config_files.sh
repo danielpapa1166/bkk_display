@@ -12,7 +12,7 @@ INC_PATH="usr/include/"
 LIB_PATH="usr/lib/"
 RES_PATH="/usr/share/config-server/www/"
 
-TARGET="root@192.168.4.1"
+TARGET="root@192.168.0.50"
 
 echo "Project path: $PROJECT_PATH"
 echo "Update owner files..."

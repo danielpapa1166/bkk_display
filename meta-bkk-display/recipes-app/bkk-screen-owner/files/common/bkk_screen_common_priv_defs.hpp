@@ -8,6 +8,7 @@
 #define BKK_SCREEN_UDS_NAME                   "/tmp/bkk_screen.sock"
 #define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN     6
 #define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE       256
+#define BKK_SCREEN_IP_LEN                     16
 
 typedef enum {
   BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT = 0, 
@@ -43,6 +44,7 @@ typedef struct {
   int key; 
   char clock[BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN];
   bkk_screen_online_status_t online_status;
+  char ip_address[BKK_SCREEN_IP_LEN];
 } bkk_screen_set_info_bar_data_t;
 
 

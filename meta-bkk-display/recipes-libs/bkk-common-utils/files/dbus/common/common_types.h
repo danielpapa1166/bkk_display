@@ -10,6 +10,7 @@ extern "C" {
 
 
 #define BROADCAST_BUS_NAME_TEMPLATE         "BKK.broadcast.%s"
+#define BROADCAST_PEER_ID_SIZE               64
 
 
 typedef enum {
@@ -21,18 +22,27 @@ typedef struct {
   bkk_dbus_listener_sig_hdl_t client_request_handler;
   void* user_data;
   const char* bus_name;
+  const char* server_name;
+  char request_peer_id[BROADCAST_PEER_ID_SIZE];
 } bc_server_t;
 
 typedef struct {
   bkk_dbus_listener_sig_hdl_t server_response_handler;
   void* user_data;
   const char* bus_name;
+  const char* client_name;
+  pthread_mutex_t response_mutex;
+  pthread_cond_t response_received;
+  int wait_for_resp;
+  int response_available;
+  bc_server_data_t last_response;
 } bc_client_t;
 
 
 
 typedef struct {
   broadcast_message_type_t msg_type;
+  char peer_id[BROADCAST_PEER_ID_SIZE];
   union {
     bc_server_data_t server_data;
     bc_client_request_t client_request;

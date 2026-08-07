@@ -105,7 +105,10 @@ bkk_screen_error_code_t bkk_screen_client_release_screen_component(
 }
 
 bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
-    int key, bkk_screen_online_status_t online_status, const char * clock) {
+    int key, 
+    bkk_screen_online_status_t online_status, 
+    const char * clock, 
+    const char * ip_address) {
   
   if(clock == nullptr) {
     return BKK_SCREEN_ERROR_INVALID_PARAM;
@@ -118,6 +121,8 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
   request.set_info_bar_data.key = key;
   strncpy(request.set_info_bar_data.clock, 
     clock, BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN);
+  strncpy(request.set_info_bar_data.ip_address,
+    ip_address, BKK_SCREEN_IP_LEN);
 
   request.set_info_bar_data.online_status = online_status;
   bkk_screen_uds_message_t response {};

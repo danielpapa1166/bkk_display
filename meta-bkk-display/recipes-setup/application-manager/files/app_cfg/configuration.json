@@ -30,39 +30,39 @@
       "name": "web-config-server",
       "binary": "/usr/bin/config-server",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
-      "after_started": "network-manager"
+      "after_exited": "logger_check"
     },
     {
       "name": "bkk_uds_server",
       "binary": "/usr/bin/bkk_uds_server",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
-      "after_started": "network-manager"
+      "after_exited": "logger_check"
+    },
+    {
+      "name": "screen_start_delay", 
+      "binary": "/bin/sleep",
+      "args": ["10"],
+      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
+      "after_exited": "logger_check"
     },
     {
       "name": "bkk-screen-owner", 
       "binary": "/usr/bin/bkk-screen-owner",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
       "args": ["-platform", "linuxfb"],
-      "after_started": "bkk_uds_server"
+      "after_exited": "screen_start_delay"
     },
-    {
-      "name": "screen-setup-time",
-      "binary": "/bin/sleep",
-      "args": ["2"],
-      "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
-      "after_started": "bkk-screen-owner"
-    }, 
     {
       "name": "bkk-screen-info-bar",
       "binary": "/usr/bin/bkk_screen_info_bar",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
-      "after_exited": "screen-setup-time"
+      "after_exited": "screen_start_delay"
     }, 
     {
       "name": "bkk-screen-main-content",
       "binary": "/usr/bin/bkk_screen_main_content",
       "phases": ["WIFI_CONFIG", "API_CONFIG", "NORMAL"],
-      "after_exited": "screen-setup-time"
+      "after_exited": "screen_start_delay"
     }
   ]
 }
