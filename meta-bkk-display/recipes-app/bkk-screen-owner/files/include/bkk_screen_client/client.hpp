@@ -15,7 +15,10 @@ bkk_screen_error_code_t bkk_screen_client_release_screen_component(
   int key, bkk_screen_component_id_t component_id);
 
 bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
-  int key, bkk_screen_online_status_t online_status, const char * clock);
+    int key, 
+    bkk_screen_online_status_t online_status, 
+    const char * clock, 
+    const char * ip_address);
 
 bkk_screen_error_code_t bkk_screen_client_set_status_screen_data(
   int key, const char * status_text, size_t status_text_len);

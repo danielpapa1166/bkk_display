@@ -60,6 +60,13 @@ void InfoBarReqHdl::init_ui() {
 
   statusRowLayout->addStretch(1);
 
+  ipAddressLabel = new QLabel("not yet set", widget);
+  ipAddressLabel->setAlignment(Qt::AlignCenter);
+  ipAddressLabel->setFixedWidth(200);
+  statusRowLayout->addWidget(ipAddressLabel);
+
+  statusRowLayout->addStretch(1);
+
   wifiIconLabel = new QLabel(widget);
   wifiIconLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   wifiIconLabel->setFixedSize(40, 40);
@@ -91,7 +98,11 @@ void InfoBarReqHdl::init_ui() {
 // Do not call this function directly from a non-Qt thread. 
 // Use qt_thread_refresh_ui() instead.
 void InfoBarReqHdl::refresh_ui() {
-  if (clockLabel == nullptr || bkkLogoLabel == nullptr || wifiIconLabel == nullptr) {
+  if (clockLabel == nullptr 
+    || bkkLogoLabel == nullptr 
+    || wifiIconLabel == nullptr
+    || ipAddressLabel == nullptr) {
+
     log_error(CATEGORY, "UI labels are not initialized");
     return;
   }
@@ -106,6 +117,7 @@ void InfoBarReqHdl::refresh_ui() {
 
 
   clockLabel->setText(config_data.clock);
+  ipAddressLabel->setText(config_data.ip_address);
 
   const char *wifi_icon_path =
     config_data.online_status == BKK_SCREEN_ONLINE_STATUS_ONLINE
@@ -150,7 +162,13 @@ bkk_screen_error_code_t InfoBarReqHdl::update_component(
 
   config_data.key = request->set_info_bar_data.key;
   config_data.online_status = request->set_info_bar_data.online_status;
-  
+
+  strncpy(
+    config_data.ip_address, 
+    request->set_info_bar_data.ip_address, 
+    BKK_SCREEN_IP_LEN - 1);
+  config_data.ip_address[BKK_SCREEN_IP_LEN - 1] = '\0'; 
+
   strncpy(
     config_data.clock, 
     request->set_info_bar_data.clock, 

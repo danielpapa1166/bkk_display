@@ -29,6 +29,7 @@ target_link_libraries(bkk_screen_main_content
         bkk-tee-client
         bkk_utils_timing
         bkk-utils-dbus
+        bkk_utils_online_status
 )
 
 

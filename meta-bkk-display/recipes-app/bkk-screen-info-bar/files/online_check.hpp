@@ -1,6 +1,7 @@
 #ifndef ONLINE_CHECK_HPP
 #define ONLINE_CHECK_HPP
 #include <cstdint>
+#include <string>
 
 
 namespace online_check {
@@ -17,6 +18,7 @@ typedef struct {
 
 void online_check_init();
 bool is_online();
+int get_ip_address(std::string &ip_address);
 
 }
 

@@ -43,6 +43,10 @@ scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so "$TARGET":/"$LIB_P
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so.1 "$TARGET":/"$LIB_PATH"
 scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk-utils-dbus.so.1.0.0 "$TARGET":/"$LIB_PATH"
 
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_online_status.so "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_online_status.so.1 "$TARGET":/"$LIB_PATH"
+scp -r "$UTILS_LIB_PATH"/package/usr/lib/libbkk_utils_online_status.so.1.0.0 "$TARGET":/"$LIB_PATH"
+
 scp -r "$UTILS_LIB_PATH"/package/usr/include/bkk_utils "$TARGET":/"$INC_PATH"
 
 

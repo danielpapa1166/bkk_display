@@ -2,6 +2,7 @@
 #include <bkk_screen_client/client.hpp>
 #include <bkk_utils/bkk_dbus_broadcast_client.h>
 #include <bkk_utils/bkk_utils_timing.h>
+#include <bkk_utils/bkk_utils_online_status.h>
 #include <config_server_pub.h>
 #include <rbuflogd/logger.h>
 
@@ -70,6 +71,15 @@ int main() {
 
   rbuflogd_logger_init("ScrCltMc");
   log_info("Main", "Starting BKK Screen Client");
+
+  char ipv4[INET_ADDRSTRLEN]; 
+  const ip_add_status_t ip_status = fetch_ip_addr("wlan0", ipv4);
+  if (ip_status == IP_ADD_STATUS_HAS_IP) {
+    printf("wlan0 IPv4 address: %s\n", ipv4);
+  } 
+  else {
+    printf("wlan0 does not currently have an IPv4 address\n");
+  }
 
   g_update_event_fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
   if (g_update_event_fd < 0) {
