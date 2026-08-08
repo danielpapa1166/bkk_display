@@ -7,8 +7,10 @@
 
 #define BKK_SCREEN_UDS_NAME                   "/tmp/bkk_screen.sock"
 #define BKK_SCREEN_INFO_BAR_CLOCK_MAX_LEN     6
-#define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE       256
+#define BKK_SCREEN_UDS_PAYLOAD_MAX_SIZE       1024
 #define BKK_SCREEN_IP_LEN                     16
+
+#define BKK_SCREEN_STATUS_TEXT_MAX_LEN        128
 
 typedef enum {
   BKK_SCREEN_COMMAND_ACQUIRE_COMPONENT = 0, 
@@ -51,8 +53,15 @@ typedef struct {
 typedef struct {
   msg_header_t header;
   int key; 
-  char status_text[64];
+  char status_text[BKK_SCREEN_STATUS_TEXT_MAX_LEN];
 } bkk_screen_set_status_screen_data_t;
+
+
+typedef struct {
+  msg_header_t header;
+  int key; 
+  helper_screen_data_t helper_data;
+} bkk_screen_set_helper_screen_data_t;
 
 typedef struct {
   msg_header_t header;
@@ -82,6 +91,7 @@ typedef union {
   bkk_screen_acq_comp_resp_t acquire_resp;
   bkk_screen_set_info_bar_data_t set_info_bar_data;
   bkk_screen_set_status_screen_data_t set_status_screen_data;
+  bkk_screen_set_helper_screen_data_t set_helper_screen_data;
   bkk_screen_set_table_data_t set_table_data;
   bkk_screen_generic_resp_t generic_resp;
 

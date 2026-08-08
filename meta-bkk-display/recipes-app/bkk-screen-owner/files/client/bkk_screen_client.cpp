@@ -182,6 +182,40 @@ bkk_screen_error_code_t bkk_screen_client_set_status_screen_data(
 }
 
 
+bkk_screen_error_code_t bkk_screen_client_set_helper_screen_data(
+    int key, const helper_screen_data_t * const helper_data) {
+
+
+  if(helper_data == nullptr) {
+    return BKK_SCREEN_ERROR_INVALID_PARAM;
+  }
+
+  bkk_screen_uds_message_t request {};
+  request.header.cmd_id = BKK_SCREEN_COMMAND_SET_DATA;
+  request.header.component_id = BKK_SCREEN_COMPONENT_HELPER_SCREEN;
+  request.set_helper_screen_data.key = key;
+  request.set_helper_screen_data.helper_data = *helper_data;
+
+  bkk_screen_uds_message_t response {};
+
+  const ipc_uds_err_t ipc_uds_res = ipc_uds_client_send_recv(
+    BKK_SCREEN_UDS_NAME,
+    &request,
+    sizeof(request),
+    &response,
+    sizeof(response));
+
+  if (ipc_uds_res != IPC_UDS_ERR_NONE) {
+    return BKK_SCREEN_ERROR_SOCKET_OPEN_FAILED;
+  }
+
+  // todo handle response 
+
+  return BKK_SCREEN_ERROR_NONE;
+}
+
+
+
 bkk_screen_error_code_t bkk_screen_client_set_table_data(
     int key, std::vector<arrival_info_t>& arrivals) {
 
