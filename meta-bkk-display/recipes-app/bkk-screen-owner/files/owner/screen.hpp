@@ -11,6 +11,7 @@
 #include "component_req_handler.hpp"
 #include "info_bar_req_handler.hpp"
 #include "user_touch_handler.hpp"
+#include "helper_screen_req_handler.hpp"
 
 
 class BkkScreen : public QWidget

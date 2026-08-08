@@ -79,7 +79,7 @@ void BkkScreen::screen_pwr_on_callback(ts_event_en event, void * ctx) {
       return;
     }
   
-    log_debug(CAT, "Screen power on timer expired, turning screen on");
+    log_debug(CAT, "User screen touch, turning screen on");
     SCREEN_PWR_ON();
   
     self->updateWidgets(); 
@@ -219,6 +219,10 @@ ComponentReqHdl * BkkScreen::ensure_main_content_handler(
       main_content_handler = new StatusScreenReqHdl(this);
       break;
     }
+    case BKK_SCREEN_COMPONENT_HELPER_SCREEN:{
+      main_content_handler = new HelperScreenReqHdl(this);
+      break;
+    }
     case BKK_SCREEN_COMPONENT_TABLE:{
       main_content_handler = new TableReqHdl(this);
       break;
@@ -318,19 +322,12 @@ int BkkScreen::dispatch_client_request(int client_fd, void * user_data) {
     int res = handler->handle_request(&request, &uds_response);
     (void) res;
   } 
-  else if(request.header.component_id == BKK_SCREEN_COMPONENT_STATUS_SCREEN) {
+  else if(request.header.component_id == BKK_SCREEN_COMPONENT_STATUS_SCREEN
+        || request.header.component_id == BKK_SCREEN_COMPONENT_HELPER_SCREEN
+        || request.header.component_id == BKK_SCREEN_COMPONENT_TABLE) {
+    // For main content components, ensure the correct handler is created
     ComponentReqHdl * handler = self->ensure_main_content_handler(
-      BKK_SCREEN_COMPONENT_STATUS_SCREEN);
-    if (handler == nullptr) {
-      return static_cast<int>(BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND);
-    }
-
-    int res = handler->handle_request(&request, &uds_response);
-    (void) res;
-  }
-  else if(request.header.component_id == BKK_SCREEN_COMPONENT_TABLE) {
-    ComponentReqHdl * handler = self->ensure_main_content_handler(
-      BKK_SCREEN_COMPONENT_TABLE);
+      request.header.component_id);
     if (handler == nullptr) {
       return static_cast<int>(BKK_SCREEN_ERROR_COMPONENT_NOT_FOUND);
     }
