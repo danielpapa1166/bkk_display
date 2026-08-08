@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <cstring>
 
 namespace screen_ctx {
 // ----------------------------------------------------------------------------
@@ -60,16 +61,6 @@ int init_screen_context() {
     log_error("Main", "Failed to switch main context state to REPORT_STATUS");
     return -1;
   }
-
-  put_screen_text("Initializing BKK Screen Client ...");
-
-  sleep(1);
-
-  // put out something else: 
-  put_screen_text("init done ");
-
-  sleep(1);
-
   return 0;
 }
 
@@ -77,8 +68,10 @@ int send_screen_ping() {
   int key;
   bkk_screen_component_id_t component_id; 
 
-  const int res = get_screen_content_ctx(&screen_content_ctx, 
-    &component_id, &key);
+  const int res = get_screen_content_ctx(
+    &screen_content_ctx, 
+    &component_id, 
+    &key);
 
   if(res < 0) {
     log_error("Ping", "Failed to get main content context");
@@ -113,13 +106,16 @@ int switch_context(main_context_state_t new_state) {
     &key);
 
   if(component_id < BKK_SCREEN_COMPONENT_MAX) {
+    // release the current component before switching to a new state
     bkk_screen_client_release_screen_component(
       key, component_id);
   }
 
+  // handle the RELEASE_COMPONENT state separately
   if(new_state == context_state::RELEASE_COMPONENT) {
+    // set key and component_id to invalid values
     int key = -1;
-    bkk_screen_component_id_t component_id = BKK_SCREEN_COMPONENT_MAX; // invalid
+    bkk_screen_component_id_t component_id = BKK_SCREEN_COMPONENT_MAX;
     set_screen_content_ctx(
       &component_id, &key, &screen_content_ctx);
     main_context_state = new_state;
@@ -131,11 +127,18 @@ int switch_context(main_context_state_t new_state) {
     return 0;
   }
 
+  // switch to the new state and acquire the corresponding component
+
   if(new_state == context_state::REPORT_STATUS) {
     component_id = BKK_SCREEN_COMPONENT_STATUS_SCREEN;
-  } else if(new_state == context_state::DISPLAY_ARRIVAL) {
+  } 
+  else if(new_state == context_state::DISPLAY_HELPER) {
+    component_id = BKK_SCREEN_COMPONENT_HELPER_SCREEN;
+  }
+  else if(new_state == context_state::DISPLAY_ARRIVAL) {
     component_id = BKK_SCREEN_COMPONENT_TABLE;
-  } else {
+  } 
+  else {
     log_error("Main", "Invalid new state for main context");
     return -1;
   }
@@ -193,6 +196,68 @@ int put_screen_text(const std::string & text) {
   if (set_res != BKK_SCREEN_ERROR_NONE) {
     log_error("Update", (
       "Failed to set status screen data, error code: " 
+      + std::to_string(set_res)).c_str());
+    return -1;
+  }
+  return 0;
+}
+
+
+int put_helper_info(const std::string & title, const std::vector<std::string> & text_lines) {
+
+  if(main_context_state != context_state::DISPLAY_HELPER) {
+    log_error("Update", "Cannot put helper info when not in DISPLAY_HELPER state");
+    return -1;
+  }
+
+  int key;
+  bkk_screen_component_id_t component_id; 
+
+  const int res = get_screen_content_ctx(
+    &screen_content_ctx, 
+    &component_id, &key);
+
+  if(res < 0) {
+    log_error("Update", "Failed to get main content context");
+    return -1;
+  }
+
+  helper_screen_data_t helper_data {};
+  strncpy(
+    helper_data.helper_title, 
+    title.c_str(), 
+    sizeof(helper_data.helper_title) - 1
+  );
+  helper_data.helper_title[sizeof(helper_data.helper_title) - 1] = '\0'; // Ensure null-termination
+
+  size_t num_lines = std::min(
+    text_lines.size(), 
+    static_cast<size_t>(BKK_SCREEN_HELPER_MAX_NUM_OF_COLS)
+  );
+
+  for (size_t i = 0; i < num_lines; ++i) {
+    strncpy(
+      helper_data.helper_text[i], 
+      text_lines[i].c_str(), 
+      sizeof(helper_data.helper_text[i]) - 1
+    );
+
+    helper_data.helper_text[i][sizeof(helper_data.helper_text[i]) - 1] = '\0'; // Ensure null-termination
+
+    helper_data.num_of_cols = static_cast<int>(num_lines);
+    helper_data.helper_image_id[i] = 
+      (i % 2 == 0) ? 
+      BKK_SCREEN_HELPER_IMG_TEST_0 : BKK_SCREEN_HELPER_IMG_TEST_2;
+
+  }
+
+  const bkk_screen_error_code_t set_res 
+    = bkk_screen_client_set_helper_screen_data(
+      key, &helper_data);
+
+  if (set_res != BKK_SCREEN_ERROR_NONE) {
+    log_error("Update", (
+      "Failed to set helper screen data, error code: " 
       + std::to_string(set_res)).c_str());
     return -1;
   }

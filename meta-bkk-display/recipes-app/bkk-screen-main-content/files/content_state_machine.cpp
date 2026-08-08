@@ -82,9 +82,14 @@ int init() {
   } while(res != 0);
 
 
-
-
   screen_ctx::put_screen_text("Initializing ...");
+  sleep(1);
+
+  switch_state(content_state::ACCESS_POINT_MODE);
+
+  sleep(5);
+
+
 
   const content_state_t st = get_current_state();
 
@@ -101,8 +106,8 @@ int init() {
     switch_state(content_state::NORMAL_DISPLAY_MODE);
   }
   else {
-    log_error("Init", "Failed to determine initial state, defaulting to Config API Mode");
-    switch_state(content_state::CONFIG_API_MODE);
+    log_error("Init", "Failed to determine initial state, defaulting to Error Mode");
+    switch_state(content_state::ERROR_MODE);
   }
 
   return 0;
@@ -112,7 +117,9 @@ int ping_timer_callback(void * arg) {
 
   if(current_state != content_state::ACCESS_POINT_MODE
       && current_state != content_state::CONFIG_API_MODE
-      && current_state != content_state::NORMAL_DISPLAY_MODE) {
+      && current_state != content_state::NORMAL_DISPLAY_MODE
+      && current_state != content_state::ERROR_MODE
+    ) {
     log_debug("Ping", "Ping timer callback called, "
       "but not in a state that requires pinging the screen");
     return 0;
@@ -144,8 +151,8 @@ int reinit() {
     switch_state(content_state::NORMAL_DISPLAY_MODE);
   }
   else {
-    log_error("Reinit", "Failed to determine reinitialization state, defaulting to Config API Mode");
-    switch_state(content_state::CONFIG_API_MODE);
+    log_error("Reinit", "Failed to determine reinitialization state, defaulting to Error Mode");
+    switch_state(content_state::ERROR_MODE);
   }
 
   return 0;
@@ -166,19 +173,20 @@ int switch_state(content_state_t new_state) {
   }
 
   if(new_state == content_state::ACCESS_POINT_MODE) {
-    screen_ctx::switch_context(screen_ctx::context_state::REPORT_STATUS);
-    screen_ctx::put_screen_text(
-      "Access Point Mode: \n"
-      "Please connect to the BKK hotspot \n"
-      "set WIFI config"
+    screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
+    
+    screen_ctx::put_helper_info(
+      "Access Point Mode",
+      {"Bla bla",
+       "Blablabla"}
     );
   }
   else if(new_state == content_state::CONFIG_API_MODE) {
-    screen_ctx::switch_context(screen_ctx::context_state::REPORT_STATUS);
-    screen_ctx::put_screen_text(
-      "Config API Mode: \n"
-      "Please connect to the selected network \n"
-      "set API key and station IDs"
+    screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
+    screen_ctx::put_helper_info(
+      "Config API Mode",
+      {"Bla bla",
+       "Blablabla"}
     );
   }
   else if(new_state == content_state::NORMAL_DISPLAY_MODE) {
@@ -222,7 +230,7 @@ static content_state_t get_current_state() {
       &client, &request, &(response.bc_server_data));
     if (res != 0 && retry_counter > max_retries) {
       log_error("Main", "Failed to request the initial network mode");
-      return content_state::UNKNOWN;
+      return content_state::ERROR_MODE;
     }
     sleep(2);
   } while(res != 0); 
@@ -250,10 +258,10 @@ static content_state_t get_current_state() {
   }
   else {
     log_warning("Init", "Unknown online status, defaulting to CONFIG_API_MODE");
-    return content_state::UNKNOWN;
+    return content_state::ERROR_MODE;
   }
 
-  return content_state::UNKNOWN;
+  return content_state::ERROR_MODE;
 }
 
 
