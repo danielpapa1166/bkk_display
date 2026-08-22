@@ -4,9 +4,5 @@
         <file alias="wifi_on.png">../icon/wifi_on.png</file>
         <file alias="wifi_off.png">../icon/wifi_off.png</file>
         <file alias="bkk_logo.png">../icon/bkk_logo.png</file>
-        <file alias="image_0.png">../icon/image_0.png</file>
-        <file alias="image_1.png">../icon/image_1.png</file>
-        <file alias="image_2.png">../icon/image_2.png</file>
-        <file alias="image_3.png">../icon/image_3.png</file>
     </qresource>
 </RCC>
