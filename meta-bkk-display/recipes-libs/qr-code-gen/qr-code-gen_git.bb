@@ -4,7 +4,7 @@ HOMEPAGE = "https://github.com/danielpapa1166/qr_code_gen"
 LICENSE = "CLOSED"
 
 SRC_URI = "git://${TOPDIR}/../submodules/qr_code_gen;protocol=file;nobranch=1"
-SRCREV = "a969c0907419c231665e057b0aed23dfc35763a9"
+SRCREV = "4fa6a7064f43275a222b091ac469df991cb7ae19"
 
 PV = "0.1.0+git${SRCPV}"
 
