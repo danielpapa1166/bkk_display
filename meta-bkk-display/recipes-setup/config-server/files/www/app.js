@@ -1,16 +1,16 @@
 /* ==========================================================================
    BKK Display setup frontend
    Phase 1 (--mode=wifi):  WiFi credentials -> Apply & Reboot
-   Phase 2 (--mode=api):   API key + stations -> Finish (no reboot)
+   Phase 2 (--mode=api):   API key + station IDs -> Finish
    ========================================================================== */
 
-var currentPhase = null;   /* "wifi" or "api" */
+var currentPhase = null;
 var navigationPending = false;
 
 /* ---------- helpers ------------------------------------------------------- */
 
 function showOnlyPage(name) {
-    var all = ["loading", "wifi", "api-key", "stations", "done"];
+    var all = ["loading", "wifi", "api", "done"];
     all.forEach(function(p) {
         var el = document.getElementById("page-" + p);
         if (el) el.style.display = (p === name) ? "" : "none";
@@ -52,67 +52,20 @@ function postJson(endpoint, payload) {
 
 /* ---------- validators ---------------------------------------------------- */
 
-var validators = {
-    "wifi": function() {
-        var ssid = document.getElementById("wifi-ssid").value.trim();
-        if (!ssid) return "SSID is required.";
-        return null;
-    },
-    "api-key": function() {
-        var key = document.getElementById("api-key").value.trim();
-        if (!key) return "API key is required.";
-        return null;
-    },
-    "stations": function() {
-        var raw = document.getElementById("station-ids").value.trim();
-        if (!raw) return "At least one station ID is required.";
-        return null;
-    }
-};
+function validateWifi() {
+    var ssid = document.getElementById("wifi-ssid").value.trim();
+    if (!ssid) return "SSID is required.";
+    return null;
+}
 
-/* ---------- phase 2 navigation -------------------------------------------- */
+function validateApiSetup() {
+    var key = document.getElementById("api-key").value.trim();
+    if (!key) return "API key is required.";
 
-function showPage(name) {
-    if (navigationPending) return;
+    var raw = document.getElementById("station-ids").value.trim();
+    if (!raw) return "At least one station ID is required.";
 
-    var order = ["api-key", "stations"];
-    var currentPage = (function() {
-        for (var i = 0; i < order.length; i++) {
-            var el = document.getElementById("page-" + order[i]);
-            if (el && el.style.display !== "none") return order[i];
-        }
-        return null;
-    })();
-
-    var fromIdx = order.indexOf(currentPage);
-    var toIdx   = order.indexOf(name);
-    var isForward = toIdx > fromIdx;
-
-    if (isForward && validators[currentPage]) {
-        var err = validators[currentPage]();
-        if (err) { setStatus(err, true); return; }
-    }
-
-    setStatus("");
-    var payload = {};
-    if (currentPage === "api-key") {
-        payload = { api_key: document.getElementById("api-key").value.trim() };
-    }
-
-    navigationPending = true;
-    setButtonsDisabled(true);
-
-    postJson("/api/button", Object.assign({
-        action: isForward ? "next" : "back",
-        from_page: currentPage,
-        to_page: name
-    }, payload))
-        .then(function() { showOnlyPage(name); })
-        .catch(function(err) { setStatus(err.message, true); })
-        .finally(function() {
-            navigationPending = false;
-            setButtonsDisabled(false);
-        });
+    return null;
 }
 
 /* ---------- phase 1: apply wifi & reboot ---------------------------------- */
@@ -120,7 +73,7 @@ function showPage(name) {
 function applyWifi() {
     if (navigationPending) return;
 
-    var err = validators["wifi"]();
+    var err = validateWifi();
     if (err) { setStatus(err, true); return; }
 
     setStatus("");
@@ -131,7 +84,7 @@ function applyWifi() {
         action: "next",
         from_page: "wifi",
         to_page: "done",
-        wifi_ssid:     document.getElementById("wifi-ssid").value.trim(),
+        wifi_ssid: document.getElementById("wifi-ssid").value.trim(),
         wifi_password: document.getElementById("wifi-password").value
     };
 
@@ -150,12 +103,12 @@ function applyWifi() {
     /* buttons stay disabled after success — reboot is imminent */
 }
 
-/* ---------- phase 2: finish (api key + stations) -------------------------- */
+/* ---------- phase 2: save API key + stations ------------------------------ */
 
 function finishApi() {
     if (navigationPending) return;
 
-    var err = validators["stations"]();
+    var err = validateApiSetup();
     if (err) { setStatus(err, true); return; }
 
     setStatus("");
@@ -164,9 +117,9 @@ function finishApi() {
 
     var payload = {
         action: "next",
-        from_page: "stations",
+        from_page: "api",
         to_page: "done",
-        api_key:     document.getElementById("api-key").value.trim(),
+        api_key: document.getElementById("api-key").value.trim(),
         station_ids: document.getElementById("station-ids").value.trim()
     };
 
@@ -196,11 +149,9 @@ document.addEventListener("DOMContentLoaded", function() {
             currentPhase = data.mode;
             if (currentPhase === "access_point") {
                 showOnlyPage("wifi");
-            } 
-            else if (currentPhase === "wifi_client") {
-                showOnlyPage("api-key");
-            } 
-            else {
+            } else if (currentPhase === "wifi_client") {
+                showOnlyPage("api");
+            } else {
                 throw new Error("Unknown mode: " + currentPhase);
             }
         })
