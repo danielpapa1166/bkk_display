@@ -23,6 +23,9 @@ bkk_screen_error_code_t bkk_screen_client_set_info_bar_data(
 bkk_screen_error_code_t bkk_screen_client_set_status_screen_data(
   int key, const char * status_text, size_t status_text_len);
 
+bkk_screen_error_code_t bkk_screen_client_set_helper_screen_data(
+  int key, const helper_screen_data_t * const helper_data);
+
 bkk_screen_error_code_t bkk_screen_client_set_table_data(
   int key, std::vector<arrival_info_t>& arrivals);
 

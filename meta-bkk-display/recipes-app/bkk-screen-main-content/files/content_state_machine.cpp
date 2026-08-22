@@ -7,7 +7,10 @@
 #include <network_manager_pub.h>
 #include <bkk_utils/bkk_dbus_broadcast_client.h>
 #include <bkk_utils/bkk_dbus.h>
+#include <bkk_utils/bkk_utils_online_status.h>
 #include <rbuflogd/logger.h>
+
+#include <netinet/in.h> 
 
 
 namespace content_sm {
@@ -82,9 +85,8 @@ int init() {
   } while(res != 0);
 
 
-
-
   screen_ctx::put_screen_text("Initializing ...");
+  sleep(1);
 
   const content_state_t st = get_current_state();
 
@@ -101,8 +103,8 @@ int init() {
     switch_state(content_state::NORMAL_DISPLAY_MODE);
   }
   else {
-    log_error("Init", "Failed to determine initial state, defaulting to Config API Mode");
-    switch_state(content_state::CONFIG_API_MODE);
+    log_error("Init", "Failed to determine initial state, defaulting to Error Mode");
+    switch_state(content_state::ERROR_MODE);
   }
 
   return 0;
@@ -112,7 +114,9 @@ int ping_timer_callback(void * arg) {
 
   if(current_state != content_state::ACCESS_POINT_MODE
       && current_state != content_state::CONFIG_API_MODE
-      && current_state != content_state::NORMAL_DISPLAY_MODE) {
+      && current_state != content_state::NORMAL_DISPLAY_MODE
+      && current_state != content_state::ERROR_MODE
+    ) {
     log_debug("Ping", "Ping timer callback called, "
       "but not in a state that requires pinging the screen");
     return 0;
@@ -144,8 +148,8 @@ int reinit() {
     switch_state(content_state::NORMAL_DISPLAY_MODE);
   }
   else {
-    log_error("Reinit", "Failed to determine reinitialization state, defaulting to Config API Mode");
-    switch_state(content_state::CONFIG_API_MODE);
+    log_error("Reinit", "Failed to determine reinitialization state, defaulting to Error Mode");
+    switch_state(content_state::ERROR_MODE);
   }
 
   return 0;
@@ -166,19 +170,50 @@ int switch_state(content_state_t new_state) {
   }
 
   if(new_state == content_state::ACCESS_POINT_MODE) {
-    screen_ctx::switch_context(screen_ctx::context_state::REPORT_STATUS);
-    screen_ctx::put_screen_text(
-      "Access Point Mode: \n"
-      "Please connect to the BKK hotspot \n"
-      "set WIFI config"
+    screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
+    
+    std::string qr_command_1 = "WIFI:T:WPA;S:" + std::string(BKK_DISPLAY_ACCESS_POINT_NAME) 
+      + ";;;";
+
+    // BKK_DISPLAY_ACCESS_POINT_IP
+    // BKK_DISPLAY_CONFIG_SERVER_PORT
+    // http://192.168.4.1:8080
+    std::string qr_command_2 = "http://" 
+      + std::string(BKK_DISPLAY_ACCESS_POINT_IP) + ":"
+      + std::to_string(BKK_DISPLAY_CONFIG_SERVER_PORT);
+
+    screen_ctx::put_helper_info(
+      "Setup Wifi Connection",
+      {qr_command_1,
+       qr_command_2},
+       {"Connect Access Point",
+       "Open Config",}
     );
   }
   else if(new_state == content_state::CONFIG_API_MODE) {
-    screen_ctx::switch_context(screen_ctx::context_state::REPORT_STATUS);
-    screen_ctx::put_screen_text(
-      "Config API Mode: \n"
-      "Please connect to the selected network \n"
-      "set API key and station IDs"
+    screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
+
+    char ip_buffer[INET_ADDRSTRLEN] = {0};
+    const ip_add_status_t ip_status = fetch_ip_addr(
+      "wlan0", ip_buffer);
+
+    if (ip_status != IP_ADD_STATUS_HAS_IP) {
+      log_warning("OnlineCheck", "Failed to retrieve IP address");
+      return -1; // Error retrieving IP address
+    }
+
+    std::string ip_address = std::string(ip_buffer);
+
+    std::string qr_command_2 = "http://" 
+      + ip_address + ":"
+      + std::to_string(BKK_DISPLAY_CONFIG_SERVER_PORT);
+
+    screen_ctx::put_helper_info(
+      "Config BKK API",
+      {"asdd", 
+        qr_command_2}, 
+      {"Connect Wifi",
+       "Open Config",}
     );
   }
   else if(new_state == content_state::NORMAL_DISPLAY_MODE) {
@@ -222,7 +257,7 @@ static content_state_t get_current_state() {
       &client, &request, &(response.bc_server_data));
     if (res != 0 && retry_counter > max_retries) {
       log_error("Main", "Failed to request the initial network mode");
-      return content_state::UNKNOWN;
+      return content_state::ERROR_MODE;
     }
     sleep(2);
   } while(res != 0); 
@@ -250,10 +285,10 @@ static content_state_t get_current_state() {
   }
   else {
     log_warning("Init", "Unknown online status, defaulting to CONFIG_API_MODE");
-    return content_state::UNKNOWN;
+    return content_state::ERROR_MODE;
   }
 
-  return content_state::UNKNOWN;
+  return content_state::ERROR_MODE;
 }
 
 

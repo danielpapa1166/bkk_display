@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QObject>
 #include <QWidget>
+#include <QString>
 #include <rbuflogd/logger.h>
 
 InfoBarReqHdl::InfoBarReqHdl(QWidget *parent)

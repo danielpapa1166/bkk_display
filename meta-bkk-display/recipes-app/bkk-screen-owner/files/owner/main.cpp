@@ -3,8 +3,6 @@
 #include <unistd.h>
 #include "screen.hpp"
 
-// start with: 
-// QT_QPA_PLATFORM=eglfs QT_QPA_EGLFS_HIDECURSOR=1 /usr/bin/bkk-screen-owner # -platform eglfs
 
 int main(int argc, char *argv[])
 {

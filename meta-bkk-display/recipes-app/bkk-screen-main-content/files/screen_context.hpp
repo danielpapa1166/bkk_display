@@ -10,8 +10,9 @@ namespace screen_ctx {
 
 typedef enum context_state{
   UNINITIALIZED = 0,
-  REPORT_STATUS, 
+  DISPLAY_HELPER, 
   DISPLAY_ARRIVAL,
+  REPORT_STATUS, 
   RELEASE_COMPONENT
 } main_context_state_t;
 
@@ -20,6 +21,9 @@ int init_screen_context();
 int send_screen_ping();
 int switch_context(main_context_state_t new_state);
 int put_screen_text(const std::string & text);
+int put_helper_info(const std::string & title, 
+  const std::vector<std::string> & qr_command, 
+  const std::vector<std::string> & text_lines);
 int send_arrival_info(std::vector<arrival_info_t> & arrivals);
 
 } // namespace screen_ctx

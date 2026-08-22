@@ -19,6 +19,7 @@ typedef enum {
 typedef enum {
   BKK_SCREEN_COMPONENT_INFO_BAR = 0, 
   BKK_SCREEN_COMPONENT_STATUS_SCREEN, 
+  BKK_SCREEN_COMPONENT_HELPER_SCREEN, 
   BKK_SCREEN_COMPONENT_TABLE,
   BKK_SCREEN_COMPONENT_MAX
 } bkk_screen_component_id_t;
@@ -46,6 +47,20 @@ typedef struct {
   char destination[BKK_SCREEN_DESTINATION_NAME_MAX_LEN];
   int departure_time; 
 } arrival_info_t;
+
+
+#define BKK_SCREEN_HELPER_MAX_NUM_OF_COLS     2
+#define BKK_SCREEN_HELPER_TITLE_MAX_LEN       64
+#define BKK_SCREEN_HELPER_TEXT_MAX_LEN        128
+
+#define BKK_SCREEN_QR_CODE_MAX_LEN    42  // Version 3-M support up to 42 bytes
+
+typedef struct {
+  int num_of_cols; // should not exceed BKK_SCREEN_HELPER_MAX_NUM_OF_COLS
+  char helper_title[BKK_SCREEN_HELPER_TITLE_MAX_LEN];
+  char helper_text[BKK_SCREEN_HELPER_MAX_NUM_OF_COLS][BKK_SCREEN_HELPER_TEXT_MAX_LEN];
+  char qr_code_data[BKK_SCREEN_HELPER_MAX_NUM_OF_COLS][BKK_SCREEN_QR_CODE_MAX_LEN]; 
+} helper_screen_data_t;
 
 
 #endif // BKK_SCREEN_COMMON_DEFS_HPP

@@ -11,6 +11,7 @@ typedef enum content_state {
   ACCESS_POINT_MODE,
   CONFIG_API_MODE, 
   NORMAL_DISPLAY_MODE,
+  ERROR_MODE, 
   UNKNOWN,
 } content_state_t;
 

@@ -15,3 +15,7 @@
 [submodule "chttp"]
 	path = submodules/chttp
 	url = https://github.com/danielpapa1166/chttp
+[submodule "submodules/qr_code_gen"]
+	path = submodules/qr_code_gen
+	url = git@github.com:danielpapa1166/qr_code_gen.git
+	branch = main
