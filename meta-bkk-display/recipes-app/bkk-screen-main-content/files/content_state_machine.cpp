@@ -7,7 +7,10 @@
 #include <network_manager_pub.h>
 #include <bkk_utils/bkk_dbus_broadcast_client.h>
 #include <bkk_utils/bkk_dbus.h>
+#include <bkk_utils/bkk_utils_online_status.h>
 #include <rbuflogd/logger.h>
+
+#include <netinet/in.h> 
 
 
 namespace content_sm {
@@ -84,12 +87,6 @@ int init() {
 
   screen_ctx::put_screen_text("Initializing ...");
   sleep(1);
-
-  switch_state(content_state::ACCESS_POINT_MODE);
-
-  sleep(5);
-
-
 
   const content_state_t st = get_current_state();
 
@@ -175,18 +172,48 @@ int switch_state(content_state_t new_state) {
   if(new_state == content_state::ACCESS_POINT_MODE) {
     screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
     
+    std::string qr_command_1 = "WIFI:T:WPA;S:" + std::string(BKK_DISPLAY_ACCESS_POINT_NAME) 
+      + ";;;";
+
+    // BKK_DISPLAY_ACCESS_POINT_IP
+    // BKK_DISPLAY_CONFIG_SERVER_PORT
+    // http://192.168.4.1:8080
+    std::string qr_command_2 = "http://" 
+      + std::string(BKK_DISPLAY_ACCESS_POINT_IP) + ":"
+      + std::to_string(BKK_DISPLAY_CONFIG_SERVER_PORT);
+
     screen_ctx::put_helper_info(
-      "Access Point Mode",
-      {"Bla bla",
-       "Blablabla"}
+      "Setup Wifi Connection",
+      {qr_command_1,
+       qr_command_2},
+       {"Connect Access Point",
+       "Open Config",}
     );
   }
   else if(new_state == content_state::CONFIG_API_MODE) {
     screen_ctx::switch_context(screen_ctx::context_state::DISPLAY_HELPER);
+
+    char ip_buffer[INET_ADDRSTRLEN] = {0};
+    const ip_add_status_t ip_status = fetch_ip_addr(
+      "wlan0", ip_buffer);
+
+    if (ip_status != IP_ADD_STATUS_HAS_IP) {
+      log_warning("OnlineCheck", "Failed to retrieve IP address");
+      return -1; // Error retrieving IP address
+    }
+
+    std::string ip_address = std::string(ip_buffer);
+
+    std::string qr_command_2 = "http://" 
+      + ip_address + ":"
+      + std::to_string(BKK_DISPLAY_CONFIG_SERVER_PORT);
+
     screen_ctx::put_helper_info(
-      "Config API Mode",
-      {"Bla bla",
-       "Blablabla"}
+      "Config BKK API",
+      {"asdd", 
+        qr_command_2}, 
+      {"Connect Wifi",
+       "Open Config",}
     );
   }
   else if(new_state == content_state::NORMAL_DISPLAY_MODE) {

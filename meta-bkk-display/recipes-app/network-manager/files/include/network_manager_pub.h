@@ -29,6 +29,11 @@ typedef union {
 } bc_data_un;
 
 
+#define BKK_DISPLAY_ACCESS_POINT_NAME       "BKK-Display-Setup"
+#define BKK_DISPLAY_ACCESS_POINT_IP         "192.168.4.1"   
+#define BKK_DISPLAY_CONFIG_SERVER_PORT      8080 
+
+
 #ifdef __cplusplus
 }
 #endif

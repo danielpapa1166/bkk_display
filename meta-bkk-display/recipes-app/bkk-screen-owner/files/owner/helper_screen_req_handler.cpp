@@ -1,8 +1,11 @@
 #include "helper_screen_req_handler.hpp"
 #include "bkk_screen_client/common_defs.hpp"
+#include <qr_code_gen/qr_code_encode.hpp>
+#include <qr_code_gen/qr_code_matrix.hpp>
 #include <QHBoxLayout>
 #include <QObject>
 #include <QLabel>
+#include <QImage>
 #include <QPixmap>
 #include <QVBoxLayout>
 #include <cstring>
@@ -50,6 +53,7 @@ void HelperScreenReqHdl::init_ui() {
 
   auto * columnsLayout = new QHBoxLayout();
   columnsLayout->setAlignment(Qt::AlignCenter);
+  columnsLayout->setSpacing(100);
 
   auto * leftColumnLayout = new QVBoxLayout();
   leftImageLabel = new QLabel(widget);
@@ -95,41 +99,71 @@ void HelperScreenReqHdl::refresh_ui() {
   leftTextLabel->setText(config_data.helper_text[0]);
   rightTextLabel->setText(config_data.helper_text[1]);
 
-  set_image(leftImageLabel, config_data.helper_image_id[0]);
-  set_image(rightImageLabel, config_data.helper_image_id[1]);
+  std::string left_qr_code_data(config_data.qr_code_data[0]);
+  std::string right_qr_code_data(config_data.qr_code_data[1]);
+
+  set_QR_code(leftImageLabel, left_qr_code_data);
+  set_QR_code(rightImageLabel, right_qr_code_data);
 }
 
 
-void HelperScreenReqHdl::set_image(QLabel * image_label,
-    helper_screen_img_t image_id) {
-  const int image_index = static_cast<int>(image_id);
-  if (image_index < BKK_SCREEN_HELPER_IMG_TEST_0
-    || image_index > BKK_SCREEN_HELPER_IMG_TEST_3) {
-    image_label->clear();
-    log_warning(CATEGORY, "Invalid helper screen image ID");
+void HelperScreenReqHdl::set_QR_code(QLabel * image_label,
+    const std::string & qr_code_data) {
+  if (image_label == nullptr) {
+    log_warning(CATEGORY, "Invalid helper screen image label");
     return;
   }
 
-  // to be replaced by actual image resource paths 
-  char image_path[64];
-  snprintf(image_path, 
-    sizeof(image_path), 
-    ":/icons/image_%d.png", 
-    image_index);
-
-  const QPixmap image(image_path);
-
-  if (image.isNull()) {
+  if(qr_code_data.empty()) {
     image_label->clear();
-    log_error(CATEGORY, "Failed to load helper screen image resource");
+    log_warning(CATEGORY, "Empty QR code data provided");
     return;
   }
 
-  image_label->setPixmap(image.scaled(
+  log_debug(CATEGORY, ("Setting QR code with data: " + qr_code_data).c_str());
+  const qr_code_gen::QrEncode qr_encoder(qr_code_data);
+  const qr_code_gen::QrMatrix qr_matrix(
+    qr_encoder.get_encoded_data());
+
+  const auto qr_matrix_data = qr_matrix.get_matrix();
+
+  log_debug(CATEGORY, "QR code matrix generated successfully");
+
+  if (qr_matrix_data.empty() || qr_matrix_data.front().empty()) {
+    image_label->clear();
+    log_error(CATEGORY, "Generated QR code matrix is empty");
+    return;
+  }
+
+  const int matrix_size = static_cast<int>(qr_matrix_data.size());
+  QImage qr_image(matrix_size, matrix_size, QImage::Format_ARGB32);
+  constexpr QRgb foreground_color = qRgb(255, 255, 255); // white
+  constexpr QRgb background_color = qRgba(0, 0, 0, 0); // transparent
+
+  for (int row = 0; row < matrix_size; ++row) {
+    if (static_cast<int>(qr_matrix_data[row].size()) != matrix_size) {
+      image_label->clear();
+      log_error(CATEGORY, "Generated QR code matrix is not square");
+      return;
+    }
+
+    for (int column = 0; column < matrix_size; ++column) {
+      qr_image.setPixel(
+        column,
+        row,
+        qr_matrix_data[row][column].color == QRMODULE_BLACK
+          ? foreground_color
+          : background_color);
+    }
+  }
+
+  image_label->setPixmap(QPixmap::fromImage(qr_image).scaled(
     img_xy_size_px,
     img_xy_size_px,
     Qt::KeepAspectRatio,
-    Qt::SmoothTransformation));
+    Qt::FastTransformation));
+
+  log_debug(CATEGORY, "QR code image set successfully");
 }
 
 bkk_screen_error_code_t HelperScreenReqHdl::update_component(

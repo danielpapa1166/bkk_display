@@ -18,7 +18,7 @@ public:
 private:
   void init_ui() override;
   void refresh_ui() override;
-  void set_image(QLabel * image_label, helper_screen_img_t image_id);
+  void set_QR_code(QLabel * image_label, const std::string & qr_code_data);
 
   QLabel * titleLabel = nullptr;
   QLabel * leftImageLabel = nullptr;
@@ -28,7 +28,7 @@ private:
 
   helper_screen_data_t config_data {};
 
-  const int img_xy_size_px = 300;
+  const int img_xy_size_px = 200;
 };
 
 #endif // HELPER_SCREEN_REQ_HANDLER_HPP

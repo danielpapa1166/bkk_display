@@ -12,4 +12,5 @@ IMAGE_INSTALL:append = "        \
     bkk-screen-fb-playground    \
     network-manager             \
     network-manager-dev         \
+    qr-code-gen                 \
 "

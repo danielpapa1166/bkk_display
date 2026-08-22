@@ -46,6 +46,7 @@ target_link_libraries(bkk-screen-owner PRIVATE
 	bkk_utils_timing
 	bkk_screen_backlight
 	bkk_utils_ipc_uds
+	qr_code_gen
 )
 
 install(TARGETS bkk-screen-owner RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

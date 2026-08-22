@@ -203,7 +203,9 @@ int put_screen_text(const std::string & text) {
 }
 
 
-int put_helper_info(const std::string & title, const std::vector<std::string> & text_lines) {
+int put_helper_info(const std::string & title, 
+  const std::vector<std::string> & qr_command, 
+  const std::vector<std::string> & text_lines) {
 
   if(main_context_state != context_state::DISPLAY_HELPER) {
     log_error("Update", "Cannot put helper info when not in DISPLAY_HELPER state");
@@ -234,21 +236,22 @@ int put_helper_info(const std::string & title, const std::vector<std::string> & 
     text_lines.size(), 
     static_cast<size_t>(BKK_SCREEN_HELPER_MAX_NUM_OF_COLS)
   );
+  helper_data.num_of_cols = static_cast<int>(num_lines);
 
   for (size_t i = 0; i < num_lines; ++i) {
     strncpy(
       helper_data.helper_text[i], 
       text_lines[i].c_str(), 
-      sizeof(helper_data.helper_text[i]) - 1
+      BKK_SCREEN_HELPER_TEXT_MAX_LEN - 1
     );
+    helper_data.helper_text[i][BKK_SCREEN_HELPER_TEXT_MAX_LEN - 1] = '\0'; // Ensure null-termination
 
-    helper_data.helper_text[i][sizeof(helper_data.helper_text[i]) - 1] = '\0'; // Ensure null-termination
-
-    helper_data.num_of_cols = static_cast<int>(num_lines);
-    helper_data.helper_image_id[i] = 
-      (i % 2 == 0) ? 
-      BKK_SCREEN_HELPER_IMG_TEST_0 : BKK_SCREEN_HELPER_IMG_TEST_2;
-
+    strncpy(
+      helper_data.qr_code_data[i], 
+      qr_command[i].c_str(), 
+      BKK_SCREEN_QR_CODE_MAX_LEN - 1
+    );
+    helper_data.qr_code_data[i][BKK_SCREEN_QR_CODE_MAX_LEN - 1] = '\0'; // Ensure null-termination
   }
 
   const bkk_screen_error_code_t set_res 
