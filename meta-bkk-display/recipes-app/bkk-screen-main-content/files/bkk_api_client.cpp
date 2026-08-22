@@ -191,7 +191,7 @@ api_fetch_status_t fetch_arrivals(
       else {
         fetch_status.any_error = 1;
         fetch_status.local_server_status = bkk_client_status_to_string((bkk_client_status_t)res);
-        fetch_status.remote_server_status = error_code_to_string((bkk_api_status_t)res);
+        fetch_status.remote_server_status = error_code_to_string(response.status);
 
         return fetch_status;
       }
@@ -207,7 +207,7 @@ api_fetch_status_t fetch_arrivals(
 
       fetch_status.any_error = 1;
       fetch_status.local_server_status = bkk_client_status_to_string((bkk_client_status_t)res);
-      fetch_status.remote_server_status = error_code_to_string((bkk_api_status_t)res);
+      fetch_status.remote_server_status = error_code_to_string(response.status);
 
       return fetch_status;
     }
