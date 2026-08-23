@@ -31,30 +31,18 @@
       </div>
     </div>
 
-    <!-- Phase 2 step 1: BKK API key -->
-    <div id="page-api-key" class="page" style="display:none">
-      <h2>BKK API Key</h2>
-      <p class="muted">Enter your Futar API key.</p>
+    <div id="page-api" class="page" style="display:none">
+      <h2>API Configuration</h2>
+      <p class="muted">Enter your BKK API key and the station IDs to display.</p>
 
-      <label for="api-key">API Key</label>
-      <input type="text" id="api-key" autocomplete="off">
-
-      <div class="actions">
-        <button onclick="showPage('stations')">Next</button>
-      </div>
-    </div>
-
-    <!-- Phase 2 step 2: station IDs -->
-    <div id="page-stations" class="page" style="display:none">
-      <h2>Station Configuration</h2>
-      <p class="muted">Enter the stop IDs to display (comma-separated).</p>
+      <label for="api-key">API key</label>
+      <input id="api-key" type="password" autocomplete="off">
 
       <label for="station-ids">Station IDs</label>
-      <input type="text" id="station-ids" placeholder="e.g. F02261,F02122">
+      <textarea id="station-ids" placeholder="Comma-separated station IDs"></textarea>
 
-      <div class="actions two-cols">
-        <button class="secondary" onclick="showPage('api-key')">Back</button>
-        <button onclick="finishApi()">Finish</button>
+      <div class="actions">
+        <button id="btn-api-finish" type="button" onclick="finishApi()">Finish</button>
       </div>
     </div>
 
