@@ -15,16 +15,14 @@
 #define ACTION_TYPE_BACK_STR                "back"
 
 #define ACTION_PAGE_WIFI                    "wifi"
-#define ACTION_PAGE_API_KEY                 "api-key"
-#define ACTION_PAGE_STATION_IDS             "stations"
+#define ACTION_PAGE_API_KEY                 "api"
 
 static bc_server_t *server = NULL;  // Broadcast server instance
 
 static const char *TAG = "usr_act";
 
 static int usr_act_wifi_apply(const api_button_request_t *request);
-static int usr_act_api_key_apply(const api_button_request_t *request);
-static int usr_act_station_ids_apply(const api_button_request_t *request);
+static int usr_act_api_apply(const api_button_request_t *request);
 
 static void notify_peer_applications(); 
 
@@ -48,10 +46,7 @@ int handle_user_action(
       const int wifi_result = usr_act_wifi_apply(request);
     }
     else if(strcmp(request->from_page, ACTION_PAGE_API_KEY) == 0) {
-      const int api_key_result = usr_act_api_key_apply(request);
-    }
-    else if(strcmp(request->from_page, ACTION_PAGE_STATION_IDS) == 0) {
-      const int station_ids_result = usr_act_station_ids_apply(request);
+      const int station_ids_result = usr_act_api_apply(request);
     }
     else {
       char msg[100]; 
@@ -143,8 +138,7 @@ static int usr_act_api_key_apply(const api_button_request_t *request) {
   return api_key_validation_result;
 }
 
-static int usr_act_station_ids_apply(const api_button_request_t *request) {
-  printf("Applying station IDs: %s\n", request->station_ids);
+static int usr_act_api_apply(const api_button_request_t *request) {
 
   // Create /etc/bkk-api directory if it does not exist
   const char *bkk_api_dir = "/etc/bkk-api";
