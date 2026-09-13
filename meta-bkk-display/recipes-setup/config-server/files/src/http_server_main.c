@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
   chttp_server_register_route(srv, "GET",  "/app.js",     http_server_handle_resource_request, NULL);
   chttp_server_register_route(srv, "POST", "/api/button", http_server_handle_button_post,      &online_status);
   chttp_server_register_route(srv, "POST", "/api/finish", http_server_handle_finish_post,      &online_status);
+  chttp_server_register_route(srv, "POST", "/api/stations/search", http_server_handle_station_search_post, NULL);
 
   log_info("main", "HTTP server running.");
   chttp_server_run(srv);

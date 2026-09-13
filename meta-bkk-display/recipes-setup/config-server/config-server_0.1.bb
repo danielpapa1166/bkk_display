@@ -12,8 +12,8 @@ SRC_URI = " \
     file://www/                         \
 "
 
-DEPENDS = "rbuflogd cjson chttp bkk-tee bkk-common-utils network-manager"
-RDEPENDS:${PN} += "rbuflogd cjson wpa-supplicant bash bkk-tee bkk-common-utils network-manager"
+DEPENDS = "rbuflogd cjson chttp bkk-tee bkk-common-utils network-manager bkk-api"
+RDEPENDS:${PN} += "rbuflogd cjson wpa-supplicant bash bkk-tee bkk-common-utils network-manager bkk-api-client"
 
 S = "${WORKDIR}/src"
 
