@@ -88,7 +88,17 @@ set_target_properties(bkk-tee PROPERTIES
     IMPORTED_LOCATION "${BKK_TEE_LIB}"
     INTERFACE_INCLUDE_DIRECTORIES "${BKK_TEE_INCLUDE_DIR}")
 
+# ---------------------------------------------------------------------------
+# bkk-api UDS client lib (also exposes bkk_stop_utils for station search)
+# ---------------------------------------------------------------------------
 
+find_library(BKK_UDS_CLIENT_LIB REQUIRED NAMES bkk_uds_client)
+find_path(BKK_UDS_INCLUDE_DIR REQUIRED NAMES bkk_stop_utils.h PATH_SUFFIXES bkk_uds)
+
+add_library(bkk-uds-client SHARED IMPORTED)
+set_target_properties(bkk-uds-client PROPERTIES
+    IMPORTED_LOCATION "${BKK_UDS_CLIENT_LIB}"
+    INTERFACE_INCLUDE_DIRECTORIES "${BKK_UDS_INCLUDE_DIR}")
 
 # ---------------------------------------------------------------------------
 # config-server executable
@@ -106,6 +116,7 @@ target_include_directories(config-server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CJSON_INCLUDE_DIR}
     ${BKK_TEE_INCLUDE_DIR}
+    ${BKK_UDS_INCLUDE_DIR}
 )
 
 target_link_libraries(config-server PRIVATE
@@ -114,6 +125,7 @@ target_link_libraries(config-server PRIVATE
     rbuflogd_producer
     bkk-tee-client
     bkk-utils-dbus
+    bkk-uds-client
 )
 
 # ---------------------------------------------------------------------------

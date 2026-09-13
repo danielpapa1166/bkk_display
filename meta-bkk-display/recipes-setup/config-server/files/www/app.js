@@ -68,6 +68,89 @@ function validateApiSetup() {
     return null;
 }
 
+/* ---------- station search (autocomplete) ---------------------------------- */
+
+var STATION_SEARCH_MIN_CHARS = 4;
+var STATION_SEARCH_DEBOUNCE_MS = 300;
+var stationSearchTimer = null;
+
+function clearStationResults() {
+    var list = document.getElementById("station-search-results");
+    list.innerHTML = "";
+    list.style.display = "none";
+}
+
+function addStationId(stopId) {
+    var textarea = document.getElementById("station-ids");
+    var existing = textarea.value.split(/[\s,]+/).filter(function(s) { return s.length > 0; });
+    if (existing.indexOf(stopId) === -1) {
+        existing.push(stopId);
+    }
+    textarea.value = existing.join(", ");
+}
+
+function renderStationResults(stations) {
+    var list = document.getElementById("station-search-results");
+    list.innerHTML = "";
+
+    if (!stations || stations.length === 0) {
+        var empty = document.createElement("li");
+        empty.className = "search-result-empty";
+        empty.textContent = "No matching stations";
+        list.appendChild(empty);
+        list.style.display = "";
+        return;
+    }
+
+    stations.forEach(function(station) {
+        var item = document.createElement("li");
+        item.className = "search-result-item";
+        item.textContent = station.stop_name + " (" + station.stop_id + ")";
+        item.addEventListener("click", function() {
+            addStationId(station.stop_id);
+            document.getElementById("station-search").value = "";
+            clearStationResults();
+        });
+        list.appendChild(item);
+    });
+    list.style.display = "";
+}
+
+function searchStations(query) {
+    return fetch("/api/stations/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query })
+    }).then(function(r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+    });
+}
+
+function onStationSearchInput() {
+    var query = document.getElementById("station-search").value.trim();
+
+    if (stationSearchTimer) {
+        clearTimeout(stationSearchTimer);
+        stationSearchTimer = null;
+    }
+
+    if (query.length < STATION_SEARCH_MIN_CHARS) {
+        clearStationResults();
+        return;
+    }
+
+    stationSearchTimer = setTimeout(function() {
+        searchStations(query)
+            .then(function(data) {
+                renderStationResults(data.stations);
+            })
+            .catch(function() {
+                clearStationResults();
+            });
+    }, STATION_SEARCH_DEBOUNCE_MS);
+}
+
 /* ---------- phase 1: apply wifi & reboot ---------------------------------- */
 
 function applyWifi() {
@@ -140,6 +223,18 @@ function finishApi() {
 /* ---------- init: fetch mode and show first page -------------------------- */
 
 document.addEventListener("DOMContentLoaded", function() {
+    var searchInput = document.getElementById("station-search");
+    if (searchInput) {
+        searchInput.addEventListener("input", onStationSearchInput);
+    }
+
+    document.addEventListener("click", function(evt) {
+        var results = document.getElementById("station-search-results");
+        if (!results || results.style.display === "none") return;
+        if (evt.target === searchInput || results.contains(evt.target)) return;
+        clearStationResults();
+    });
+
     fetch("/api/mode")
         .then(function(r) {
             if (!r.ok) throw new Error("HTTP " + r.status);

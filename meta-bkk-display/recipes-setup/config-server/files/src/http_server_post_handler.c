@@ -3,9 +3,15 @@
 #include "http_server_utils.h"
 #include <network_manager_pub.h>
 #include "http_server_user_action_handler.h"
+#include "bkk_stop_utils.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "rbuflogd/logger.h"
+
+#define STATION_SEARCH_MAX_QUERY_LEN 64
+#define STATION_SEARCH_MIN_QUERY_LEN 2
+#define STATION_SEARCH_MAX_RESULTS   25
 
 // ----------------------------------------------------------------------------
 // local function declarations
@@ -75,6 +81,88 @@ void http_server_handle_finish_post(
   set_simple_response(resp, "200 OK", "text/plain; charset=utf-8", "ok\n");
 
   log_debug("fnsh_hdl", "Finish post handled successfully"); 
+}
+
+void http_server_handle_station_search_post(
+    const chttp_request_t *req,
+    chttp_response_t *resp,
+    void *user_data) {
+
+  log_debug("stn_srch", "Handling station search post");
+  (void)user_data;
+
+  if (req->body == NULL || req->body_len == 0) {
+    set_simple_response(resp, "400 Bad Request",
+      "text/plain; charset=utf-8", "Bad Request\n");
+    return;
+  }
+
+  cJSON *json = cJSON_ParseWithLength(req->body, req->body_len);
+  if (json == NULL) {
+    set_simple_response(resp, "400 Bad Request",
+      "text/plain; charset=utf-8", "Bad Request\n");
+    return;
+  }
+
+  const cJSON *query_item = cJSON_GetObjectItemCaseSensitive(json, "query");
+  if (!cJSON_IsString(query_item) || query_item->valuestring == NULL) {
+    cJSON_Delete(json);
+    set_simple_response(resp, "400 Bad Request",
+      "text/plain; charset=utf-8", "Missing 'query' field\n");
+    return;
+  }
+
+  char query[STATION_SEARCH_MAX_QUERY_LEN + 1];
+  snprintf(query, sizeof(query), "%s", query_item->valuestring);
+  cJSON_Delete(json);
+
+  if (strlen(query) < STATION_SEARCH_MIN_QUERY_LEN) {
+    set_simple_response(resp, "400 Bad Request",
+      "text/plain; charset=utf-8", "Query too short\n");
+    log_warning("stn_srch", "400 Bad Request: query too short");
+    return;
+  }
+
+  size_t *indices = NULL;
+  size_t count = 0;
+  bkk_stop_stat_t stat = find_stops_by_name_substring(query, &indices, &count);
+
+  cJSON *root = cJSON_CreateObject();
+  cJSON *stations = cJSON_AddArrayToObject(root, "stations");
+
+  if (stat == BKK_STOP_FOUND) {
+    size_t result_count = count < STATION_SEARCH_MAX_RESULTS ? count : STATION_SEARCH_MAX_RESULTS;
+    for (size_t i = 0; i < result_count; i++) {
+      bkk_stop_t stop;
+      if (find_stop_by_index(indices[i], &stop) == BKK_STOP_FOUND) {
+        cJSON *station_obj = cJSON_CreateObject();
+        cJSON_AddStringToObject(station_obj, "stop_id", stop.stop_id);
+        cJSON_AddStringToObject(station_obj, "stop_name", stop.stop_name);
+        cJSON_AddItemToArray(stations, station_obj);
+      }
+    }
+    cJSON_AddNumberToObject(root, "count", (double)count);
+  } else {
+    cJSON_AddNumberToObject(root, "count", 0);
+  }
+
+  free(indices);
+
+  char *json_str = cJSON_PrintUnformatted(root);
+  cJSON_Delete(root);
+
+  if (json_str == NULL) {
+    set_simple_response(resp, "500 Internal Server Error",
+      "text/plain; charset=utf-8", "Internal Server Error\n");
+    return;
+  }
+
+  resp->status       = "200 OK";
+  resp->content_type = "application/json; charset=utf-8";
+  resp->body         = json_str; /* chttp frees this after send */
+  resp->body_len     = strlen(json_str);
+
+  log_debug("stn_srch", "Station search handled successfully");
 }
 
 // ----------------------------------------------------------------------------
