@@ -163,16 +163,32 @@ An API key can be requested from the official [BKK](https://opendata.bkk.hu/keys
 
 #### Normal operation 
 <p align="center">
-    <img src="/doc/hw_setup.png" alt="HW_setup" width="400"/>
+    <img src="/doc/hw_setup.png" alt="HW_setup" width="500"/>
     <p align="center">HW setup during normal operation</p>
 </p>
 
 During normal operation, the display shows real-time arrival information for the configured stations and indicates any errors that may prevent the arrival data from being retrieved or displayed.
 
-## Screenshots 
-![Bus Lines presented on the map above](doc/display_demo_01.png)
-*Bus Lines presented on the map above.*
+#### Screenshots 
 
-![Other stations](doc/display_demo_02.png)
+<p align="center">
+    <img src="doc/display_demo_01.png" alt="demo 1" width="500"/>
+    <p align="center">Bus Lines presented on the map above.</p>
+</p>
 
-![Other stations](doc/display_demo_03.png)
+<p align="center">
+    <img src="doc/display_demo_02.png" alt="demo 1" width="500"/>
+    <p align="center">Tram 4-6 and M4 departures from Rákóczi tér</p>
+</p>
+
+<p align="center">
+    <img src="doc/display_demo_03.png" alt="demo 1" width="500"/>
+    <p align="center">M2 and M4 departures from Keleti Pályaudvar</p>
+</p>
+
+
+## Disclaimer / Project scope
+
+This is a **hobby project** developed primarily for learning and experimenting with embedded Linux technologies. Some parts of the system are intentionally over-engineered for the relatively simple task they perform, with the goal of exploring technologies, architectural patterns, and lower-level system concepts that would not necessarily be required in a production implementation.
+
+The project is under active development and may contain known limitations or bugs. See the [open GitHub issues](https://github.com/danielpapa1166/bkk_display/issues) for currently known issues and planned improvements.
