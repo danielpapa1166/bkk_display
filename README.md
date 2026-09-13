@@ -136,9 +136,9 @@ Flash the image to an SD card using a tool such as **Raspberry Pi Imager**, `bma
 
 ### User config 
 #### Network Configuration 
-For the first time the device hosts an Access Point with that you can set your wifi credentials at `192.168.4.1:8080`. 
+On first boot, the device creates a Wi-Fi access point through which the network credentials can be configured using a web interface available at `192.168.4.1:8080.`
 
-To streamline the user experience, the Display shows QR codes for connecting to the access point and opening the service point. The QR code is generated during runtime using [this module](https://github.com/danielpapa1166/qr_code_gen).
+To simplify the setup process, the Display shows QR codes for connecting to the access point and opening the configuration interface. The QR codes are generated at runtime using [this module](https://github.com/danielpapa1166/qr_code_gen).
 
 <p align="center">
     <img src="/doc/wifi_config_QR.PNG" alt="Wifi Config QR" width="500"/>
@@ -152,7 +152,9 @@ To streamline the user experience, the Display shows QR codes for connecting to 
 
 
 #### BKK API configuration
-After the network is configured, the next step is to provide your BKK API key (can be requested from the official webside of [BKK](https://opendata.bkk.hu/keys)) and the station list to be displayed. 
+
+After the network connection has been configured, the BKK API key and the list of stations to be displayed can be provided through the web interface.
+An API key can be requested from the official [BKK](https://opendata.bkk.hu/keys) website. 
 
 <p align="center">
     <img src="/doc/api_config_web.png" alt="API config WEB" width="500"/>
@@ -165,7 +167,7 @@ After the network is configured, the next step is to provide your BKK API key (c
     <p align="center">HW setup during normal operation</p>
 </p>
 
-During normal operation the Display will show the arrivals for the selected stations. Also will indicate if any issue occured. 
+During normal operation, the display shows real-time arrival information for the configured stations and indicates any errors that may prevent the arrival data from being retrieved or displayed.
 
 ## Screenshots 
 ![Bus Lines presented on the map above](doc/display_demo_01.png)
