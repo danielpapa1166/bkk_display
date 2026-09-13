@@ -1,4 +1,7 @@
-![Header GIF](doc/header_gif.gif)
+<p align="center">
+    <img src="doc/header_gif.gif" alt="Header Gif" width="500"/>
+    <p align="center">Routes from "Diószegi út (Vérellátó szolgálat)" and "Hollókő utca" to the city center.</p>
+</p>
 
 # BKK Display
 
@@ -30,7 +33,7 @@ Description of modules used in this project
 
 <p align="center">
     <img src="/doc/hw_setup.png" alt="HW_setup" width="400"/>
-    HW setup during normal operation
+    <p align="center">HW setup during normal operation</p>
 </p>
 
 ## Screenshots 
