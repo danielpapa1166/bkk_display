@@ -1,3 +1,5 @@
+![Header GIF](doc/header_gif.gif)
+
 # BKK Display
 
 BKK Display is a Yocto-based project that uses a custom BKK API submodule to fetch real-time public transport data from the Budapest Public Transport Center’s key-accessed server. With a Qt-powered UI, it lets you display and configure arrival times for selected stations, offering a simple and personalized solution for commuting.
@@ -9,10 +11,10 @@ Living in Budapest, I have two bus stations near my home, each in opposite direc
 ![Bus Stations Map](doc/routes_to_the_city.png)  
 *A map illustrating the two lines I frequently use.*
 
-## Modules 
+## Architecture 
 Description of modules used in this project 
 
-## Get started
+## Getting started
 
 ### BOM 
 - Raspberry Pi 4 
