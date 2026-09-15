@@ -78,7 +78,7 @@ The Network Manager hosts a wireless Access Point during the first boot to allow
 
 ### Secure storage
 
-`bkk-tee` integrates OP-TEE and provides secure storage for sensitive
+`bkk-tee` integrates [OP-TEE](https://optee.readthedocs.io/en/latest/general/about.html) and provides secure storage for sensitive
 configuration such as API credentials.
 
 [Detailed documentation →](meta-bkk-display/recipes-app/bkk-tee/readme.md)
