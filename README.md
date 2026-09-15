@@ -68,6 +68,7 @@ The UI is split into several processes with separate responsibilities:
 - **bkk-screen-owner** - owns and coordinates the physical display - [detailed documentation →](meta-bkk-display/recipes-app/bkk-screen-owner/readme.md)
 - **bkk-screen-main-content** - renders the real-time public transport information - [detailed documentation →](meta-bkk-display/recipes-app/bkk-screen-main-content/readme.md)
 - **bkk-screen-info-bar** - renders auxiliary/status information - [detailed documentation →](meta-bkk-display/recipes-app/bkk-screen-info-bar/readme.md)
+- **ads7846-controller** - Provides the interface to the ADS7846 touchscreen controller and handles touchscreen input. It is also used as part of the display **power-saving mechanism**: after a configurable period of inactivity, the display enters power-save mode and is woken up when touchscreen activity is detected: i.e. you poke the screen.
 
 ### Configuration and networking
 
